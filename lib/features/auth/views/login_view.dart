@@ -44,9 +44,10 @@ class _LoginViewState extends State<LoginView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
+      body: SizedBox.expand(
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -167,6 +168,7 @@ class _LoginViewState extends State<LoginView> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

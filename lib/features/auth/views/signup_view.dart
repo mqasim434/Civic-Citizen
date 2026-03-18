@@ -32,14 +32,21 @@ class _SignupViewState extends State<SignupView> {
   Future<void> _submit() async {
     context.read<AuthController>().clearError();
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final success = await context.read<AuthController>().signUp(
+    final user = await context.read<AuthController>().signUp(
           email: _emailController.text,
           password: _passwordController.text,
           displayName: _nameController.text,
         );
     if (!mounted) return;
-    if (success) {
-      navigatorKey.currentState?.pushReplacementNamed(AppConstants.routeHome);
+    if (user != null) {
+      navigatorKey.currentState?.pushReplacementNamed(
+        AppConstants.routeKyc,
+        arguments: {
+          'uid': user.uid,
+          'displayName': user.displayName ?? _nameController.text.trim(),
+          'email': user.email ?? _emailController.text.trim(),
+        },
+      );
     }
   }
 
@@ -47,9 +54,10 @@ class _SignupViewState extends State<SignupView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
+      body: SizedBox.expand(
+        child: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -190,6 +198,7 @@ class _SignupViewState extends State<SignupView> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

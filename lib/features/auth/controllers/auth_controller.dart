@@ -30,7 +30,8 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> signUp({
+  /// Returns the created user on success, null on failure.
+  Future<UserModel?> signUp({
     required String email,
     required String password,
     String? displayName,
@@ -38,21 +39,21 @@ class AuthController extends ChangeNotifier {
     _setLoading(true);
     _error = null;
     try {
-      await _authService.signUpWithEmail(
+      final user = await _authService.signUpWithEmail(
         email: email,
         password: password,
         displayName: displayName,
       );
       _setLoading(false);
-      return true;
+      return user;
     } on FirebaseAuthException catch (e) {
       _error = _messageFromCode(e.code);
       _setLoading(false);
-      return false;
+      return null;
     } catch (e) {
       _error = e.toString();
       _setLoading(false);
-      return false;
+      return null;
     }
   }
 
