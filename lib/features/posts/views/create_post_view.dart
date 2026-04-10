@@ -24,6 +24,7 @@ class _CreatePostViewState extends State<CreatePostView> {
   final _descController = TextEditingController();
   final _contactController = TextEditingController();
   final _locationController = TextEditingController();
+  final _categoryOtherController = TextEditingController();
   PostModule _module = PostModule.lost;
   String? _category;
   final List<File> _images = [];
@@ -34,6 +35,7 @@ class _CreatePostViewState extends State<CreatePostView> {
     _descController.dispose();
     _contactController.dispose();
     _locationController.dispose();
+    _categoryOtherController.dispose();
     super.dispose();
   }
 
@@ -54,6 +56,13 @@ class _CreatePostViewState extends State<CreatePostView> {
       );
       return;
     }
+    final loc = _locationController.text.trim();
+    if (loc.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location is required')),
+      );
+      return;
+    }
     final id = await context.read<PostController>().createPost(
           module: _module,
           title: _titleController.text.trim(),
@@ -62,9 +71,12 @@ class _CreatePostViewState extends State<CreatePostView> {
           authorName: user.displayName ?? user.email ?? 'User',
           contactNumber: _contactController.text.trim(),
           category: _category,
-          location: _locationController.text.trim().isEmpty
-              ? null
-              : _locationController.text.trim(),
+          categoryCustom: _category == 'Other'
+              ? _categoryOtherController.text.trim().isEmpty
+                  ? null
+                  : _categoryOtherController.text.trim()
+              : null,
+          location: loc,
           images: _images,
         );
     if (!mounted) return;
@@ -97,6 +109,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                 onChanged: (m) => setState(() {
                   _module = m ?? PostModule.lost;
                   _category = null;
+                  _categoryOtherController.clear();
                 }),
               ),
               const SizedBox(height: 20),
@@ -108,8 +121,26 @@ class _CreatePostViewState extends State<CreatePostView> {
                     const DropdownMenuItem(value: null, child: Text('Select')),
                     ...categories.map((c) => DropdownMenuItem(value: c, child: Text(c))),
                   ],
-                  onChanged: (c) => setState(() => _category = c),
+                  onChanged: (c) => setState(() {
+                    _category = c;
+                    if (c != 'Other') _categoryOtherController.clear();
+                  }),
                 ),
+                if (_category == 'Other') ...[
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: _categoryOtherController,
+                    label: 'Describe your category',
+                    hint: 'e.g. Musical instruments',
+                    validator: (v) {
+                      if (_category != 'Other') return null;
+                      if (v == null || v.trim().isEmpty) {
+                        return 'Please describe the Other category';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
                 const SizedBox(height: 20),
               ],
               AppTextField(
@@ -137,8 +168,10 @@ class _CreatePostViewState extends State<CreatePostView> {
               const SizedBox(height: 20),
               AppTextField(
                 controller: _locationController,
-                label: 'Location (optional)',
+                label: 'Location',
                 hint: 'Type address or pick on map',
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Location is required' : null,
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.map_rounded),
                   tooltip: 'Pick on map',

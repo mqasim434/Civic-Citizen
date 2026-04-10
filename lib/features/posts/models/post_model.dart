@@ -78,6 +78,7 @@ class PostModel {
     required this.authorName,
     required this.contactNumber,
     this.category,
+    this.categoryCustom,
     this.location,
     this.imageUrls = const [],
     this.createdAt,
@@ -95,6 +96,7 @@ class PostModel {
       authorName: d['authorName'] as String? ?? '',
       contactNumber: d['contactNumber'] as String? ?? '',
       category: d['category'] as String?,
+      categoryCustom: d['categoryCustom'] as String?,
       location: d['location'] as String?,
       imageUrls: List<String>.from(d['imageUrls'] as List? ?? []),
       createdAt: (d['createdAt'] as Timestamp?)?.toDate(),
@@ -110,10 +112,23 @@ class PostModel {
   final String authorName;
   final String contactNumber;
   final String? category;
+  /// When [category] is "Other", user-defined label (still grouped under Other).
+  final String? categoryCustom;
   final String? location;
   final List<String> imageUrls;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  /// Category line for UI: "Other: …" when custom, else [category].
+  String? get categoryDisplayLabel {
+    if (category == null) return null;
+    if (category == 'Other' &&
+        categoryCustom != null &&
+        categoryCustom!.trim().isNotEmpty) {
+      return 'Other: ${categoryCustom!.trim()}';
+    }
+    return category;
+  }
 
   Map<String, dynamic> toMap() => {
         'module': module.value,
@@ -123,6 +138,7 @@ class PostModel {
         'authorName': authorName,
         'contactNumber': contactNumber,
         'category': category,
+        if (categoryCustom != null) 'categoryCustom': categoryCustom,
         'location': location,
         'imageUrls': imageUrls,
         'createdAt': FieldValue.serverTimestamp(),

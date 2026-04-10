@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/routes/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
+import 'features/admin/services/admin_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/kyc/controllers/kyc_controller.dart';
@@ -34,6 +35,7 @@ class CivicCitizenApp extends StatelessWidget {
           create: (ctx) => AuthController(ctx.read<AuthService>()),
         ),
         Provider<KycService>(create: (_) => KycService()),
+        Provider<AdminService>(create: (_) => AdminService()),
         ChangeNotifierProvider<KycController>(
           create: (ctx) => KycController(ctx.read<KycService>()),
         ),

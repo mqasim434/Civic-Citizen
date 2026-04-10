@@ -40,3 +40,8 @@ exports.imagekitAuth = functions.https.onRequest((req, res) => {
 
   res.json({ token, expire, signature });
 });
+
+/**
+ * Verification emails: use EmailJS from the Flutter app (see lib/core/config/emailjs_config.dart).
+ * No Firestore trigger / SMTP here — works on Firebase Spark without Blaze or a card.
+ */

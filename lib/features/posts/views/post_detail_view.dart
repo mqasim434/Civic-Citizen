@@ -55,12 +55,14 @@ class PostDetailView extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (post.category != null) ...[
+                      if (post.categoryDisplayLabel != null) ...[
                         const SizedBox(width: 8),
-                        Text(
-                          post.category!,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        Expanded(
+                          child: Text(
+                            post.categoryDisplayLabel!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
                           ),
                         ),
                       ],

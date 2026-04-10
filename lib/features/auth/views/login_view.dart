@@ -3,9 +3,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/navigation/post_auth_navigation.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../admin/services/admin_service.dart';
+import '../../kyc/services/kyc_service.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginView extends StatefulWidget {
@@ -36,7 +39,20 @@ class _LoginViewState extends State<LoginView> {
         );
     if (!mounted) return;
     if (success) {
-      navigatorKey.currentState?.pushReplacementNamed(AppConstants.routeHome);
+      final auth = context.read<AuthController>();
+      final user = auth.user!;
+      final dest = await resolvePostAuthDestination(
+        uid: user.uid,
+        kycService: context.read<KycService>(),
+        adminService: context.read<AdminService>(),
+      );
+      if (!mounted) return;
+      pushDestination(
+        dest,
+        uid: user.uid,
+        displayName: user.displayName ?? '',
+        email: user.email ?? '',
+      );
     }
   }
 

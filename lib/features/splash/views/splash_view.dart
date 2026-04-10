@@ -5,8 +5,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/navigation/post_auth_navigation.dart';
 import '../../../core/routes/app_router.dart';
+import '../../admin/services/admin_service.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../kyc/services/kyc_service.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -28,10 +31,23 @@ class _SplashViewState extends State<SplashView> {
     );
     if (!mounted) return;
     final auth = context.read<AuthController>();
-    final route = auth.isLoggedIn
-        ? AppConstants.routeHome
-        : AppConstants.routeLogin;
-    navigatorKey.currentState?.pushReplacementNamed(route);
+    if (!auth.isLoggedIn) {
+      navigatorKey.currentState?.pushReplacementNamed(AppConstants.routeLogin);
+      return;
+    }
+    final user = auth.user!;
+    final dest = await resolvePostAuthDestination(
+      uid: user.uid,
+      kycService: context.read<KycService>(),
+      adminService: context.read<AdminService>(),
+    );
+    if (!mounted) return;
+    pushDestination(
+      dest,
+      uid: user.uid,
+      displayName: user.displayName ?? '',
+      email: user.email ?? '',
+    );
   }
 
   @override

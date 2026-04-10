@@ -14,7 +14,11 @@ class AppConstants {
   static const String routeLogin = '/login';
   static const String routeSignup = '/signup';
   static const String routeKyc = '/kyc';
+  static const String routeVerificationPending = '/verification-pending';
+  static const String routeVerificationRejected = '/verification-rejected';
   static const String routeHome = '/home';
+  static const String routeAdmin = '/admin';
+  static const String routeAdminUserVerification = '/admin-user-verification';
   static const String routePostDetail = '/post-detail';
   static const String routeCreatePost = '/create-post';
   static const String routeEditPost = '/edit-post';
@@ -22,6 +26,7 @@ class AppConstants {
 
   // Firestore
   static const String usersCollection = 'users';
+  static const String adminsCollection = 'admins';
   static const String postsCollection = 'posts';
   static const String cnicStoragePath = 'kyc/cnic';
   static const String selfieStoragePath = 'kyc/selfie';

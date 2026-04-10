@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/post_model.dart';
@@ -37,7 +38,8 @@ class PostController extends ChangeNotifier {
     required String authorName,
     required String contactNumber,
     String? category,
-    String? location,
+    String? categoryCustom,
+    required String location,
     List<File>? images,
   }) async {
     _setLoading(true);
@@ -52,6 +54,7 @@ class PostController extends ChangeNotifier {
         authorName: authorName,
         contactNumber: contactNumber,
         category: category,
+        categoryCustom: categoryCustom,
         location: location,
       );
       final id = await _postService.createPost(post);
@@ -82,19 +85,26 @@ class PostController extends ChangeNotifier {
     required String description,
     required String contactNumber,
     String? category,
-    String? location,
+    String? categoryCustom,
+    required String location,
   }) async {
     _setLoading(true);
     _error = null;
     try {
-      await _postService.updatePost(id, {
+      final data = <String, dynamic>{
         'module': module.value,
         'title': title,
         'description': description,
         'contactNumber': contactNumber,
         'category': category,
         'location': location,
-      });
+      };
+      if (categoryCustom != null && categoryCustom.isNotEmpty) {
+        data['categoryCustom'] = categoryCustom;
+      } else {
+        data['categoryCustom'] = FieldValue.delete();
+      }
+      await _postService.updatePost(id, data);
       _setLoading(false);
       return true;
     } catch (e) {

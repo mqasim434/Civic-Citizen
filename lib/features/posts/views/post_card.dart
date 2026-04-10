@@ -59,13 +59,17 @@ class PostCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (post.category != null &&
+                      if (post.categoryDisplayLabel != null &&
                           !PostModule.values.any((m) => m.label == post.category)) ...[
                         const SizedBox(width: 8),
-                        Text(
-                          post.category!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        Flexible(
+                          child: Text(
+                            post.categoryDisplayLabel!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

@@ -10,9 +10,13 @@ class KycController extends ChangeNotifier {
 
   final KycService _kycService;
 
-  File? _cnicImage;
-  File? get cnicImage => _cnicImage;
-  bool get hasCnic => _cnicImage != null;
+  File? _cnicFrontImage;
+  File? get cnicFrontImage => _cnicFrontImage;
+  File? _cnicBackImage;
+  File? get cnicBackImage => _cnicBackImage;
+  bool get hasCnicFront => _cnicFrontImage != null;
+  bool get hasCnicBack => _cnicBackImage != null;
+  bool get hasBothCnicSides => hasCnicFront && hasCnicBack;
 
   File? _selfieImage;
   File? get selfieImage => _selfieImage;
@@ -28,14 +32,18 @@ class KycController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Pick CNIC from camera or gallery.
-  Future<bool> pickCnic({required bool fromCamera}) async {
+  /// Pick CNIC front or back from camera or gallery.
+  Future<bool> pickCnic({required bool fromCamera, required bool isFront}) async {
     _setLoading(true);
     _error = null;
     try {
       final file = await _kycService.pickImage(fromCamera: fromCamera);
       if (file != null) {
-        _cnicImage = file;
+        if (isFront) {
+          _cnicFrontImage = file;
+        } else {
+          _cnicBackImage = file;
+        }
         _setLoading(false);
         notifyListeners();
         return true;
@@ -84,17 +92,19 @@ class KycController extends ChangeNotifier {
     required String displayName,
     required String email,
   }) async {
-    if (_cnicImage == null || _selfieImage == null) return false;
+    if (_cnicFrontImage == null || _cnicBackImage == null || _selfieImage == null) return false;
     _setLoading(true);
     _error = null;
     try {
-      final cnicUrl = await _kycService.uploadCnic(uid, _cnicImage!);
+      final frontUrl = await _kycService.uploadCnic(uid, _cnicFrontImage!, side: 'front');
+      final backUrl = await _kycService.uploadCnic(uid, _cnicBackImage!, side: 'back');
       final selfieUrl = await _kycService.uploadSelfie(uid, _selfieImage!);
       await _kycService.saveKycProfile(
         uid: uid,
         displayName: displayName,
         email: email,
-        cnicImageUrl: cnicUrl,
+        cnicFrontImageUrl: frontUrl,
+        cnicBackImageUrl: backUrl,
         selfieImageUrl: selfieUrl,
       );
       _setLoading(false);
@@ -108,7 +118,8 @@ class KycController extends ChangeNotifier {
   }
 
   void clearImages() {
-    _cnicImage = null;
+    _cnicFrontImage = null;
+    _cnicBackImage = null;
     _selfieImage = null;
     _error = null;
     notifyListeners();

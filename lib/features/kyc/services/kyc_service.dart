@@ -56,12 +56,20 @@ class KycService {
   }
 
   /// Upload CNIC image and save path to user document.
-  Future<String> uploadCnic(String uid, File image) async {
+  Future<String> uploadCnic(String uid, File image, {required String side}) async {
     return _imagekit.upload(
       file: image,
-      folder: '${AppConstants.cnicStoragePath}/$uid',
+      folder: '${AppConstants.cnicStoragePath}/$uid/$side',
     );
   }
+
+  /// KYC documents submitted (awaiting admin verification or already decided).
+  static bool hasSubmittedKyc(Map<String, dynamic>? profile) {
+    return profile != null && profile['kycSubmittedAt'] != null;
+  }
+
+  @Deprecated('Use hasSubmittedKyc')
+  static bool isKycComplete(Map<String, dynamic>? profile) => hasSubmittedKyc(profile);
 
   /// Upload selfie image and save path to user document.
   Future<String> uploadSelfie(String uid, File image) async {
@@ -76,13 +84,16 @@ class KycService {
     required String uid,
     required String displayName,
     required String email,
-    required String cnicImageUrl,
+    required String cnicFrontImageUrl,
+    required String cnicBackImageUrl,
     required String selfieImageUrl,
   }) async {
     await _users.doc(uid).set({
       'displayName': displayName,
       'email': email,
-      'cnicImageUrl': cnicImageUrl,
+      'cnicFrontImageUrl': cnicFrontImageUrl,
+      'cnicBackImageUrl': cnicBackImageUrl,
+      'cnicImageUrl': cnicFrontImageUrl,
       'selfieImageUrl': selfieImageUrl,
       'verificationStatus': KycStatus.pending.name,
       'kycSubmittedAt': FieldValue.serverTimestamp(),
