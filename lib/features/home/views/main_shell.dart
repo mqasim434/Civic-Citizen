@@ -30,7 +30,7 @@ class _MainShellState extends State<MainShell> {
         index: _index,
         children: const [
           DashboardView(),
-          MapPlaceholderView(),
+          MapPostsView(),
           ProfileView(),
         ],
       ),

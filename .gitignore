@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/local.properties
+
+# Local secret defines (do not commit)
+*.env
+*.env.local
+env.local
+env.local.json

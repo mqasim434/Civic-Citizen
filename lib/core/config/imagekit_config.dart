@@ -4,10 +4,7 @@ class ImageKitConfig {
     required this.urlEndpoint,
     this.privateKey,
     this.authenticationEndpoint,
-  }) : assert(
-         privateKey != null || authenticationEndpoint != null,
-         'Provide either privateKey or authenticationEndpoint',
-       );
+  });
 
   final String publicKey;
   final String urlEndpoint;
@@ -15,10 +12,23 @@ class ImageKitConfig {
   final String? authenticationEndpoint;
 
   bool get useDirectAuth => privateKey != null && privateKey!.isNotEmpty;
+  bool get hasAuthEndpoint =>
+      authenticationEndpoint != null && authenticationEndpoint!.isNotEmpty;
+  bool get isConfigured =>
+      publicKey.isNotEmpty &&
+      urlEndpoint.isNotEmpty &&
+      (useDirectAuth || hasAuthEndpoint);
 
-  static ImageKitConfig get instance => const ImageKitConfig(
-    publicKey: 'public_TmAJXPJQH85XW70GM8IMnncjYY8=',
-    urlEndpoint: 'https://ik.imagekit.io/zqetqiw22',
-    privateKey: 'private_JgefaHinFeHL50fvAuZOmv/e4kg=',
+  static ImageKitConfig get instance => ImageKitConfig(
+    publicKey: const String.fromEnvironment('IMAGEKIT_PUBLIC_KEY'),
+    urlEndpoint: const String.fromEnvironment('IMAGEKIT_URL_ENDPOINT'),
+    privateKey: _nullableEnv('IMAGEKIT_PRIVATE_KEY'),
+    authenticationEndpoint: _nullableEnv('IMAGEKIT_AUTH_ENDPOINT'),
   );
+
+  static String? _nullableEnv(String key) {
+    final value = String.fromEnvironment(key);
+    if (value.isNotEmpty) return value;
+    return null;
+  }
 }

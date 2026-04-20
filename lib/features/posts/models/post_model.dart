@@ -81,6 +81,8 @@ class PostModel {
     this.categoryCustom,
     this.location,
     this.imageUrls = const [],
+    this.isInappropriate = false,
+    this.inappropriateReason,
     this.createdAt,
     this.updatedAt,
   });
@@ -99,6 +101,8 @@ class PostModel {
       categoryCustom: d['categoryCustom'] as String?,
       location: d['location'] as String?,
       imageUrls: List<String>.from(d['imageUrls'] as List? ?? []),
+      isInappropriate: d['isInappropriate'] as bool? ?? false,
+      inappropriateReason: d['inappropriateReason'] as String?,
       createdAt: (d['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (d['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -116,6 +120,8 @@ class PostModel {
   final String? categoryCustom;
   final String? location;
   final List<String> imageUrls;
+  final bool isInappropriate;
+  final String? inappropriateReason;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -141,6 +147,8 @@ class PostModel {
         if (categoryCustom != null) 'categoryCustom': categoryCustom,
         'location': location,
         'imageUrls': imageUrls,
+        'isInappropriate': isInappropriate,
+        if (inappropriateReason != null) 'inappropriateReason': inappropriateReason,
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       };

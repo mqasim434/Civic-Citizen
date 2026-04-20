@@ -19,6 +19,13 @@ class ImageKitService {
     required String folder,
     String? fileName,
   }) async {
+    if (!_config.isConfigured) {
+      throw Exception(
+        'Image upload is not configured. Provide ImageKit values via --dart-define '
+        '(IMAGEKIT_PUBLIC_KEY, IMAGEKIT_URL_ENDPOINT, and either IMAGEKIT_PRIVATE_KEY '
+        'or IMAGEKIT_AUTH_ENDPOINT).',
+      );
+    }
     final fn = fileName ?? '${DateTime.now().millisecondsSinceEpoch}.jpg';
     final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl));
 
