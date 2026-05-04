@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -76,6 +78,15 @@ class AuthService {
     if (!_isFirebaseReady) {
       throw Exception('Firebase is not configured.');
     }
-    await _auth!.sendPasswordResetEmail(email: email.trim());
+    try {
+      await _auth!.sendPasswordResetEmail(email: email.trim()).timeout(
+            const Duration(seconds: 45),
+          );
+    } on TimeoutException {
+      throw Exception(
+        'Reset email is taking too long. Check your connection, update Google Play '
+        'services, and try again.',
+      );
+    }
   }
 }

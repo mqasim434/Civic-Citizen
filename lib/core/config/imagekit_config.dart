@@ -20,15 +20,9 @@ class ImageKitConfig {
       (useDirectAuth || hasAuthEndpoint);
 
   static ImageKitConfig get instance => ImageKitConfig(
-    publicKey: const String.fromEnvironment('IMAGEKIT_PUBLIC_KEY'),
-    urlEndpoint: const String.fromEnvironment('IMAGEKIT_URL_ENDPOINT'),
-    privateKey: _nullableEnv('IMAGEKIT_PRIVATE_KEY'),
-    authenticationEndpoint: _nullableEnv('IMAGEKIT_AUTH_ENDPOINT'),
+    publicKey: 'public_TmAJXPJQH85XW70GM8IMnncjYY8=',
+    urlEndpoint: 'https://ik.imagekit.io/zqetqiw22',
+    privateKey: 'private_JgefaHinFeHL50fvAuZOmv/e4kg=',
+    authenticationEndpoint: null,
   );
-
-  static String? _nullableEnv(String key) {
-    final value = String.fromEnvironment(key);
-    if (value.isNotEmpty) return value;
-    return null;
-  }
 }

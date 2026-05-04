@@ -56,6 +56,101 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
+  Future<void> _showForgotPasswordDialog() async {
+    final emailController = TextEditingController(text: _emailController.text.trim());
+    final resetFormKey = GlobalKey<FormState>();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        return AlertDialog(
+          title: const Text('Reset password'),
+          content: Form(
+            key: resetFormKey,
+            child: AppTextField(
+              controller: emailController,
+              label: 'Email',
+              hint: 'you@example.com',
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              autofillHints: const [AutofillHints.email],
+              prefixIcon: Icon(
+                Icons.email_outlined,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'Enter your email';
+                if (!v.contains('@') || !v.contains('.')) return 'Enter a valid email';
+                return null;
+              },
+              onSubmitted: (_) async {
+                if (!(resetFormKey.currentState?.validate() ?? false)) return;
+                FocusManager.instance.primaryFocus?.unfocus();
+                context.read<AuthController>().clearError();
+                await context.read<AuthController>().sendPasswordReset(emailController.text);
+                if (!mounted) return;
+                final error = context.read<AuthController>().error;
+                if (error != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(error)),
+                  );
+                  return;
+                }
+                Navigator.of(dialogContext).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Password reset email sent. Check your inbox.')),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            Consumer<AuthController>(
+              builder: (_, auth, __) => TextButton(
+                onPressed: auth.isPasswordResetLoading
+                    ? null
+                    : () async {
+                        if (!(resetFormKey.currentState?.validate() ?? false)) return;
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        context.read<AuthController>().clearError();
+                        await context.read<AuthController>().sendPasswordReset(emailController.text);
+                        if (!mounted) return;
+                        final error = context.read<AuthController>().error;
+                        if (error != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(error)),
+                          );
+                          return;
+                        }
+                        Navigator.of(dialogContext).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Password reset email sent. Check your inbox.')),
+                        );
+                      },
+                child: auth.isPasswordResetLoading
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: theme.colorScheme.primary,
+                        ),
+                      )
+                    : const Text('Send link'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    emailController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -139,7 +234,14 @@ class _LoginViewState extends State<LoginView> {
                       return null;
                     },
                   ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05, end: 0),
-                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: _showForgotPasswordDialog,
+                      child: const Text('Forgot password?'),
+                    ),
+                  ).animate().fadeIn(delay: 450.ms),
+                  const SizedBox(height: 8),
                   Consumer<AuthController>(
                     builder: (_, auth, __) {
                       if (auth.error == null) return const SizedBox.shrink();

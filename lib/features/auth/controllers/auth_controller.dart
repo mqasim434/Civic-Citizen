@@ -23,6 +23,9 @@ class AuthController extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  bool _passwordResetLoading = false;
+  bool get isPasswordResetLoading => _passwordResetLoading;
+
   String? _error;
   String? get error => _error;
   void clearError() {
@@ -89,8 +92,9 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> sendPasswordReset(String email) async {
-    _setLoading(true);
+    _passwordResetLoading = true;
     _error = null;
+    notifyListeners();
     try {
       await _authService.sendPasswordResetEmail(email);
     } on FirebaseAuthException catch (e) {
@@ -98,7 +102,7 @@ class AuthController extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
     } finally {
-      _setLoading(false);
+      _passwordResetLoading = false;
       notifyListeners();
     }
   }

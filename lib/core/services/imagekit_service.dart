@@ -21,9 +21,8 @@ class ImageKitService {
   }) async {
     if (!_config.isConfigured) {
       throw Exception(
-        'Image upload is not configured. Provide ImageKit values via --dart-define '
-        '(IMAGEKIT_PUBLIC_KEY, IMAGEKIT_URL_ENDPOINT, and either IMAGEKIT_PRIVATE_KEY '
-        'or IMAGEKIT_AUTH_ENDPOINT).',
+        'Image upload is not configured. Set ImageKit public key, URL endpoint, and either '
+        'a private key or authentication endpoint in lib/core/config/imagekit_config.dart.',
       );
     }
     final fn = fileName ?? '${DateTime.now().millisecondsSinceEpoch}.jpg';
