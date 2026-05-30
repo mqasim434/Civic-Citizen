@@ -24,6 +24,7 @@ class _EditPostViewState extends State<EditPostView> {
   late final TextEditingController _contactController;
   late final TextEditingController _locationController;
   late final TextEditingController _categoryOtherController;
+  late final TextEditingController _conditionController;
   late PostModule _module;
   late String? _category;
 
@@ -35,6 +36,7 @@ class _EditPostViewState extends State<EditPostView> {
     _contactController = TextEditingController(text: widget.post.contactNumber);
     _locationController = TextEditingController(text: widget.post.location ?? '');
     _categoryOtherController = TextEditingController(text: widget.post.categoryCustom ?? '');
+    _conditionController = TextEditingController(text: widget.post.itemCondition ?? '');
     _module = widget.post.module;
     _category = widget.post.category;
   }
@@ -46,6 +48,7 @@ class _EditPostViewState extends State<EditPostView> {
     _contactController.dispose();
     _locationController.dispose();
     _categoryOtherController.dispose();
+    _conditionController.dispose();
     super.dispose();
   }
 
@@ -72,6 +75,11 @@ class _EditPostViewState extends State<EditPostView> {
                   : _categoryOtherController.text.trim()
               : null,
           location: loc,
+          itemCondition: _isLendBorrow(_module)
+              ? (_conditionController.text.trim().isEmpty
+                  ? null
+                  : _conditionController.text.trim())
+              : null,
         );
     if (!mounted) return;
     if (success) {
@@ -81,6 +89,34 @@ class _EditPostViewState extends State<EditPostView> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.post.isFulfilled) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Edit post')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.check_circle_outline, size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'This listing was completed via QR handshake and can no longer be edited.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: () => navigatorKey.currentState?.pop(),
+                  child: const Text('Go back'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final theme = Theme.of(context);
     final categories = _categoriesForModule(_module);
     return Scaffold(
@@ -135,6 +171,14 @@ class _EditPostViewState extends State<EditPostView> {
                     },
                   ),
                 ],
+                const SizedBox(height: 20),
+              ],
+              if (_isLendBorrow(_module)) ...[
+                AppTextField(
+                  controller: _conditionController,
+                  label: 'Item condition',
+                  hint: 'e.g. Good, Like new, Fair',
+                ),
                 const SizedBox(height: 20),
               ],
               AppTextField(
@@ -225,4 +269,7 @@ class _EditPostViewState extends State<EditPostView> {
         return ['Electronics', 'Books', 'Accessories', 'Tools', 'Other'];
     }
   }
+
+  bool _isLendBorrow(PostModule m) =>
+      m == PostModule.lend || m == PostModule.borrow;
 }

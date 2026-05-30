@@ -25,6 +25,7 @@ class _CreatePostViewState extends State<CreatePostView> {
   final _contactController = TextEditingController();
   final _locationController = TextEditingController();
   final _categoryOtherController = TextEditingController();
+  final _conditionController = TextEditingController();
   PostModule _module = PostModule.lost;
   String? _category;
   final List<File> _images = [];
@@ -36,6 +37,7 @@ class _CreatePostViewState extends State<CreatePostView> {
     _contactController.dispose();
     _locationController.dispose();
     _categoryOtherController.dispose();
+    _conditionController.dispose();
     super.dispose();
   }
 
@@ -77,6 +79,11 @@ class _CreatePostViewState extends State<CreatePostView> {
                   : _categoryOtherController.text.trim()
               : null,
           location: loc,
+          itemCondition: _isLendBorrow(_module)
+              ? (_conditionController.text.trim().isEmpty
+                  ? null
+                  : _conditionController.text.trim())
+              : null,
           images: _images,
         );
     if (!mounted) return;
@@ -110,6 +117,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                   _module = m ?? PostModule.lost;
                   _category = null;
                   _categoryOtherController.clear();
+                  if (!_isLendBorrow(_module)) _conditionController.clear();
                 }),
               ),
               const SizedBox(height: 20),
@@ -141,6 +149,14 @@ class _CreatePostViewState extends State<CreatePostView> {
                     },
                   ),
                 ],
+                const SizedBox(height: 20),
+              ],
+              if (_isLendBorrow(_module)) ...[
+                AppTextField(
+                  controller: _conditionController,
+                  label: 'Item condition',
+                  hint: 'e.g. Good, Like new, Fair',
+                ),
                 const SizedBox(height: 20),
               ],
               AppTextField(
@@ -289,4 +305,7 @@ class _CreatePostViewState extends State<CreatePostView> {
         return ['Electronics', 'Books', 'Accessories', 'Tools', 'Other'];
     }
   }
+
+  bool _isLendBorrow(PostModule m) =>
+      m == PostModule.lend || m == PostModule.borrow;
 }

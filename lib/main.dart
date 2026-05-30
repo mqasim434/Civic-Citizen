@@ -11,6 +11,7 @@ import 'features/auth/controllers/auth_controller.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/kyc/controllers/kyc_controller.dart';
 import 'features/kyc/services/kyc_service.dart';
+import 'features/lend_borrow/services/lend_borrow_contract_service.dart';
 import 'features/posts/controllers/post_controller.dart';
 import 'features/posts/services/post_service.dart';
 
@@ -40,6 +41,7 @@ class CivicCitizenApp extends StatelessWidget {
           create: (ctx) => KycController(ctx.read<KycService>()),
         ),
         Provider<PostService>(create: (_) => PostService()),
+        Provider<LendBorrowContractService>(create: (_) => LendBorrowContractService()),
         ChangeNotifierProvider<PostController>(
           create: (ctx) => PostController(ctx.read<PostService>()),
         ),

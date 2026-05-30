@@ -23,14 +23,23 @@ class AppConstants {
   static const String routeCreatePost = '/create-post';
   static const String routeEditPost = '/edit-post';
   static const String routeSettings = '/settings';
+  static const String routeLendBorrowContract = '/lend-borrow-contract';
+  static const String routeContractSignature = '/contract-signature';
+  static const String routeContractQr = '/contract-qr';
+  static const String routeContractScan = '/contract-scan';
 
   // Firestore
   static const String usersCollection = 'users';
   static const String adminsCollection = 'admins';
   static const String postsCollection = 'posts';
+  static const String contractsCollection = 'lend_borrow_contracts';
   static const String cnicStoragePath = 'kyc/cnic';
   static const String selfieStoragePath = 'kyc/selfie';
   static const String postImagesPath = 'posts';
+  static const String contractSignaturesPath = 'contracts/signatures';
+
+  /// QR handshake validity after both parties sign.
+  static const int contractQrValidityHours = 24;
 
   // Preferences
   static const String keyThemeMode = 'theme_mode';

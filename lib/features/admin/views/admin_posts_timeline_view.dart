@@ -89,6 +89,7 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView> {
                 itemBuilder: (context, i) {
                   final post = posts[i];
                   final flagged = post.isInappropriate;
+                  final fulfilled = post.isFulfilled;
                   final busy = _busyPostIds.contains(post.id);
                   return Stack(
                     children: [
@@ -182,6 +183,25 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView> {
                               'Inappropriate',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: theme.colorScheme.onErrorContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (fulfilled && !flagged)
+                        Positioned(
+                          left: 12,
+                          top: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.tertiaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Fulfilled',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onTertiaryContainer,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

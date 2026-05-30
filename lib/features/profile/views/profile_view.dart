@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../lend_borrow/widgets/completed_exchanges_section.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
 
@@ -112,6 +113,13 @@ class ProfileView extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Active listings only — completed lend/borrow items move to Completed exchanges.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+              ),
+            ),
             const SizedBox(height: 12),
             StreamBuilder<List<PostModel>>(
               stream: context.read<PostController>().watchMyPosts(user.uid),
@@ -162,6 +170,7 @@ class ProfileView extends StatelessWidget {
                 );
               },
             ),
+            CompletedExchangesSection(userId: user.uid),
             const SizedBox(height: 32),
             OutlinedButton.icon(
               onPressed: () async {
@@ -286,7 +295,7 @@ class _MyPostCard extends StatelessWidget {
                   child: const Text('View'),
                 ),
                 OutlinedButton(
-                  onPressed: onEdit,
+                  onPressed: post.isFulfilled ? null : onEdit,
                   child: const Text('Edit'),
                 ),
                 OutlinedButton(

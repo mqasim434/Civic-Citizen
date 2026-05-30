@@ -8,6 +8,10 @@ import '../../features/home/views/main_shell.dart';
 import '../../features/kyc/views/kyc_view.dart';
 import '../../features/verification/views/verification_pending_view.dart';
 import '../../features/verification/views/verification_rejected_view.dart';
+import '../../features/lend_borrow/views/contract_detail_view.dart';
+import '../../features/lend_borrow/views/contract_qr_view.dart';
+import '../../features/lend_borrow/views/contract_scan_view.dart';
+import '../../features/lend_borrow/views/contract_signature_view.dart';
 import '../../features/posts/models/post_model.dart';
 import '../../features/posts/views/create_post_view.dart';
 import '../../features/posts/views/edit_post_view.dart';
@@ -72,6 +76,35 @@ class AppRouter {
       }
       case AppConstants.routeSettings:
         return _buildRoute(const SettingsView(), settings);
+      case AppConstants.routeLendBorrowContract: {
+        final contractId = settings.arguments as String?;
+        if (contractId == null || contractId.isEmpty) {
+          return _buildRoute(const MainShell(), settings);
+        }
+        return _buildRoute(ContractDetailView(contractId: contractId), settings);
+      }
+      case AppConstants.routeContractSignature: {
+        final args = settings.arguments as Map<String, dynamic>?;
+        final contractId = args?['contractId'] as String?;
+        if (contractId == null) return _buildRoute(const MainShell(), settings);
+        return _buildRoute(
+          ContractSignatureView(
+            contractId: contractId,
+            isLender: args?['isLender'] as bool? ?? false,
+          ),
+          settings,
+        );
+      }
+      case AppConstants.routeContractQr: {
+        final contractId = settings.arguments as String?;
+        if (contractId == null) return _buildRoute(const MainShell(), settings);
+        return _buildRoute(ContractQrView(contractId: contractId), settings);
+      }
+      case AppConstants.routeContractScan: {
+        final contractId = settings.arguments as String?;
+        if (contractId == null) return _buildRoute(const MainShell(), settings);
+        return _buildRoute(ContractScanView(contractId: contractId), settings);
+      }
       default:
         return _buildRoute(const SplashView(), settings);
     }

@@ -46,7 +46,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Photo library access is required to upload your CNIC image for verification.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Location access is used to pick a location on the map when creating a post.</string>
+	<string>Location access is used to pick a location on the map when creating a post and to log GPS coordinates during lend/borrow QR handshakes.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

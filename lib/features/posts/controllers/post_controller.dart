@@ -26,7 +26,7 @@ class PostController extends ChangeNotifier {
       _postService.watchPosts(module: module);
 
   Stream<List<PostModel>> watchMyPosts(String authorId) =>
-      _postService.watchPostsByAuthor(authorId);
+      _postService.watchActivePostsByAuthor(authorId);
 
   Future<PostModel?> getPost(String id) => _postService.getPost(id);
 
@@ -40,6 +40,7 @@ class PostController extends ChangeNotifier {
     String? category,
     String? categoryCustom,
     required String location,
+    String? itemCondition,
     List<File>? images,
   }) async {
     _setLoading(true);
@@ -56,6 +57,7 @@ class PostController extends ChangeNotifier {
         category: category,
         categoryCustom: categoryCustom,
         location: location,
+        itemCondition: itemCondition,
       );
       final id = await _postService.createPost(post);
       if (images != null && images.isNotEmpty && id.isNotEmpty) {
@@ -87,6 +89,7 @@ class PostController extends ChangeNotifier {
     String? category,
     String? categoryCustom,
     required String location,
+    String? itemCondition,
   }) async {
     _setLoading(true);
     _error = null;
@@ -99,6 +102,11 @@ class PostController extends ChangeNotifier {
         'category': category,
         'location': location,
       };
+      if (itemCondition != null && itemCondition.isNotEmpty) {
+        data['itemCondition'] = itemCondition;
+      } else {
+        data['itemCondition'] = FieldValue.delete();
+      }
       if (categoryCustom != null && categoryCustom.isNotEmpty) {
         data['categoryCustom'] = categoryCustom;
       } else {

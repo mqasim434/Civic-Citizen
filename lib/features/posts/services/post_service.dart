@@ -22,18 +22,20 @@ class PostService {
   CollectionReference<Map<String, dynamic>> get _posts =>
       _firestore.collection(AppConstants.postsCollection);
 
-  /// Stream all posts, optionally filtered by module.
+  /// Stream publicly listed posts (excludes fulfilled lend/borrow listings).
   Stream<List<PostModel>> watchPosts({PostModule? module}) {
     final Query<Map<String, dynamic>> q = module != null
         ? _posts
             .where('module', isEqualTo: module.value)
             .orderBy('createdAt', descending: true)
         : _posts.orderBy('createdAt', descending: true);
-    return q.snapshots().map((snap) =>
-        snap.docs.map((d) => PostModel.fromFirestore(d)).toList());
+    return q.snapshots().map((snap) => snap.docs
+        .map((d) => PostModel.fromFirestore(d))
+        .where((p) => p.isPubliclyListed)
+        .toList());
   }
 
-  /// Stream posts by author.
+  /// All posts by author (active + fulfilled).
   Stream<List<PostModel>> watchPostsByAuthor(String authorId) {
     return _posts
         .where('authorId', isEqualTo: authorId)
@@ -41,6 +43,13 @@ class PostService {
         .snapshots()
         .map((snap) =>
             snap.docs.map((d) => PostModel.fromFirestore(d)).toList());
+  }
+
+  /// Active listings only — for profile "My posts".
+  Stream<List<PostModel>> watchActivePostsByAuthor(String authorId) {
+    return watchPostsByAuthor(authorId).map(
+      (posts) => posts.where((p) => p.isPubliclyListed).toList(),
+    );
   }
 
   /// Get single post by id.

@@ -16,7 +16,7 @@ val localProperties = Properties().apply {
 
 android {
     namespace = "com.example.civic_citizen"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     compileOptions {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../lend_borrow/widgets/lend_borrow_contract_section.dart';
 import '../models/post_model.dart';
 
 class PostDetailView extends StatelessWidget {
@@ -39,6 +40,35 @@ class PostDetailView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (post.isFulfilled)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.tertiaryContainer,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            color: theme.colorScheme.onTertiaryContainer,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Fulfilled — hidden from public feed',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.onTertiaryContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   Row(
                     children: [
                       Container(
@@ -80,6 +110,26 @@ class PostDetailView extends StatelessWidget {
                     post.description,
                     style: theme.textTheme.bodyLarge,
                   ),
+                  if (post.itemCondition != null &&
+                      post.itemCondition!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.inventory_2_outlined,
+                          size: 20,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Condition: ${post.itemCondition}',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   if (post.location != null) ...[
                     const SizedBox(height: 16),
                     Row(
@@ -142,6 +192,7 @@ class PostDetailView extends StatelessWidget {
                       ),
                     ],
                   ),
+                  LendBorrowContractSection(post: post),
                 ],
               ),
             ),

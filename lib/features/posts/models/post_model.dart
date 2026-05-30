@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'post_listing_status.dart';
+
 /// Civic post module types.
 enum PostModule {
   lost,
@@ -80,6 +82,10 @@ class PostModel {
     this.category,
     this.categoryCustom,
     this.location,
+    this.itemCondition,
+    this.listingStatus = PostListingStatus.active,
+    this.fulfilledAt,
+    this.completedContractId,
     this.imageUrls = const [],
     this.isInappropriate = false,
     this.inappropriateReason,
@@ -100,6 +106,10 @@ class PostModel {
       category: d['category'] as String?,
       categoryCustom: d['categoryCustom'] as String?,
       location: d['location'] as String?,
+      itemCondition: d['itemCondition'] as String?,
+      listingStatus: PostListingStatusX.fromValue(d['listingStatus'] as String?),
+      fulfilledAt: (d['fulfilledAt'] as Timestamp?)?.toDate(),
+      completedContractId: d['completedContractId'] as String?,
       imageUrls: List<String>.from(d['imageUrls'] as List? ?? []),
       isInappropriate: d['isInappropriate'] as bool? ?? false,
       inappropriateReason: d['inappropriateReason'] as String?,
@@ -119,11 +129,20 @@ class PostModel {
   /// When [category] is "Other", user-defined label (still grouped under Other).
   final String? categoryCustom;
   final String? location;
+  final String? itemCondition;
+  final PostListingStatus listingStatus;
+  final DateTime? fulfilledAt;
+  final String? completedContractId;
   final List<String> imageUrls;
   final bool isInappropriate;
   final String? inappropriateReason;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  /// Hidden from home feed and map after lend/borrow handshake.
+  bool get isFulfilled => listingStatus == PostListingStatus.fulfilled;
+
+  bool get isPubliclyListed => !isFulfilled;
 
   /// Category line for UI: "Other: …" when custom, else [category].
   String? get categoryDisplayLabel {
@@ -146,6 +165,8 @@ class PostModel {
         'category': category,
         if (categoryCustom != null) 'categoryCustom': categoryCustom,
         'location': location,
+        if (itemCondition != null) 'itemCondition': itemCondition,
+        'listingStatus': listingStatus.value,
         'imageUrls': imageUrls,
         'isInappropriate': isInappropriate,
         if (inappropriateReason != null) 'inappropriateReason': inappropriateReason,
