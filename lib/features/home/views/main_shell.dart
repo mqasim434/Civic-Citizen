@@ -5,6 +5,7 @@ import '../../../core/routes/app_router.dart';
 import 'dashboard_view.dart';
 import 'nearby_posts_view.dart';
 import '../../profile/views/profile_view.dart';
+import '../../profile/widgets/ban_guard.dart';
 import '../views/map_placeholder_view.dart';
 
 /// Main shell with bottom navigation.
@@ -27,34 +28,36 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          DashboardView(),
-          NearbyPostsView(),
-          MapPostsView(),
-          ProfileView(),
-        ],
-      ),
-      floatingActionButton: _index == 0
-          ? FloatingActionButton.extended(
-              onPressed: () => navigatorKey.currentState?.pushNamed(
-                AppConstants.routeCreatePost,
-              ),
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('Post'),
-            )
-          : null,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: _tabs
-            .map((t) => NavigationDestination(
-                  icon: Icon(t.icon),
-                  label: t.label,
-                ))
-            .toList(),
+    return BanGuard(
+      child: Scaffold(
+        body: IndexedStack(
+          index: _index,
+          children: const [
+            DashboardView(),
+            NearbyPostsView(),
+            MapPostsView(),
+            ProfileView(),
+          ],
+        ),
+        floatingActionButton: _index == 0
+            ? FloatingActionButton.extended(
+                onPressed: () => navigatorKey.currentState?.pushNamed(
+                  AppConstants.routeCreatePost,
+                ),
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Post'),
+              )
+            : null,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _index,
+          onDestinationSelected: (i) => setState(() => _index = i),
+          destinations: _tabs
+              .map((t) => NavigationDestination(
+                    icon: Icon(t.icon),
+                    label: t.label,
+                  ))
+              .toList(),
+        ),
       ),
     );
   }

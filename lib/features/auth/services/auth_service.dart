@@ -74,6 +74,27 @@ class AuthService {
     if (_isFirebaseReady) await _auth!.signOut();
   }
 
+  Future<void> updateDisplayName(String displayName) async {
+    if (!_isFirebaseReady) {
+      throw Exception('Firebase is not configured.');
+    }
+    final user = _auth!.currentUser;
+    if (user == null) throw Exception('Not signed in.');
+    await user.updateDisplayName(displayName.trim());
+    await user.reload();
+  }
+
+  Future<UserModel?> reloadCurrentUser() async {
+    final auth = _auth;
+    if (auth == null) return null;
+    final user = auth.currentUser;
+    if (user == null) return null;
+    await user.reload();
+    final refreshed = auth.currentUser;
+    if (refreshed == null) return null;
+    return UserModel.fromFirebase(refreshed);
+  }
+
   Future<void> sendPasswordResetEmail(String email) async {
     if (!_isFirebaseReady) {
       throw Exception('Firebase is not configured.');

@@ -28,6 +28,10 @@ class AppConstants {
   static const String routeContractQr = '/contract-qr';
   static const String routeContractScan = '/contract-scan';
   static const String routeNotifications = '/notifications';
+  static const String routeEditProfile = '/edit-profile';
+  static const String routeAccountBanned = '/account-banned';
+  static const String routeBroadcasts = '/broadcasts';
+  static const String routeBroadcastDetail = '/broadcast-detail';
 
   // Firestore
   static const String usersCollection = 'users';

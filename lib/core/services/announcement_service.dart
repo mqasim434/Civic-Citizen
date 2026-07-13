@@ -60,7 +60,49 @@ class AnnouncementService {
     if (userId.isEmpty || announcementId.isEmpty) return;
     await _reads(userId).doc(announcementId).set({
       'dismissedAt': FieldValue.serverTimestamp(),
-    });
+    }, SetOptions(merge: true));
+  }
+
+  /// Save whether the user found a broadcast helpful (also marks as seen).
+  Future<void> submitFeedback({
+    required String userId,
+    required String announcementId,
+    required bool helpful,
+  }) async {
+    if (userId.isEmpty || announcementId.isEmpty) return;
+    await _reads(userId).doc(announcementId).set({
+      'dismissedAt': FieldValue.serverTimestamp(),
+      'helpful': helpful,
+    }, SetOptions(merge: true));
+  }
+
+  Stream<Set<String>> watchSeenAnnouncementIds(String userId) {
+    if (userId.isEmpty) return Stream.value({});
+    return _reads(userId).snapshots().map(
+          (snap) => snap.docs.map((d) => d.id).toSet(),
+        );
+  }
+
+  Future<bool?> getFeedback(String userId, String announcementId) async {
+    if (userId.isEmpty || announcementId.isEmpty) return null;
+    final doc = await _reads(userId).doc(announcementId).get();
+    return doc.data()?['helpful'] as bool?;
+  }
+
+  Stream<List<AppAnnouncement>> watchActiveAnnouncements() {
+    return _announcements
+        .where('active', isEqualTo: true)
+        .snapshots()
+        .map((snap) {
+          final items =
+              snap.docs.map(AppAnnouncement.fromFirestore).toList();
+          items.sort((a, b) {
+            final at = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final bt = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return bt.compareTo(at);
+          });
+          return items;
+        });
   }
 
   Future<void> create({

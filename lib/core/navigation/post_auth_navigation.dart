@@ -1,5 +1,6 @@
 import '../constants/app_constants.dart';
 import '../routes/app_router.dart';
+import '../services/profile_service.dart';
 import '../../features/kyc/models/kyc_status.dart';
 import '../../features/kyc/services/kyc_service.dart';
 import '../../features/admin/services/admin_service.dart';
@@ -9,6 +10,7 @@ enum PostAuthDestination {
   kyc,
   verificationPending,
   verificationRejected,
+  banned,
   home,
   admin,
 }
@@ -23,6 +25,9 @@ Future<PostAuthDestination> resolvePostAuthDestination({
     return PostAuthDestination.admin;
   }
   final profile = await kycService.getUserProfile(uid);
+  if (ProfileService.isBanned(profile)) {
+    return PostAuthDestination.banned;
+  }
   if (!KycService.hasSubmittedKyc(profile)) {
     return PostAuthDestination.kyc;
   }
@@ -59,6 +64,9 @@ void pushDestination(
       break;
     case PostAuthDestination.verificationRejected:
       navigatorKey.currentState?.pushReplacementNamed(AppConstants.routeVerificationRejected);
+      break;
+    case PostAuthDestination.banned:
+      navigatorKey.currentState?.pushReplacementNamed(AppConstants.routeAccountBanned);
       break;
     case PostAuthDestination.home:
       navigatorKey.currentState?.pushReplacementNamed(AppConstants.routeHome);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../features/announcements/views/broadcast_detail_view.dart';
+import '../../features/announcements/views/broadcasts_view.dart';
 import '../../features/admin/views/admin_dashboard_view.dart';
 import '../../features/admin/views/admin_user_verification_view.dart';
 import '../../features/auth/views/login_view.dart';
@@ -13,10 +15,13 @@ import '../../features/lend_borrow/views/contract_qr_view.dart';
 import '../../features/lend_borrow/views/contract_scan_view.dart';
 import '../../features/lend_borrow/views/contract_signature_view.dart';
 import '../../features/notifications/views/notifications_view.dart';
+import '../models/app_announcement.dart';
 import '../../features/posts/models/post_model.dart';
 import '../../features/posts/views/create_post_view.dart';
 import '../../features/posts/views/edit_post_view.dart';
 import '../../features/posts/views/post_detail_view.dart';
+import '../../features/profile/views/account_banned_view.dart';
+import '../../features/profile/views/edit_profile_view.dart';
 import '../../features/settings/views/settings_view.dart';
 import '../../features/splash/views/splash_view.dart';
 
@@ -77,6 +82,22 @@ class AppRouter {
       }
       case AppConstants.routeSettings:
         return _buildRoute(const SettingsView(), settings);
+      case AppConstants.routeEditProfile:
+        return _buildRoute(const EditProfileView(), settings);
+      case AppConstants.routeAccountBanned:
+        return _buildRoute(const AccountBannedView(), settings);
+      case AppConstants.routeBroadcasts:
+        return _buildRoute(const BroadcastsView(), settings);
+      case AppConstants.routeBroadcastDetail: {
+        final announcement = settings.arguments as AppAnnouncement?;
+        if (announcement == null) {
+          return _buildRoute(const BroadcastsView(), settings);
+        }
+        return _buildRoute(
+          BroadcastDetailView(announcement: announcement),
+          settings,
+        );
+      }
       case AppConstants.routeNotifications:
         return _buildRoute(const NotificationsView(), settings);
       case AppConstants.routeLendBorrowContract: {

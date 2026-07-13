@@ -108,6 +108,22 @@ class ProfileView extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ],
+            const SizedBox(height: 20),
+            FilledButton.tonalIcon(
+              onPressed: () => navigatorKey.currentState?.pushNamed(
+                AppConstants.routeEditProfile,
+              ),
+              icon: const Icon(Icons.edit_rounded, size: 18),
+              label: const Text('Edit profile'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => navigatorKey.currentState?.pushNamed(
+                AppConstants.routeBroadcasts,
+              ),
+              icon: const Icon(Icons.campaign_outlined, size: 18),
+              label: const Text('Community broadcasts'),
+            ),
             const SizedBox(height: 32),
             Text(
               'My posts',

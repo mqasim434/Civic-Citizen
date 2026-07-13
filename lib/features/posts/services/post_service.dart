@@ -31,7 +31,7 @@ class PostService {
         : _posts.orderBy('createdAt', descending: true);
     return q.snapshots().map((snap) => snap.docs
         .map((d) => PostModel.fromFirestore(d))
-        .where((p) => p.isPubliclyListed)
+        .where((p) => p.isPubliclyListed && !p.isInappropriate)
         .toList());
   }
 

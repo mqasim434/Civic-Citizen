@@ -62,7 +62,11 @@ class _MapPostsViewState extends State<MapPostsView> {
           final allPosts = snap.data ?? const <PostModel>[];
           final availableCategories = _extractCategories(allPosts);
           _normalizeCategoryFilter(availableCategories);
-          final visiblePosts = _applyCategoryFilter(allPosts);
+          final visiblePosts = _applyCategoryFilter(
+            allPosts
+                .where((p) => p.isPubliclyListed && !p.isInappropriate)
+                .toList(),
+          );
 
           return FutureBuilder<Map<String, LatLng>>(
             future: _buildMarkerCoordinates(visiblePosts),

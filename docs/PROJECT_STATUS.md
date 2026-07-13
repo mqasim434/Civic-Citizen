@@ -15,9 +15,10 @@ Short overview of what is **built** vs what the **proposal still requires**.
 | **Home** | Real-time feed with module chips, keyword search, category + radius filters |
 | **Nearby** | Dedicated tab — posts within 1–10 km, sorted nearest first, distance on cards |
 | **Map** | Post markers, module + category + radius filters, nearby circle, info windows, user location |
-| **Profile** | View account, list/manage own posts, settings link |
+| **Profile** | View account, edit display name, list/manage own posts, community broadcasts, settings link |
+| **Broadcasting** | Admin popups + optional image; user broadcasts list, detail, helpful feedback |
 | **Settings** | Dark mode + system theme (saved locally) |
-| **Admin** | KYC review, flag/delete posts, ban/unban/delete users, posts timeline, map |
+| **Admin** | KYC review, flag/delete posts, ban/unban/delete users, posts timeline, map, broadcast tab |
 | **Lend/borrow contracts** | Auto-generated terms, dual signatures, QR handshake, GPS log; fulfilled listings hidden from feed/map; profile **Completed exchanges** |
 | **Notifications** | In-app center + tray alerts (Spark) — lend/borrow, KYC, admin actions; EmailJS only for KYC approve/reject |
 | **Backend** | Firebase Auth & Firestore, ImageKit uploads, EmailJS verification emails |
@@ -29,10 +30,9 @@ Short overview of what is **built** vs what the **proposal still requires**.
 | Module | What's missing |
 |--------|----------------|
 | **Lost/found (advanced)** | Claim flow with QR confirmation on recovery |
-| **Broadcasting** | Mass broadcasts, polls, audience feedback |
+| **Broadcasting (advanced)** | Interactive polls, admin feedback analytics |
 | **Mutual confidence** | Secure mediated contact, trust cards, safe meetup suggestions |
 | **Admin (legal)** | Export evidence package (CNIC, selfie, contracts, GPS logs) |
-| **Polish** | Edit profile, enforce bans in-app |
 
 ---
 

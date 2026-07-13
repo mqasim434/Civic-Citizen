@@ -7,6 +7,7 @@ import 'core/routes/app_router.dart';
 import 'features/announcements/widgets/announcement_listener.dart';
 import 'core/services/announcement_service.dart';
 import 'core/services/notification_service.dart';
+import 'core/services/profile_service.dart';
 import 'core/services/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
@@ -48,6 +49,7 @@ class CivicCitizenApp extends StatelessWidget {
         ),
         Provider<NotificationService>(create: (_) => NotificationService()),
         Provider<AnnouncementService>(create: (_) => AnnouncementService()),
+        Provider<ProfileService>(create: (_) => ProfileService()),
         Provider<PushNotificationService>.value(value: pushService),
         Provider<KycService>(
           create: (ctx) => KycService(

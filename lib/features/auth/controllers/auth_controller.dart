@@ -91,6 +91,14 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  Future<void> refreshUser() async {
+    final refreshed = await _authService.reloadCurrentUser();
+    if (refreshed != null) {
+      _user = refreshed;
+      notifyListeners();
+    }
+  }
+
   Future<void> sendPasswordReset(String email) async {
     _passwordResetLoading = true;
     _error = null;
