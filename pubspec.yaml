@@ -38,6 +38,9 @@ dependencies:
   firebase_auth: ^5.3.4
   cloud_firestore: ^5.6.0
 
+  # Tray alerts while app is open (Spark plan — no FCM server required)
+  flutter_local_notifications: ^18.0.1
+
   # Image upload (ImageKit)
   http: ^1.2.2
 

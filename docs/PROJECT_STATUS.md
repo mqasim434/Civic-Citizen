@@ -12,12 +12,13 @@ Short overview of what is **built** vs what the **proposal still requires**.
 | **KYC (3FV)** | CNIC front/back upload, camera-only selfie + ML Kit face check, admin approve/reject, pending/rejected screens |
 | **Civic posts** | Lost, Found, Charity, Resources, Lend, Borrow — create (with images + location), edit, delete, detail view |
 | **Location** | Manual address, map pin picker, reverse geocoding |
-| **Home** | Real-time feed with module filter chips |
+| **Home** | Real-time feed with module chips, keyword search, category + radius filters |
 | **Map** | Post markers, module + category filters, info windows, user location |
 | **Profile** | View account, list/manage own posts, settings link |
 | **Settings** | Dark mode + system theme (saved locally) |
 | **Admin** | KYC review, flag/delete posts, ban/unban/delete users, posts timeline, map |
 | **Lend/borrow contracts** | Auto-generated terms, dual signatures, QR handshake, GPS log; fulfilled listings hidden from feed/map; profile **Completed exchanges** |
+| **Notifications** | In-app center + tray alerts (Spark) — lend/borrow, KYC, admin actions; EmailJS only for KYC approve/reject |
 | **Backend** | Firebase Auth & Firestore, ImageKit uploads, EmailJS verification emails |
 
 ---
@@ -26,21 +27,19 @@ Short overview of what is **built** vs what the **proposal still requires**.
 
 | Module | What's missing |
 |--------|----------------|
-| **Search & filter** | Keyword search; radius filter; search on home |
-| **Nearby items** | Posts within 1–5 km of user; store lat/lng on posts |
+| **Nearby items (map)** | Dedicated nearby tab / map radius circle (home feed has radius filter) |
 | **Lost/found (advanced)** | Claim flow with QR confirmation on recovery |
 | **Broadcasting** | Mass broadcasts, polls, audience feedback |
 | **Mutual confidence** | Secure mediated contact, trust cards, safe meetup suggestions |
 | **Admin (legal)** | Export evidence package (CNIC, selfie, contracts, GPS logs) |
-| **Notifications** | Firebase Cloud Messaging (FCM) |
-| **Polish** | Edit profile, enforce bans, hide flagged posts from public feed |
+| **Polish** | Edit profile, enforce bans in-app |
 
 ---
 
 ## Proposal coverage (rough)
 
 - **Core platform** (auth, KYC, posting, map, basic admin): ~**done**
-- **Advanced trust/legal features** (nearby, search, broadcast, FCM, admin legal export): ~**partial** (lend/borrow contracts done)
+- **Advanced trust/legal features** (nearby, search, broadcast, admin legal export): ~**partial** (lend/borrow contracts + in-app notifications done)
 
 ---
 

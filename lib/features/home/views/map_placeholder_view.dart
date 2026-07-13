@@ -184,6 +184,10 @@ class _MapPostsViewState extends State<MapPostsView> {
   ) async {
     final coords = <String, LatLng>{};
     for (final post in posts) {
+      if (post.latitude != null && post.longitude != null) {
+        coords[post.id] = LatLng(post.latitude!, post.longitude!);
+        continue;
+      }
       final rawLocation = post.location?.trim();
       if (rawLocation == null || rawLocation.isEmpty) continue;
       final latLng = await _resolveLocation(rawLocation);

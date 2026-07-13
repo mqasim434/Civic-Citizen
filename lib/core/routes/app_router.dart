@@ -12,6 +12,7 @@ import '../../features/lend_borrow/views/contract_detail_view.dart';
 import '../../features/lend_borrow/views/contract_qr_view.dart';
 import '../../features/lend_borrow/views/contract_scan_view.dart';
 import '../../features/lend_borrow/views/contract_signature_view.dart';
+import '../../features/notifications/views/notifications_view.dart';
 import '../../features/posts/models/post_model.dart';
 import '../../features/posts/views/create_post_view.dart';
 import '../../features/posts/views/edit_post_view.dart';
@@ -76,6 +77,8 @@ class AppRouter {
       }
       case AppConstants.routeSettings:
         return _buildRoute(const SettingsView(), settings);
+      case AppConstants.routeNotifications:
+        return _buildRoute(const NotificationsView(), settings);
       case AppConstants.routeLendBorrowContract: {
         final contractId = settings.arguments as String?;
         if (contractId == null || contractId.isEmpty) {

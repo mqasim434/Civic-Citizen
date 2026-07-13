@@ -23,6 +23,22 @@
         { "fieldPath": "verificationStatus", "order": "ASCENDING" },
         { "fieldPath": "kycSubmittedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "lend_borrow_contracts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "postId", "order": "ASCENDING" },
+        { "fieldPath": "participantIds", "arrayConfig": "CONTAINS" }
+      ]
+    },
+    {
+      "collectionGroup": "announcements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "active", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

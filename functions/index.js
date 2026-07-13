@@ -1,47 +1,55 @@
-const functions = require('firebase-functions');
-const crypto = require('crypto');
-const { v4: uuidv4 } = require('uuid');
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
+
+initializeApp();
 
 /**
- * ImageKit authentication endpoint for client-side uploads.
- * Returns signature, token, expire for ImageKit upload API.
- *
- * Set IMAGEKIT_PRIVATE_KEY in Firebase config:
- *   firebase functions:config:set imagekit.private_key="your_private_key"
+ * Sends FCM push to the recipient when a notification doc is created.
+ * Path: users/{userId}/notifications/{notificationId}
  */
-exports.imagekitAuth = functions.https.onRequest((req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  if (req.method === 'OPTIONS') {
-    res.set('Access-Control-Allow-Methods', 'GET');
-    res.set('Access-Control-Allow-Headers', 'Content-Type');
-    res.status(204).send('');
-    return;
-  }
+exports.deliverUserNotification = onDocumentCreated(
+  'users/{userId}/notifications/{notificationId}',
+  async (event) => {
+    const userId = event.params.userId;
+    const data = event.data?.data();
+    if (!data) return null;
 
-  if (req.method !== 'GET') {
-    res.status(405).json({ error: 'Method not allowed' });
-    return;
-  }
+    const db = getFirestore();
+    const userSnap = await db.collection('users').doc(userId).get();
+    const token = userSnap.data()?.fcmToken;
+    if (!token) return null;
 
-  const privateKey = functions.config().imagekit?.private_key;
-  if (!privateKey) {
-    console.error('IMAGEKIT_PRIVATE_KEY not set. Run: firebase functions:config:set imagekit.private_key="YOUR_KEY"');
-    res.status(500).json({ error: 'Server misconfiguration' });
-    return;
-  }
+    const title = data.title || 'Civic Citizen';
+    const body = data.body || '';
 
-  const token = req.query.token || uuidv4();
-  const expire = parseInt(req.query.expire, 10) || Math.floor(Date.now() / 1000) + 2400;
+    const payload = {
+      token,
+      notification: { title, body },
+      data: {
+        type: String(data.type || ''),
+        title,
+        body,
+        contractId: String(data.contractId || ''),
+        postId: String(data.postId || ''),
+        targetUserId: String(data.targetUserId || ''),
+        routeName: String(data.routeName || ''),
+      },
+      android: {
+        priority: 'high',
+        notification: { channelId: 'civic_citizen_alerts' },
+      },
+      apns: {
+        payload: { aps: { sound: 'default' } },
+      },
+    };
 
-  const signature = crypto
-    .createHmac('sha1', privateKey)
-    .update(token + expire)
-    .digest('hex');
-
-  res.json({ token, expire, signature });
-});
-
-/**
- * Verification emails: use EmailJS from the Flutter app (see lib/core/config/emailjs_config.dart).
- * No Firestore trigger / SMTP here — works on Firebase Spark without Blaze or a card.
- */
+    try {
+      await getMessaging().send(payload);
+    } catch (err) {
+      console.error('FCM send failed', userId, err);
+    }
+    return null;
+  },
+);

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../shared/widgets/notification_bell_button.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../lend_borrow/widgets/completed_exchanges_section.dart';
 import '../../posts/controllers/post_controller.dart';
@@ -61,6 +62,7 @@ class ProfileView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Profile'),
         actions: [
+          const NotificationBellButton(),
           IconButton(
             icon: const Icon(Icons.settings_rounded),
             onPressed: () => navigatorKey.currentState?.pushNamed(

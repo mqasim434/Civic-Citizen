@@ -40,6 +40,8 @@ class PostController extends ChangeNotifier {
     String? category,
     String? categoryCustom,
     required String location,
+    double? latitude,
+    double? longitude,
     String? itemCondition,
     List<File>? images,
   }) async {
@@ -57,6 +59,8 @@ class PostController extends ChangeNotifier {
         category: category,
         categoryCustom: categoryCustom,
         location: location,
+        latitude: latitude,
+        longitude: longitude,
         itemCondition: itemCondition,
       );
       final id = await _postService.createPost(post);
@@ -89,6 +93,8 @@ class PostController extends ChangeNotifier {
     String? category,
     String? categoryCustom,
     required String location,
+    double? latitude,
+    double? longitude,
     String? itemCondition,
   }) async {
     _setLoading(true);
@@ -102,6 +108,13 @@ class PostController extends ChangeNotifier {
         'category': category,
         'location': location,
       };
+      if (latitude != null && longitude != null) {
+        data['latitude'] = latitude;
+        data['longitude'] = longitude;
+      } else {
+        data['latitude'] = FieldValue.delete();
+        data['longitude'] = FieldValue.delete();
+      }
       if (itemCondition != null && itemCondition.isNotEmpty) {
         data['itemCondition'] = itemCondition;
       } else {

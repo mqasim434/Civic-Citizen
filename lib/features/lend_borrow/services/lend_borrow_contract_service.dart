@@ -11,6 +11,7 @@ import 'package:uuid/uuid.dart';
 import '../../../core/config/imagekit_config.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/imagekit_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../posts/models/post_listing_status.dart';
 import '../../posts/models/post_model.dart';
 import '../models/contract_status.dart';
@@ -18,12 +19,14 @@ import '../models/lend_borrow_contract.dart';
 
 /// Creates lend/borrow contracts, signatures, QR handshake, and GPS logs.
 class LendBorrowContractService {
-  LendBorrowContractService()
+  LendBorrowContractService({NotificationService? notifications})
       : _firestore = FirebaseFirestore.instance,
-        _imagekit = ImageKitService(ImageKitConfig.instance);
+        _imagekit = ImageKitService(ImageKitConfig.instance),
+        _notifications = notifications;
 
   final FirebaseFirestore _firestore;
   final ImageKitService _imagekit;
+  final NotificationService? _notifications;
   final _uuid = const Uuid();
 
   CollectionReference<Map<String, dynamic>> get _contracts =>
@@ -89,11 +92,15 @@ Agreement date: $date
     required String postId,
     required String userId,
   }) {
-    return _contracts.where('postId', isEqualTo: postId).snapshots().map((snap) {
+    return _contracts
+        .where('postId', isEqualTo: postId)
+        .where('participantIds', arrayContains: userId)
+        .snapshots()
+        .map((snap) {
       LendBorrowContract? latest;
       for (final doc in snap.docs) {
         final c = LendBorrowContract.fromFirestore(doc);
-        if (!c.involvesUser(userId) || !c.status.isActive) continue;
+        if (!c.status.isActive) continue;
         if (latest == null ||
             (c.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0)).isAfter(
               latest.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0),
@@ -143,7 +150,10 @@ Agreement date: $date
         ? initiatorName
         : post.authorName;
 
-    final existing = await _contracts.where('postId', isEqualTo: post.id).get();
+    final existing = await _contracts
+        .where('postId', isEqualTo: post.id)
+        .where('participantIds', arrayContains: initiatorId)
+        .get();
     for (final doc in existing.docs) {
       final c = LendBorrowContract.fromFirestore(doc);
       if (c.status.isActive &&
@@ -178,6 +188,14 @@ Agreement date: $date
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _notifications?.notifyContractCreated(
+      lenderId: parties.lenderId,
+      initiatorId: initiatorId,
+      initiatorName: initiatorName,
+      contractId: docRef.id,
+      postId: post.id,
+      itemTitle: post.title,
+    );
     return docRef.id;
   }
 
@@ -201,6 +219,13 @@ Agreement date: $date
       'status': ContractStatus.pendingBorrowerSignature.value,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _notifications?.notifyContractLenderSigned(
+      borrowerId: contract.borrowerId,
+      lenderId: contract.lenderId,
+      lenderName: contract.lenderName,
+      contractId: contractId,
+      itemTitle: contract.itemTitle,
+    );
   }
 
   Future<void> signAsBorrower({
@@ -230,6 +255,13 @@ Agreement date: $date
       'qrExpiresAt': Timestamp.fromDate(expires),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _notifications?.notifyContractBorrowerSigned(
+      lenderId: contract.lenderId,
+      borrowerId: contract.borrowerId,
+      borrowerName: contract.borrowerName,
+      contractId: contractId,
+      itemTitle: contract.itemTitle,
+    );
   }
 
   /// Lender refreshes QR token before meetup (optional).
@@ -327,9 +359,14 @@ Agreement date: $date
     });
 
     await batch.commit();
-  }
 
-  /// Completed lend/borrow exchanges involving [userId] (lender or borrower).
+    await _notifications?.notifyContractCompleted(
+      lenderId: contract.lenderId,
+      borrowerId: contract.borrowerId,
+      contractId: contractId,
+      itemTitle: contract.itemTitle,
+    );
+  }
   Stream<List<LendBorrowContract>> watchCompletedContractsForUser(String userId) {
     return _contracts
         .where('participantIds', arrayContains: userId)

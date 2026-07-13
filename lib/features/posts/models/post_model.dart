@@ -87,6 +87,8 @@ class PostModel {
     this.fulfilledAt,
     this.completedContractId,
     this.imageUrls = const [],
+    this.latitude,
+    this.longitude,
     this.isInappropriate = false,
     this.inappropriateReason,
     this.createdAt,
@@ -111,6 +113,8 @@ class PostModel {
       fulfilledAt: (d['fulfilledAt'] as Timestamp?)?.toDate(),
       completedContractId: d['completedContractId'] as String?,
       imageUrls: List<String>.from(d['imageUrls'] as List? ?? []),
+      latitude: (d['latitude'] as num?)?.toDouble(),
+      longitude: (d['longitude'] as num?)?.toDouble(),
       isInappropriate: d['isInappropriate'] as bool? ?? false,
       inappropriateReason: d['inappropriateReason'] as String?,
       createdAt: (d['createdAt'] as Timestamp?)?.toDate(),
@@ -134,6 +138,8 @@ class PostModel {
   final DateTime? fulfilledAt;
   final String? completedContractId;
   final List<String> imageUrls;
+  final double? latitude;
+  final double? longitude;
   final bool isInappropriate;
   final String? inappropriateReason;
   final DateTime? createdAt;
@@ -165,6 +171,8 @@ class PostModel {
         'category': category,
         if (categoryCustom != null) 'categoryCustom': categoryCustom,
         'location': location,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
         if (itemCondition != null) 'itemCondition': itemCondition,
         'listingStatus': listingStatus.value,
         'imageUrls': imageUrls,

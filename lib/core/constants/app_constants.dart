@@ -27,15 +27,20 @@ class AppConstants {
   static const String routeContractSignature = '/contract-signature';
   static const String routeContractQr = '/contract-qr';
   static const String routeContractScan = '/contract-scan';
+  static const String routeNotifications = '/notifications';
 
   // Firestore
   static const String usersCollection = 'users';
   static const String adminsCollection = 'admins';
   static const String postsCollection = 'posts';
   static const String contractsCollection = 'lend_borrow_contracts';
+  static const String notificationsSubcollection = 'notifications';
+  static const String announcementsCollection = 'announcements';
+  static const String announcementReadsSubcollection = 'announcement_reads';
   static const String cnicStoragePath = 'kyc/cnic';
   static const String selfieStoragePath = 'kyc/selfie';
   static const String postImagesPath = 'posts';
+  static const String announcementImagesPath = 'announcements';
   static const String contractSignaturesPath = 'contracts/signatures';
 
   /// QR handshake validity after both parties sign.

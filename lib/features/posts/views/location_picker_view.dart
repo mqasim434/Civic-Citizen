@@ -5,7 +5,9 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-/// Full-screen map to pick a location. Returns address string or "lat,lng" on confirm.
+import '../models/location_pick_result.dart';
+
+/// Full-screen map to pick a location.
 class LocationPickerView extends StatefulWidget {
   const LocationPickerView({super.key});
 
@@ -167,7 +169,15 @@ class _LocationPickerViewState extends State<LocationPickerView> {
       } else {
         result = '${_selectedPosition.latitude}, ${_selectedPosition.longitude}';
       }
-      if (mounted) Navigator.of(context).pop(result);
+      if (mounted) {
+        Navigator.of(context).pop(
+          LocationPickResult(
+            address: result,
+            latitude: _selectedPosition.latitude,
+            longitude: _selectedPosition.longitude,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _error = 'Could not get address: $e');

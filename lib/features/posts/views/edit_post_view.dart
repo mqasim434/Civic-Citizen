@@ -5,6 +5,7 @@ import '../../../core/routes/app_router.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../controllers/post_controller.dart';
+import '../models/location_pick_result.dart';
 import '../models/post_model.dart';
 import 'location_picker_view.dart';
 
@@ -27,6 +28,8 @@ class _EditPostViewState extends State<EditPostView> {
   late final TextEditingController _conditionController;
   late PostModule _module;
   late String? _category;
+  double? _latitude;
+  double? _longitude;
 
   @override
   void initState() {
@@ -39,6 +42,8 @@ class _EditPostViewState extends State<EditPostView> {
     _conditionController = TextEditingController(text: widget.post.itemCondition ?? '');
     _module = widget.post.module;
     _category = widget.post.category;
+    _latitude = widget.post.latitude;
+    _longitude = widget.post.longitude;
   }
 
   @override
@@ -75,6 +80,8 @@ class _EditPostViewState extends State<EditPostView> {
                   : _categoryOtherController.text.trim()
               : null,
           location: loc,
+          latitude: _latitude,
+          longitude: _longitude,
           itemCondition: _isLendBorrow(_module)
               ? (_conditionController.text.trim().isEmpty
                   ? null
@@ -214,13 +221,17 @@ class _EditPostViewState extends State<EditPostView> {
                   icon: const Icon(Icons.map_rounded),
                   tooltip: 'Pick on map',
                   onPressed: () async {
-                    final result = await Navigator.of(context).push<String>(
+                    final result = await Navigator.of(context).push<LocationPickResult>(
                       MaterialPageRoute(
                         builder: (_) => const LocationPickerView(),
                       ),
                     );
                     if (result != null && mounted) {
-                      setState(() => _locationController.text = result);
+                      setState(() {
+                        _locationController.text = result.address;
+                        _latitude = result.latitude;
+                        _longitude = result.longitude;
+                      });
                     }
                   },
                 ),

@@ -7,17 +7,20 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/config/imagekit_config.dart';
 import '../../../core/services/imagekit_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../models/kyc_status.dart';
 
 /// Handles KYC uploads and user profile in Firestore.
 class KycService {
   final _picker = ImagePicker();
-  KycService()
+  KycService({NotificationService? notifications})
       : _firestore = FirebaseFirestore.instance,
-        _imagekit = ImageKitService(ImageKitConfig.instance);
+        _imagekit = ImageKitService(ImageKitConfig.instance),
+        _notifications = notifications;
 
   final FirebaseFirestore _firestore;
   final ImageKitService _imagekit;
+  final NotificationService? _notifications;
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection(AppConstants.usersCollection);
@@ -99,6 +102,15 @@ class KycService {
       'kycSubmittedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    try {
+      await _notifications?.notifyKycSubmitted(
+        userId: uid,
+        displayName: displayName.isEmpty ? 'A user' : displayName,
+      );
+    } catch (_) {
+      // KYC profile is saved; admin notification is best-effort.
+    }
   }
 
   /// Get user KYC profile.

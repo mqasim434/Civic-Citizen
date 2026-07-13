@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../shared/widgets/notification_bell_button.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../home/views/map_placeholder_view.dart';
+import 'admin_announcements_view.dart';
 import 'admin_posts_timeline_view.dart';
 import 'admin_user_management_view.dart';
 import '../services/admin_service.dart';
@@ -41,6 +43,11 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
       label: 'Users',
       title: 'Admin - user management',
     ),
+    _AdminTab(
+      icon: Icons.campaign_outlined,
+      label: 'Broadcast',
+      title: 'Admin - announcements',
+    ),
   ];
 
   @override
@@ -49,6 +56,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
       appBar: AppBar(
         title: Text(_tabs[_index].title),
         actions: [
+          const NotificationBellButton(),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Sign out',
@@ -71,6 +79,7 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
           AdminPostsTimelineView(),
           MapPostsView(),
           AdminUserManagementView(),
+          AdminAnnouncementsView(),
         ],
       ),
       bottomNavigationBar: NavigationBar(

@@ -2,16 +2,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/emailjs_service.dart';
+import '../../../core/services/notification_service.dart';
 import '../../posts/models/post_model.dart';
 
 /// Admin access: create document [adminsCollection]/[adminUid] in Firebase Console only.
 class AdminService {
-  AdminService({EmailJsService? emailJs})
+  AdminService({EmailJsService? emailJs, NotificationService? notifications})
       : _firestore = FirebaseFirestore.instance,
-        _emailJs = emailJs ?? EmailJsService();
+        _emailJs = emailJs ?? EmailJsService(),
+        _notifications = notifications;
 
   final FirebaseFirestore _firestore;
   final EmailJsService _emailJs;
+  final NotificationService? _notifications;
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection(AppConstants.usersCollection);
@@ -52,10 +55,29 @@ class AdminService {
     required bool inappropriate,
     String? reason,
   }) async {
+    if (inappropriate) {
+      final postSnap = await _posts.doc(postId).get();
+      final postData = postSnap.data();
+      await _posts.doc(postId).update({
+        'isInappropriate': inappropriate,
+        if (reason != null && reason.trim().isNotEmpty)
+          'inappropriateReason': reason.trim(),
+        if (!inappropriate) 'inappropriateReason': FieldValue.delete(),
+        'moderatedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      if (postData != null) {
+        await _notifications?.notifyPostFlagged(
+          authorId: postData['authorId'] as String? ?? '',
+          postId: postId,
+          postTitle: postData['title'] as String? ?? 'Post',
+          reason: reason,
+        );
+      }
+      return;
+    }
     await _posts.doc(postId).update({
       'isInappropriate': inappropriate,
-      if (inappropriate && reason != null && reason.trim().isNotEmpty)
-        'inappropriateReason': reason.trim(),
       if (!inappropriate) 'inappropriateReason': FieldValue.delete(),
       'moderatedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
@@ -86,6 +108,10 @@ class AdminService {
       'bannedAt': banned ? FieldValue.serverTimestamp() : FieldValue.delete(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+
+    if (banned) {
+      await _notifications?.notifyAccountBanned(userId: uid, reason: reason);
+    }
   }
 
   /// Delete user profile and all posts authored by that user.
@@ -116,6 +142,11 @@ class AdminService {
       userName: name,
       verified: true,
     );
+
+    await _notifications?.notifyKycApproved(
+      userId: uid,
+      displayName: name.isEmpty ? 'User' : name,
+    );
   }
 
   Future<void> markRejected(String uid, {String? reason}) async {
@@ -136,6 +167,12 @@ class AdminService {
       userName: name,
       verified: false,
       rejectionReason: reason,
+    );
+
+    await _notifications?.notifyKycRejected(
+      userId: uid,
+      displayName: name.isEmpty ? 'User' : name,
+      reason: reason,
     );
   }
 }

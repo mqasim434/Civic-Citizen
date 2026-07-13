@@ -8,6 +8,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/post_controller.dart';
+import '../models/location_pick_result.dart';
 import '../models/post_model.dart';
 import 'location_picker_view.dart';
 
@@ -29,6 +30,8 @@ class _CreatePostViewState extends State<CreatePostView> {
   PostModule _module = PostModule.lost;
   String? _category;
   final List<File> _images = [];
+  double? _latitude;
+  double? _longitude;
 
   @override
   void dispose() {
@@ -79,6 +82,8 @@ class _CreatePostViewState extends State<CreatePostView> {
                   : _categoryOtherController.text.trim()
               : null,
           location: loc,
+          latitude: _latitude,
+          longitude: _longitude,
           itemCondition: _isLendBorrow(_module)
               ? (_conditionController.text.trim().isEmpty
                   ? null
@@ -192,13 +197,17 @@ class _CreatePostViewState extends State<CreatePostView> {
                   icon: const Icon(Icons.map_rounded),
                   tooltip: 'Pick on map',
                   onPressed: () async {
-                    final result = await Navigator.of(context).push<String>(
+                    final result = await Navigator.of(context).push<LocationPickResult>(
                       MaterialPageRoute(
                         builder: (_) => const LocationPickerView(),
                       ),
                     );
                     if (result != null && mounted) {
-                      setState(() => _locationController.text = result);
+                      setState(() {
+                        _locationController.text = result.address;
+                        _latitude = result.latitude;
+                        _longitude = result.longitude;
+                      });
                     }
                   },
                 ),
