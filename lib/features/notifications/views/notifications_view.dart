@@ -146,6 +146,12 @@ class NotificationsView extends StatelessWidget {
       case AppNotificationType.claimReadyForHandshake:
       case AppNotificationType.claimCompleted:
         return Icons.qr_code_scanner_rounded;
+      case AppNotificationType.contactRequested:
+        return Icons.mail_outline_rounded;
+      case AppNotificationType.contactAccepted:
+        return Icons.check_circle_outline;
+      case AppNotificationType.contactDeclined:
+        return Icons.person_off_outlined;
     }
   }
 

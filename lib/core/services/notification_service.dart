@@ -276,6 +276,67 @@ class NotificationService {
     );
   }
 
+  // --- Mediated contact ---
+
+  Future<void> notifyContactRequested({
+    required String authorId,
+    required String requesterId,
+    required String requesterName,
+    required String requestId,
+    required String postId,
+    required String itemTitle,
+  }) async {
+    await notifyUser(
+      recipientUserId: authorId,
+      type: AppNotificationType.contactRequested,
+      title: 'Contact request',
+      body: '$requesterName wants to connect about "$itemTitle".',
+      actorUserId: requesterId,
+      actorName: requesterName,
+      contractId: requestId,
+      postId: postId,
+      routeName: AppConstants.routeContactRequest,
+    );
+  }
+
+  Future<void> notifyContactAccepted({
+    required String requesterId,
+    required String authorId,
+    required String authorName,
+    required String requestId,
+    required String itemTitle,
+  }) async {
+    await notifyUser(
+      recipientUserId: requesterId,
+      type: AppNotificationType.contactAccepted,
+      title: 'Contact approved',
+      body: '$authorName shared contact details for "$itemTitle".',
+      actorUserId: authorId,
+      actorName: authorName,
+      contractId: requestId,
+      routeName: AppConstants.routeContactRequest,
+    );
+  }
+
+  Future<void> notifyContactDeclined({
+    required String requesterId,
+    required String authorId,
+    required String authorName,
+    required String requestId,
+    required String itemTitle,
+  }) async {
+    await notifyUser(
+      recipientUserId: requesterId,
+      type: AppNotificationType.contactDeclined,
+      title: 'Contact declined',
+      body: '$authorName declined your request for "$itemTitle".',
+      actorUserId: authorId,
+      actorName: authorName,
+      contractId: requestId,
+      routeName: AppConstants.routeContactRequest,
+    );
+  }
+
   // --- KYC / admin ---
 
   Future<void> notifyKycSubmitted({

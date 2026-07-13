@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../lend_borrow/widgets/lend_borrow_contract_section.dart';
 import '../../lost_found/widgets/lost_found_claim_section.dart';
+import '../../mutual_confidence/widgets/contact_section.dart';
 import '../models/post_model.dart';
 
 class PostDetailView extends StatelessWidget {
@@ -152,47 +153,7 @@ class PostDetailView extends StatelessWidget {
                       ],
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Contact',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 20,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        post.authorName,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.phone_outlined,
-                        size: 20,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      SelectableText(
-                        post.contactNumber,
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
+                  ContactSection(post: post),
                   LendBorrowContractSection(post: post),
                   LostFoundClaimSection(post: post),
                 ],

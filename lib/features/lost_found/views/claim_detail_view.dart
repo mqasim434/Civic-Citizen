@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../mutual_confidence/widgets/post_meetup_tips_section.dart';
 import '../../posts/models/post_model.dart';
 import '../models/claim_status.dart';
 import '../models/lost_found_claim.dart';
@@ -121,6 +122,13 @@ class _ClaimDetailViewState extends State<ClaimDetailView> {
                   if (claim.handshakeAddress != null &&
                       claim.handshakeAddress!.trim().isNotEmpty)
                     _InfoRow(label: 'Address', value: claim.handshakeAddress!),
+                ],
+                if (claim.status == ClaimStatus.readyForHandshake) ...[
+                  const SizedBox(height: 24),
+                  PostMeetupTipsSection(
+                    postId: claim.postId,
+                    locationFallback: claim.itemLocation,
+                  ),
                 ],
                 const SizedBox(height: 28),
                 ..._buildActions(context, claim, user.uid),

@@ -14,6 +14,9 @@ enum AppNotificationType {
   claimCreated,
   claimReadyForHandshake,
   claimCompleted,
+  contactRequested,
+  contactAccepted,
+  contactDeclined,
 }
 
 extension AppNotificationTypeX on AppNotificationType {
@@ -43,6 +46,12 @@ extension AppNotificationTypeX on AppNotificationType {
         return 'claim_ready_for_handshake';
       case AppNotificationType.claimCompleted:
         return 'claim_completed';
+      case AppNotificationType.contactRequested:
+        return 'contact_requested';
+      case AppNotificationType.contactAccepted:
+        return 'contact_accepted';
+      case AppNotificationType.contactDeclined:
+        return 'contact_declined';
     }
   }
 
@@ -72,6 +81,12 @@ extension AppNotificationTypeX on AppNotificationType {
         return AppNotificationType.claimReadyForHandshake;
       case 'claim_completed':
         return AppNotificationType.claimCompleted;
+      case 'contact_requested':
+        return AppNotificationType.contactRequested;
+      case 'contact_accepted':
+        return AppNotificationType.contactAccepted;
+      case 'contact_declined':
+        return AppNotificationType.contactDeclined;
       default:
         return AppNotificationType.contractCreated;
     }

@@ -8,19 +8,24 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/config/imagekit_config.dart';
 import '../../../core/services/imagekit_service.dart';
 import '../../../core/services/notification_service.dart';
+import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../models/kyc_status.dart';
 
 /// Handles KYC uploads and user profile in Firestore.
 class KycService {
   final _picker = ImagePicker();
-  KycService({NotificationService? notifications})
-      : _firestore = FirebaseFirestore.instance,
+  KycService({
+    NotificationService? notifications,
+    TrustProfileService? trustProfiles,
+  })  : _firestore = FirebaseFirestore.instance,
         _imagekit = ImageKitService(ImageKitConfig.instance),
-        _notifications = notifications;
+        _notifications = notifications,
+        _trustProfiles = trustProfiles;
 
   final FirebaseFirestore _firestore;
   final ImageKitService _imagekit;
   final NotificationService? _notifications;
+  final TrustProfileService? _trustProfiles;
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection(AppConstants.usersCollection);
@@ -111,6 +116,12 @@ class KycService {
     } catch (_) {
       // KYC profile is saved; admin notification is best-effort.
     }
+
+    await _trustProfiles?.ensureProfile(
+      userId: uid,
+      displayName: displayName,
+      verificationStatus: KycStatus.pending.name,
+    );
   }
 
   /// Get user KYC profile.

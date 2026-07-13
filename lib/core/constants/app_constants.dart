@@ -35,6 +35,7 @@ class AppConstants {
   static const String routeAccountBanned = '/account-banned';
   static const String routeBroadcasts = '/broadcasts';
   static const String routeBroadcastDetail = '/broadcast-detail';
+  static const String routeContactRequest = '/contact-request';
 
   // Firestore
   static const String usersCollection = 'users';
@@ -42,6 +43,8 @@ class AppConstants {
   static const String postsCollection = 'posts';
   static const String contractsCollection = 'lend_borrow_contracts';
   static const String lostFoundClaimsCollection = 'lost_found_claims';
+  static const String contactRequestsCollection = 'contact_requests';
+  static const String publicTrustCollection = 'public_trust';
   static const String notificationsSubcollection = 'notifications';
   static const String announcementsCollection = 'announcements';
   static const String announcementReadsSubcollection = 'announcement_reads';

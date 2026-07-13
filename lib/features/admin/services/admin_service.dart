@@ -3,18 +3,24 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/emailjs_service.dart';
 import '../../../core/services/notification_service.dart';
+import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../../posts/models/post_model.dart';
 
 /// Admin access: create document [adminsCollection]/[adminUid] in Firebase Console only.
 class AdminService {
-  AdminService({EmailJsService? emailJs, NotificationService? notifications})
-      : _firestore = FirebaseFirestore.instance,
+  AdminService({
+    EmailJsService? emailJs,
+    NotificationService? notifications,
+    TrustProfileService? trustProfiles,
+  })  : _firestore = FirebaseFirestore.instance,
         _emailJs = emailJs ?? EmailJsService(),
-        _notifications = notifications;
+        _notifications = notifications,
+        _trustProfiles = trustProfiles;
 
   final FirebaseFirestore _firestore;
   final EmailJsService _emailJs;
   final NotificationService? _notifications;
+  final TrustProfileService? _trustProfiles;
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection(AppConstants.usersCollection);
@@ -144,6 +150,11 @@ class AdminService {
     );
 
     await _notifications?.notifyKycApproved(
+      userId: uid,
+      displayName: name.isEmpty ? 'User' : name,
+    );
+
+    await _trustProfiles?.markVerified(
       userId: uid,
       displayName: name.isEmpty ? 'User' : name,
     );

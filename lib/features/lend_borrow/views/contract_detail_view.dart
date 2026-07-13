@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../mutual_confidence/widgets/post_meetup_tips_section.dart';
 import '../models/contract_status.dart';
 import '../models/lend_borrow_contract.dart';
 import '../services/lend_borrow_contract_service.dart';
@@ -121,6 +122,13 @@ class ContractDetailView extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   _HandshakeLogCard(contract: contract),
+                ],
+                if (contract.status == ContractStatus.readyForHandshake) ...[
+                  const SizedBox(height: 24),
+                  PostMeetupTipsSection(
+                    postId: contract.postId,
+                    locationFallback: contract.itemLocation,
+                  ),
                 ],
                 const SizedBox(height: 28),
                 ..._actions(context, contract, user.uid),

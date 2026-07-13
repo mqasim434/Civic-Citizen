@@ -19,6 +19,8 @@ import 'features/kyc/controllers/kyc_controller.dart';
 import 'features/kyc/services/kyc_service.dart';
 import 'features/lend_borrow/services/lend_borrow_contract_service.dart';
 import 'features/lost_found/services/lost_found_claim_service.dart';
+import 'features/mutual_confidence/services/contact_request_service.dart';
+import 'features/mutual_confidence/services/trust_profile_service.dart';
 import 'features/posts/controllers/post_controller.dart';
 import 'features/posts/services/post_service.dart';
 
@@ -56,14 +58,17 @@ class CivicCitizenApp extends StatelessWidget {
         Provider<KycService>(
           create: (ctx) => KycService(
             notifications: ctx.read<NotificationService>(),
+            trustProfiles: ctx.read<TrustProfileService>(),
           ),
         ),
         Provider<AdminService>(
           create: (ctx) => AdminService(
             notifications: ctx.read<NotificationService>(),
+            trustProfiles: ctx.read<TrustProfileService>(),
           ),
         ),
         Provider<LegalExportService>(create: (_) => LegalExportService()),
+        Provider<TrustProfileService>(create: (_) => TrustProfileService()),
         ChangeNotifierProvider<KycController>(
           create: (ctx) => KycController(ctx.read<KycService>()),
         ),
@@ -71,10 +76,17 @@ class CivicCitizenApp extends StatelessWidget {
         Provider<LendBorrowContractService>(
           create: (ctx) => LendBorrowContractService(
             notifications: ctx.read<NotificationService>(),
+            trustProfiles: ctx.read<TrustProfileService>(),
           ),
         ),
         Provider<LostFoundClaimService>(
           create: (ctx) => LostFoundClaimService(
+            notifications: ctx.read<NotificationService>(),
+            trustProfiles: ctx.read<TrustProfileService>(),
+          ),
+        ),
+        Provider<ContactRequestService>(
+          create: (ctx) => ContactRequestService(
             notifications: ctx.read<NotificationService>(),
           ),
         ),

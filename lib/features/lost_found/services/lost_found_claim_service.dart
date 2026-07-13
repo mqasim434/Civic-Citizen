@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/notification_service.dart';
+import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../../posts/models/post_listing_status.dart';
 import '../../posts/models/post_model.dart';
 import '../models/claim_status.dart';
@@ -14,12 +15,16 @@ import '../models/lost_found_claim.dart';
 
 /// Lost/found recovery claims with QR handshake and GPS logging.
 class LostFoundClaimService {
-  LostFoundClaimService({NotificationService? notifications})
-      : _firestore = FirebaseFirestore.instance,
-        _notifications = notifications;
+  LostFoundClaimService({
+    NotificationService? notifications,
+    TrustProfileService? trustProfiles,
+  })  : _firestore = FirebaseFirestore.instance,
+        _notifications = notifications,
+        _trustProfiles = trustProfiles;
 
   final FirebaseFirestore _firestore;
   final NotificationService? _notifications;
+  final TrustProfileService? _trustProfiles;
   final _uuid = const Uuid();
 
   CollectionReference<Map<String, dynamic>> get _claims =>
@@ -320,6 +325,11 @@ This record is stored in Cloud Firestore for community trust and dispute resolut
     });
 
     await batch.commit();
+
+    await _trustProfiles?.incrementCompletedRecoveriesForBoth(
+      userA: claim.ownerId,
+      userB: claim.finderId,
+    );
 
     await _notifications?.notifyClaimCompleted(
       ownerId: claim.ownerId,

@@ -12,6 +12,7 @@ import '../../../core/config/imagekit_config.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/imagekit_service.dart';
 import '../../../core/services/notification_service.dart';
+import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../../posts/models/post_listing_status.dart';
 import '../../posts/models/post_model.dart';
 import '../models/contract_status.dart';
@@ -19,14 +20,18 @@ import '../models/lend_borrow_contract.dart';
 
 /// Creates lend/borrow contracts, signatures, QR handshake, and GPS logs.
 class LendBorrowContractService {
-  LendBorrowContractService({NotificationService? notifications})
-      : _firestore = FirebaseFirestore.instance,
+  LendBorrowContractService({
+    NotificationService? notifications,
+    TrustProfileService? trustProfiles,
+  })  : _firestore = FirebaseFirestore.instance,
         _imagekit = ImageKitService(ImageKitConfig.instance),
-        _notifications = notifications;
+        _notifications = notifications,
+        _trustProfiles = trustProfiles;
 
   final FirebaseFirestore _firestore;
   final ImageKitService _imagekit;
   final NotificationService? _notifications;
+  final TrustProfileService? _trustProfiles;
   final _uuid = const Uuid();
 
   CollectionReference<Map<String, dynamic>> get _contracts =>
@@ -359,6 +364,11 @@ Agreement date: $date
     });
 
     await batch.commit();
+
+    await _trustProfiles?.incrementCompletedExchangesForBoth(
+      userA: contract.lenderId,
+      userB: contract.borrowerId,
+    );
 
     await _notifications?.notifyContractCompleted(
       lenderId: contract.lenderId,

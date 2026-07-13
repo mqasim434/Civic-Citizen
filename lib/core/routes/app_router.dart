@@ -17,6 +17,7 @@ import '../../features/lend_borrow/views/contract_signature_view.dart';
 import '../../features/lost_found/views/claim_detail_view.dart';
 import '../../features/lost_found/views/claim_qr_view.dart';
 import '../../features/lost_found/views/claim_scan_view.dart';
+import '../../features/mutual_confidence/views/contact_request_detail_view.dart';
 import '../../features/notifications/views/notifications_view.dart';
 import '../models/app_announcement.dart';
 import '../../features/posts/models/post_model.dart';
@@ -146,6 +147,16 @@ class AppRouter {
         final claimId = settings.arguments as String?;
         if (claimId == null) return _buildRoute(const MainShell(), settings);
         return _buildRoute(ClaimScanView(claimId: claimId), settings);
+      }
+      case AppConstants.routeContactRequest: {
+        final requestId = settings.arguments as String?;
+        if (requestId == null || requestId.isEmpty) {
+          return _buildRoute(const MainShell(), settings);
+        }
+        return _buildRoute(
+          ContactRequestDetailView(requestId: requestId),
+          settings,
+        );
       }
       default:
         return _buildRoute(const SplashView(), settings);

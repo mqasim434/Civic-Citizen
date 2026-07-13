@@ -78,5 +78,16 @@ Future<void> navigateFromNotification(
         );
       }
       return;
+    case AppNotificationType.contactRequested:
+    case AppNotificationType.contactAccepted:
+    case AppNotificationType.contactDeclined:
+      final requestId = notification.contractId;
+      if (requestId != null) {
+        navigatorKey.currentState?.pushNamed(
+          AppConstants.routeContactRequest,
+          arguments: requestId,
+        );
+      }
+      return;
   }
 }
