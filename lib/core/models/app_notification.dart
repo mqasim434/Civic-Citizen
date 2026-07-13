@@ -11,6 +11,9 @@ enum AppNotificationType {
   contractLenderSigned,
   contractBorrowerSigned,
   contractCompleted,
+  claimCreated,
+  claimReadyForHandshake,
+  claimCompleted,
 }
 
 extension AppNotificationTypeX on AppNotificationType {
@@ -34,6 +37,12 @@ extension AppNotificationTypeX on AppNotificationType {
         return 'contract_borrower_signed';
       case AppNotificationType.contractCompleted:
         return 'contract_completed';
+      case AppNotificationType.claimCreated:
+        return 'claim_created';
+      case AppNotificationType.claimReadyForHandshake:
+        return 'claim_ready_for_handshake';
+      case AppNotificationType.claimCompleted:
+        return 'claim_completed';
     }
   }
 
@@ -57,6 +66,12 @@ extension AppNotificationTypeX on AppNotificationType {
         return AppNotificationType.contractBorrowerSigned;
       case 'contract_completed':
         return AppNotificationType.contractCompleted;
+      case 'claim_created':
+        return AppNotificationType.claimCreated;
+      case 'claim_ready_for_handshake':
+        return AppNotificationType.claimReadyForHandshake;
+      case 'claim_completed':
+        return AppNotificationType.claimCompleted;
       default:
         return AppNotificationType.contractCreated;
     }

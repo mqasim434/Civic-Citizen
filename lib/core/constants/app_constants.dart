@@ -27,6 +27,9 @@ class AppConstants {
   static const String routeContractSignature = '/contract-signature';
   static const String routeContractQr = '/contract-qr';
   static const String routeContractScan = '/contract-scan';
+  static const String routeLostFoundClaim = '/lost-found-claim';
+  static const String routeClaimQr = '/claim-qr';
+  static const String routeClaimScan = '/claim-scan';
   static const String routeNotifications = '/notifications';
   static const String routeEditProfile = '/edit-profile';
   static const String routeAccountBanned = '/account-banned';
@@ -38,6 +41,7 @@ class AppConstants {
   static const String adminsCollection = 'admins';
   static const String postsCollection = 'posts';
   static const String contractsCollection = 'lend_borrow_contracts';
+  static const String lostFoundClaimsCollection = 'lost_found_claims';
   static const String notificationsSubcollection = 'notifications';
   static const String announcementsCollection = 'announcements';
   static const String announcementReadsSubcollection = 'announcement_reads';

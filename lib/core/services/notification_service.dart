@@ -203,6 +203,79 @@ class NotificationService {
     );
   }
 
+  // --- Lost / found recovery ---
+
+  Future<void> notifyClaimCreated({
+    required String postAuthorId,
+    required String initiatorId,
+    required String initiatorName,
+    required String claimId,
+    required String postId,
+    required String itemTitle,
+  }) async {
+    await notifyUser(
+      recipientUserId: postAuthorId,
+      type: AppNotificationType.claimCreated,
+      title: 'New recovery claim',
+      body: '$initiatorName started a recovery claim for "$itemTitle". Confirm when ready to meet.',
+      actorUserId: initiatorId,
+      actorName: initiatorName,
+      contractId: claimId,
+      postId: postId,
+      routeName: AppConstants.routeLostFoundClaim,
+    );
+  }
+
+  Future<void> notifyClaimReadyForHandshake({
+    required String qrScannerUserId,
+    required String qrDisplayUserId,
+    required String claimId,
+    required String itemTitle,
+  }) async {
+    await notifyUser(
+      recipientUserId: qrScannerUserId,
+      type: AppNotificationType.claimReadyForHandshake,
+      title: 'Ready for QR confirmation',
+      body: 'Recovery claim for "$itemTitle" is confirmed. Scan the QR code at meetup.',
+      contractId: claimId,
+      routeName: AppConstants.routeClaimScan,
+    );
+    await notifyUser(
+      recipientUserId: qrDisplayUserId,
+      type: AppNotificationType.claimReadyForHandshake,
+      title: 'Show your QR code',
+      body: 'Recovery claim for "$itemTitle" is ready. Show your QR code at meetup.',
+      contractId: claimId,
+      routeName: AppConstants.routeClaimQr,
+    );
+  }
+
+  Future<void> notifyClaimCompleted({
+    required String ownerId,
+    required String finderId,
+    required String claimId,
+    required String itemTitle,
+  }) async {
+    const title = 'Recovery confirmed';
+    final body = 'QR confirmation logged for "$itemTitle". View recovery record & GPS.';
+    await notifyUser(
+      recipientUserId: ownerId,
+      type: AppNotificationType.claimCompleted,
+      title: title,
+      body: body,
+      contractId: claimId,
+      routeName: AppConstants.routeLostFoundClaim,
+    );
+    await notifyUser(
+      recipientUserId: finderId,
+      type: AppNotificationType.claimCompleted,
+      title: title,
+      body: body,
+      contractId: claimId,
+      routeName: AppConstants.routeLostFoundClaim,
+    );
+  }
+
   // --- KYC / admin ---
 
   Future<void> notifyKycSubmitted({

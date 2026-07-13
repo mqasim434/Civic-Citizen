@@ -14,6 +14,9 @@ import '../../features/lend_borrow/views/contract_detail_view.dart';
 import '../../features/lend_borrow/views/contract_qr_view.dart';
 import '../../features/lend_borrow/views/contract_scan_view.dart';
 import '../../features/lend_borrow/views/contract_signature_view.dart';
+import '../../features/lost_found/views/claim_detail_view.dart';
+import '../../features/lost_found/views/claim_qr_view.dart';
+import '../../features/lost_found/views/claim_scan_view.dart';
 import '../../features/notifications/views/notifications_view.dart';
 import '../models/app_announcement.dart';
 import '../../features/posts/models/post_model.dart';
@@ -128,6 +131,21 @@ class AppRouter {
         final contractId = settings.arguments as String?;
         if (contractId == null) return _buildRoute(const MainShell(), settings);
         return _buildRoute(ContractScanView(contractId: contractId), settings);
+      }
+      case AppConstants.routeLostFoundClaim: {
+        final claimId = settings.arguments as String?;
+        if (claimId == null) return _buildRoute(const MainShell(), settings);
+        return _buildRoute(ClaimDetailView(claimId: claimId), settings);
+      }
+      case AppConstants.routeClaimQr: {
+        final claimId = settings.arguments as String?;
+        if (claimId == null) return _buildRoute(const MainShell(), settings);
+        return _buildRoute(ClaimQrView(claimId: claimId), settings);
+      }
+      case AppConstants.routeClaimScan: {
+        final claimId = settings.arguments as String?;
+        if (claimId == null) return _buildRoute(const MainShell(), settings);
+        return _buildRoute(ClaimScanView(claimId: claimId), settings);
       }
       default:
         return _buildRoute(const SplashView(), settings);

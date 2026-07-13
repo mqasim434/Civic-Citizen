@@ -17,6 +17,7 @@ import 'features/auth/services/auth_service.dart';
 import 'features/kyc/controllers/kyc_controller.dart';
 import 'features/kyc/services/kyc_service.dart';
 import 'features/lend_borrow/services/lend_borrow_contract_service.dart';
+import 'features/lost_found/services/lost_found_claim_service.dart';
 import 'features/posts/controllers/post_controller.dart';
 import 'features/posts/services/post_service.dart';
 
@@ -67,6 +68,11 @@ class CivicCitizenApp extends StatelessWidget {
         Provider<PostService>(create: (_) => PostService()),
         Provider<LendBorrowContractService>(
           create: (ctx) => LendBorrowContractService(
+            notifications: ctx.read<NotificationService>(),
+          ),
+        ),
+        Provider<LostFoundClaimService>(
+          create: (ctx) => LostFoundClaimService(
             notifications: ctx.read<NotificationService>(),
           ),
         ),

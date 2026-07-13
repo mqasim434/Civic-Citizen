@@ -142,6 +142,10 @@ class NotificationsView extends StatelessWidget {
       case AppNotificationType.contractBorrowerSigned:
       case AppNotificationType.contractCompleted:
         return Icons.handshake_outlined;
+      case AppNotificationType.claimCreated:
+      case AppNotificationType.claimReadyForHandshake:
+      case AppNotificationType.claimCompleted:
+        return Icons.qr_code_scanner_rounded;
     }
   }
 

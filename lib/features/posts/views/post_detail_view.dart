@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../lend_borrow/widgets/lend_borrow_contract_section.dart';
+import '../../lost_found/widgets/lost_found_claim_section.dart';
 import '../models/post_model.dart';
 
 class PostDetailView extends StatelessWidget {
@@ -193,6 +194,7 @@ class PostDetailView extends StatelessWidget {
                     ],
                   ),
                   LendBorrowContractSection(post: post),
+                  LostFoundClaimSection(post: post),
                 ],
               ),
             ),

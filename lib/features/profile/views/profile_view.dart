@@ -6,6 +6,7 @@ import '../../../core/routes/app_router.dart';
 import '../../../shared/widgets/notification_bell_button.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../lend_borrow/widgets/completed_exchanges_section.dart';
+import '../../lost_found/widgets/completed_recoveries_section.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
 
@@ -189,6 +190,7 @@ class ProfileView extends StatelessWidget {
               },
             ),
             CompletedExchangesSection(userId: user.uid),
+            CompletedRecoveriesSection(userId: user.uid),
             const SizedBox(height: 32),
             OutlinedButton.icon(
               onPressed: () async {

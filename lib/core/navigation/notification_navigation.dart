@@ -60,5 +60,23 @@ Future<void> navigateFromNotification(
         );
       }
       return;
+    case AppNotificationType.claimReadyForHandshake:
+      final claimId = notification.contractId;
+      if (claimId == null) return;
+      navigatorKey.currentState?.pushNamed(
+        notification.routeName ?? AppConstants.routeLostFoundClaim,
+        arguments: claimId,
+      );
+      return;
+    case AppNotificationType.claimCreated:
+    case AppNotificationType.claimCompleted:
+      final claimId = notification.contractId;
+      if (claimId != null) {
+        navigatorKey.currentState?.pushNamed(
+          AppConstants.routeLostFoundClaim,
+          arguments: claimId,
+        );
+      }
+      return;
   }
 }

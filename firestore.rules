@@ -42,12 +42,28 @@ service cloud.firestore {
         );
     }
 
+    function canFulfillPostViaClaim(claimId, postId) {
+      let claim = get(
+        /databases/$(database)/documents/lost_found_claims/$(claimId)
+      ).data;
+      return request.auth.uid in claim.participantIds
+        && claim.postId == postId;
+    }
+
     function isNotBanned() {
       return request.auth != null
         && (
           !exists(/databases/$(database)/documents/users/$(request.auth.uid))
           || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isBanned', false) != true
         );
+    }
+
+    function isClaimParticipant(claimId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/lost_found_claims/$(claimId))
+        && request.auth.uid in get(
+          /databases/$(database)/documents/lost_found_claims/$(claimId)
+        ).data.participantIds;
     }
 
     match /admins/{adminId} {
@@ -90,10 +106,30 @@ service cloud.firestore {
       allow update: if request.auth != null
         && request.resource.data.listingStatus == 'fulfilled'
         && request.resource.data.completedContractId is string
-        && canFulfillPostViaContract(
-          request.resource.data.completedContractId,
-          postId
+        && (
+          canFulfillPostViaContract(
+            request.resource.data.completedContractId,
+            postId
+          )
+          || canFulfillPostViaClaim(
+            request.resource.data.completedContractId,
+            postId
+          )
         );
+    }
+
+    match /lost_found_claims/{claimId} {
+      allow read: if request.auth != null
+        && request.auth.uid in resource.data.participantIds;
+      allow create: if request.auth != null
+        && request.auth.uid in request.resource.data.participantIds;
+      allow update: if request.auth != null
+        && request.auth.uid in resource.data.participantIds;
+
+      match /handshake_logs/{logId} {
+        allow read, create: if request.auth != null
+          && isClaimParticipant(claimId);
+      }
     }
 
     match /lend_borrow_contracts/{contractId} {
