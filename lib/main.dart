@@ -55,6 +55,7 @@ class CivicCitizenApp extends StatelessWidget {
         Provider<AnnouncementService>(create: (_) => AnnouncementService()),
         Provider<ProfileService>(create: (_) => ProfileService()),
         Provider<PushNotificationService>.value(value: pushService),
+        Provider<TrustProfileService>(create: (_) => TrustProfileService()),
         Provider<KycService>(
           create: (ctx) => KycService(
             notifications: ctx.read<NotificationService>(),
@@ -68,7 +69,6 @@ class CivicCitizenApp extends StatelessWidget {
           ),
         ),
         Provider<LegalExportService>(create: (_) => LegalExportService()),
-        Provider<TrustProfileService>(create: (_) => TrustProfileService()),
         ChangeNotifierProvider<KycController>(
           create: (ctx) => KycController(ctx.read<KycService>()),
         ),
