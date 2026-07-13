@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/models/app_announcement.dart';
 import '../../../core/services/announcement_service.dart';
+import '../../announcements/widgets/announcement_analytics_panel.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 class AdminAnnouncementsView extends StatefulWidget {
@@ -18,15 +19,36 @@ class AdminAnnouncementsView extends StatefulWidget {
 class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
+  final _pollQuestionController = TextEditingController();
+  final _pollOptionControllers = [
+    TextEditingController(),
+    TextEditingController(),
+  ];
   final _picker = ImagePicker();
   File? _selectedImage;
   bool _saving = false;
+  bool _includePoll = false;
 
   @override
   void dispose() {
     _titleController.dispose();
     _bodyController.dispose();
+    _pollQuestionController.dispose();
+    for (final c in _pollOptionControllers) {
+      c.dispose();
+    }
     super.dispose();
+  }
+
+  void _addPollOption() {
+    if (_pollOptionControllers.length >= 5) return;
+    setState(() => _pollOptionControllers.add(TextEditingController()));
+  }
+
+  void _removePollOption(int index) {
+    if (_pollOptionControllers.length <= 2) return;
+    _pollOptionControllers.removeAt(index).dispose();
+    setState(() {});
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -53,11 +75,22 @@ class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
             title: _titleController.text,
             body: _bodyController.text,
             imageFile: _selectedImage,
+            pollQuestion: _includePoll ? _pollQuestionController.text : null,
+            pollOptionTexts: _includePoll
+                ? _pollOptionControllers.map((c) => c.text).toList()
+                : null,
           );
       if (!mounted) return;
       _titleController.clear();
       _bodyController.clear();
-      setState(() => _selectedImage = null);
+      _pollQuestionController.clear();
+      for (final c in _pollOptionControllers) {
+        c.clear();
+      }
+      setState(() {
+        _selectedImage = null;
+        _includePoll = false;
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Announcement published')),
       );
@@ -88,7 +121,7 @@ class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
         const SizedBox(height: 8),
         Text(
           'Active announcements appear as a popup when users open the app. '
-          'Add an optional image for rich in-app messaging.',
+          'Add an optional image or interactive poll.',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
@@ -114,6 +147,58 @@ class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
           maxLines: 8,
           textCapitalization: TextCapitalization.sentences,
         ),
+        const SizedBox(height: 16),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Include poll'),
+          subtitle: const Text('Users can vote once; results appear below.'),
+          value: _includePoll,
+          onChanged: _saving ? null : (v) => setState(() => _includePoll = v),
+        ),
+        if (_includePoll) ...[
+          TextField(
+            controller: _pollQuestionController,
+            decoration: const InputDecoration(
+              labelText: 'Poll question',
+              border: OutlineInputBorder(),
+            ),
+            textCapitalization: TextCapitalization.sentences,
+          ),
+          const SizedBox(height: 12),
+          ...List.generate(_pollOptionControllers.length, (i) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _pollOptionControllers[i],
+                      decoration: InputDecoration(
+                        labelText: 'Option ${i + 1}',
+                        border: const OutlineInputBorder(),
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                  ),
+                  if (_pollOptionControllers.length > 2)
+                    IconButton(
+                      onPressed: _saving ? null : () => _removePollOption(i),
+                      icon: const Icon(Icons.remove_circle_outline),
+                    ),
+                ],
+              ),
+            );
+          }),
+          if (_pollOptionControllers.length < 5)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _saving ? null : _addPollOption,
+                icon: const Icon(Icons.add_rounded),
+                label: const Text('Add option'),
+              ),
+            ),
+        ],
         const SizedBox(height: 16),
         Text(
           'Optional image',
@@ -194,7 +279,8 @@ class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
               );
             }
             return Column(
-              children: items.map((a) => _AnnouncementTile(announcement: a)).toList(),
+              children:
+                  items.map((a) => _AnnouncementTile(announcement: a)).toList(),
             );
           },
         ),
@@ -203,15 +289,23 @@ class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
   }
 }
 
-class _AnnouncementTile extends StatelessWidget {
+class _AnnouncementTile extends StatefulWidget {
   const _AnnouncementTile({required this.announcement});
 
   final AppAnnouncement announcement;
 
   @override
+  State<_AnnouncementTile> createState() => _AnnouncementTileState();
+}
+
+class _AnnouncementTileState extends State<_AnnouncementTile> {
+  bool _showAnalytics = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final service = context.read<AnnouncementService>();
+    final announcement = widget.announcement;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -240,14 +334,28 @@ class _AnnouncementTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
-                Text(
-                  announcement.active ? 'Active' : 'Inactive',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: announcement.active
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outline,
-                    fontWeight: FontWeight.w600,
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      announcement.active ? 'Active' : 'Inactive',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: announcement.active
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outline,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (announcement.hasPoll)
+                      Text(
+                        'Poll',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.secondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -261,6 +369,30 @@ class _AnnouncementTile extends StatelessWidget {
                     child: const Text('Deactivate'),
                   )
                 : null,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      setState(() => _showAnalytics = !_showAnalytics),
+                  icon: Icon(
+                    _showAnalytics
+                        ? Icons.expand_less_rounded
+                        : Icons.bar_chart_rounded,
+                  ),
+                  label: Text(
+                    _showAnalytics ? 'Hide analytics' : 'View analytics',
+                  ),
+                ),
+                if (_showAnalytics) ...[
+                  const SizedBox(height: 12),
+                  AnnouncementAnalyticsPanel(announcement: announcement),
+                ],
+              ],
+            ),
           ),
         ],
       ),

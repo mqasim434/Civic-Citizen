@@ -16,7 +16,7 @@ Short overview of what is **built** vs what the **proposal still requires**.
 | **Nearby** | Dedicated tab — posts within 1–10 km, sorted nearest first, distance on cards |
 | **Map** | Post markers, module + category + radius filters, nearby circle, info windows, user location |
 | **Profile** | View account, edit display name, list/manage own posts, community broadcasts, settings link |
-| **Broadcasting** | Admin popups + optional image; user broadcasts list, detail, helpful feedback |
+| **Broadcasting** | Admin popups + image; polls; helpful feedback; user list/detail; admin analytics |
 | **Settings** | Dark mode + system theme (saved locally) |
 | **Admin** | KYC review, flag/delete posts, ban/unban/delete users, posts timeline, map, broadcast tab |
 | **Lost/found recovery** | QR claim flow — counterparty starts, author confirms, QR + GPS handoff; fulfilled listings hidden; profile **Completed recoveries** |
@@ -30,7 +30,6 @@ Short overview of what is **built** vs what the **proposal still requires**.
 
 | Module | What's missing |
 |--------|----------------|
-| **Broadcasting (advanced)** | Interactive polls, admin feedback analytics |
 | **Mutual confidence** | Secure mediated contact, trust cards, safe meetup suggestions |
 | **Admin (legal)** | Export evidence package (CNIC, selfie, contracts, GPS logs) |
 

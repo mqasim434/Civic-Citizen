@@ -137,7 +137,25 @@ class _BroadcastListTile extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (!seen)
+                        if (announcement.hasPoll)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Poll',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSecondaryContainer,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    if (!seen)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,

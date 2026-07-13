@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/models/app_announcement.dart';
+import '../../../core/routes/app_router.dart';
+import 'broadcast_poll_card.dart';
 
 Future<void> showAnnouncementDialog(
   BuildContext context,
@@ -62,10 +65,25 @@ Future<void> showAnnouncementDialog(
               announcement.body,
               style: theme.textTheme.bodyLarge,
             ),
+            if (announcement.hasPoll) ...[
+              const SizedBox(height: 20),
+              BroadcastPollCard(announcement: announcement, compact: true),
+            ],
           ],
         ),
       ),
       actions: [
+        if (announcement.hasPoll)
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              navigatorKey.currentState?.pushNamed(
+                AppConstants.routeBroadcastDetail,
+                arguments: announcement,
+              );
+            },
+            child: const Text('Open full broadcast'),
+          ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(),
           child: const Text('Got it'),

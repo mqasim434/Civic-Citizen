@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/models/app_announcement.dart';
 import '../../../core/services/announcement_service.dart';
+import '../widgets/broadcast_poll_card.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 class BroadcastDetailView extends StatefulWidget {
@@ -112,6 +113,10 @@ class _BroadcastDetailViewState extends State<BroadcastDetailView> {
                   color: theme.colorScheme.outline,
                 ),
               ),
+            ],
+            if (announcement.hasPoll) ...[
+              const SizedBox(height: 28),
+              BroadcastPollCard(announcement: announcement),
             ],
             const SizedBox(height: 28),
             Text(
