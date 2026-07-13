@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../services/admin_service.dart';
+import '../widgets/legal_export_dialog.dart';
 
 class AdminUserManagementView extends StatefulWidget {
   const AdminUserManagementView({super.key});
@@ -108,9 +109,27 @@ class _AdminUserManagementViewState extends State<AdminUserManagementView> {
                           }
                           if (value == 'delete') {
                             await _deleteUser(uid, name ?? email ?? 'user');
+                            return;
+                          }
+                          if (value == 'export') {
+                            await showLegalExportDialog(
+                              context,
+                              userId: uid,
+                              userLabel: name ?? email ?? uid,
+                            );
                           }
                         },
                         itemBuilder: (_) => [
+                          const PopupMenuItem(
+                            value: 'export',
+                            child: ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: Icon(Icons.folder_zip_outlined),
+                              title: Text('Export evidence'),
+                            ),
+                          ),
+                          const PopupMenuDivider(),
                           PopupMenuItem(
                             value: banned ? 'unban' : 'ban',
                             child: ListTile(

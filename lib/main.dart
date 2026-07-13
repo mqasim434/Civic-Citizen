@@ -12,6 +12,7 @@ import 'core/services/push_notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'features/admin/services/admin_service.dart';
+import 'features/admin/services/legal_export_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/auth/services/auth_service.dart';
 import 'features/kyc/controllers/kyc_controller.dart';
@@ -62,6 +63,7 @@ class CivicCitizenApp extends StatelessWidget {
             notifications: ctx.read<NotificationService>(),
           ),
         ),
+        Provider<LegalExportService>(create: (_) => LegalExportService()),
         ChangeNotifierProvider<KycController>(
           create: (ctx) => KycController(ctx.read<KycService>()),
         ),

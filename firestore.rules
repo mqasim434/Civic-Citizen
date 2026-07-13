@@ -121,7 +121,7 @@ service cloud.firestore {
 
     match /lost_found_claims/{claimId} {
       allow read: if request.auth != null
-        && request.auth.uid in resource.data.participantIds;
+        && (request.auth.uid in resource.data.participantIds || isAdmin());
       allow create: if request.auth != null
         && request.auth.uid in request.resource.data.participantIds;
       allow update: if request.auth != null
@@ -135,7 +135,7 @@ service cloud.firestore {
 
     match /lend_borrow_contracts/{contractId} {
       allow read: if request.auth != null
-        && request.auth.uid in resource.data.participantIds;
+        && (request.auth.uid in resource.data.participantIds || isAdmin());
       allow create: if request.auth != null
         && request.auth.uid in request.resource.data.participantIds;
       allow update: if request.auth != null

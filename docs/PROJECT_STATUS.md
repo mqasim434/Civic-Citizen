@@ -18,7 +18,7 @@ Short overview of what is **built** vs what the **proposal still requires**.
 | **Profile** | View account, edit display name, list/manage own posts, community broadcasts, settings link |
 | **Broadcasting** | Admin popups + image; polls; helpful feedback; user list/detail; admin analytics |
 | **Settings** | Dark mode + system theme (saved locally) |
-| **Admin** | KYC review, flag/delete posts, ban/unban/delete users, posts timeline, map, broadcast tab |
+| **Admin** | KYC review, flag/delete posts, ban/unban/delete users, posts timeline, map, broadcast tab, legal evidence export |
 | **Lost/found recovery** | QR claim flow — counterparty starts, author confirms, QR + GPS handoff; fulfilled listings hidden; profile **Completed recoveries** |
 | **Lend/borrow contracts** | Auto-generated terms, dual signatures, QR handshake, GPS log; fulfilled listings hidden from feed/map; profile **Completed exchanges** |
 | **Notifications** | In-app center + tray alerts (Spark) — lend/borrow, KYC, admin actions; EmailJS only for KYC approve/reject |
@@ -31,7 +31,6 @@ Short overview of what is **built** vs what the **proposal still requires**.
 | Module | What's missing |
 |--------|----------------|
 | **Mutual confidence** | Secure mediated contact, trust cards, safe meetup suggestions |
-| **Admin (legal)** | Export evidence package (CNIC, selfie, contracts, GPS logs) |
 
 ---
 

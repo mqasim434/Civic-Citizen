@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../services/admin_service.dart';
+import '../widgets/legal_export_dialog.dart';
 
 class AdminUserVerificationView extends StatefulWidget {
   const AdminUserVerificationView({super.key, required this.userId});
@@ -81,6 +82,17 @@ class _AdminUserVerificationViewState extends State<AdminUserVerificationView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Review verification'),
+        actions: [
+          IconButton(
+            tooltip: 'Export evidence package',
+            icon: const Icon(Icons.folder_zip_outlined),
+            onPressed: () => showLegalExportDialog(
+              context,
+              userId: widget.userId,
+              userLabel: widget.userId,
+            ),
+          ),
+        ],
       ),
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
