@@ -11,6 +11,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
+import '../../posts/utils/post_search_filter.dart';
 
 class MapPostsView extends StatefulWidget {
   const MapPostsView({super.key});
@@ -34,6 +35,9 @@ class _MapPostsViewState extends State<MapPostsView> {
 
   PostModule? _moduleFilter;
   String? _categoryFilter;
+  double? _radiusKm;
+  double? _userLatitude;
+  double? _userLongitude;
   bool _didCenterOnUser = false;
 
   @override
@@ -64,15 +68,46 @@ class _MapPostsViewState extends State<MapPostsView> {
             future: _buildMarkerCoordinates(visiblePosts),
             builder: (context, coordSnap) {
               final markerCoords = coordSnap.data ?? const <String, LatLng>{};
-              final markerPosts = visiblePosts
+              var markerPosts = visiblePosts
                   .where((p) => markerCoords.containsKey(p.id))
                   .toList();
+              if (_radiusKm != null &&
+                  _userLatitude != null &&
+                  _userLongitude != null) {
+                markerPosts = markerPosts.where((post) {
+                  final coords = markerCoords[post.id]!;
+                  return PostSearchFilter.distanceKm(
+                        _userLatitude!,
+                        _userLongitude!,
+                        coords.latitude,
+                        coords.longitude,
+                      ) <=
+                      _radiusKm!;
+                }).toList();
+              }
               final markers = _buildMarkers(markerPosts, markerCoords);
+              final theme = Theme.of(context);
+              final circles = _radiusKm != null &&
+                      _userLatitude != null &&
+                      _userLongitude != null
+                  ? {
+                      Circle(
+                        circleId: const CircleId('nearby_radius'),
+                        center: LatLng(_userLatitude!, _userLongitude!),
+                        radius: _radiusKm! * 1000,
+                        fillColor: theme.colorScheme.primary
+                            .withValues(alpha: 0.12),
+                        strokeColor: theme.colorScheme.primary,
+                        strokeWidth: 2,
+                      ),
+                    }
+                  : const <Circle>{};
               return Stack(
                 children: [
                   GoogleMap(
                     initialCameraPosition: _defaultCamera,
                     markers: markers,
+                    circles: circles,
                     myLocationButtonEnabled: true,
                     myLocationEnabled: true,
                     onTap: (_) => _customInfoWindowController.hideInfoWindow!(),
@@ -92,6 +127,7 @@ class _MapPostsViewState extends State<MapPostsView> {
                     child: _MapFilters(
                       moduleFilter: _moduleFilter,
                       categoryFilter: _categoryFilter,
+                      radiusKm: _radiusKm,
                       categories: availableCategories,
                       onModuleSelected: (module) => setState(() {
                         _moduleFilter = module;
@@ -99,6 +135,10 @@ class _MapPostsViewState extends State<MapPostsView> {
                       }),
                       onCategorySelected: (category) => setState(() {
                         _categoryFilter = category;
+                        _customInfoWindowController.hideInfoWindow!();
+                      }),
+                      onRadiusSelected: (radius) => setState(() {
+                        _radiusKm = radius;
                         _customInfoWindowController.hideInfoWindow!();
                       }),
                     ),
@@ -173,6 +213,12 @@ class _MapPostsViewState extends State<MapPostsView> {
         return;
       }
       final pos = await Geolocator.getCurrentPosition();
+      if (mounted) {
+        setState(() {
+          _userLatitude = pos.latitude;
+          _userLongitude = pos.longitude;
+        });
+      }
       await _moveTo(LatLng(pos.latitude, pos.longitude));
     } catch (_) {
       // Keep default camera target if current location can't be resolved.
@@ -378,16 +424,20 @@ class _MapFilters extends StatelessWidget {
   const _MapFilters({
     required this.moduleFilter,
     required this.categoryFilter,
+    required this.radiusKm,
     required this.categories,
     required this.onModuleSelected,
     required this.onCategorySelected,
+    required this.onRadiusSelected,
   });
 
   final PostModule? moduleFilter;
   final String? categoryFilter;
+  final double? radiusKm;
   final List<String> categories;
   final ValueChanged<PostModule?> onModuleSelected;
   final ValueChanged<String?> onCategorySelected;
+  final ValueChanged<double?> onRadiusSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -457,6 +507,33 @@ class _MapFilters extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 34,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: const Text('Any distance'),
+                      selected: radiusKm == null,
+                      onSelected: (_) => onRadiusSelected(null),
+                    ),
+                  ),
+                  ...PostSearchFilter.radiusOptionsKm.map(
+                    (km) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FilterChip(
+                        label: Text('${km.toStringAsFixed(km == km.roundToDouble() ? 0 : 1)} km'),
+                        selected: radiusKm == km,
+                        onSelected: (_) => onRadiusSelected(km),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

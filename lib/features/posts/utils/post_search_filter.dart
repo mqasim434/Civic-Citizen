@@ -8,6 +8,43 @@ class PostSearchFilter {
 
   static const radiusOptionsKm = <double>[1, 3, 5, 10];
 
+  /// Default radius for the Nearby tab (proposal: 1–5 km).
+  static const double defaultNearbyRadiusKm = 5;
+
+  /// Posts within [radiusKm] of the user, sorted nearest first.
+  static List<({PostModel post, double distanceKm})> nearbyPosts({
+    required List<PostModel> posts,
+    required double userLatitude,
+    required double userLongitude,
+    required double radiusKm,
+    PostModule? module,
+  }) {
+    final results = <({PostModel post, double distanceKm})>[];
+    for (final post in posts) {
+      if (!post.isPubliclyListed || post.isInappropriate) continue;
+      if (module != null && post.module != module) continue;
+      final coords = coordinatesFor(post);
+      if (coords == null) continue;
+      final d = distanceKm(
+        userLatitude,
+        userLongitude,
+        coords.lat,
+        coords.lng,
+      );
+      if (d <= radiusKm) {
+        results.add((post: post, distanceKm: d));
+      }
+    }
+    results.sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
+    return results;
+  }
+
+  static String formatDistanceKm(double km) {
+    if (km < 1) return '${(km * 1000).round()} m away';
+    if (km < 10) return '${km.toStringAsFixed(1)} km away';
+    return '${km.round()} km away';
+  }
+
   static List<PostModel> apply({
     required List<PostModel> posts,
     String keyword = '',

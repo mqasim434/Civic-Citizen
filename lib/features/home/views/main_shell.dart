@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import 'dashboard_view.dart';
+import 'nearby_posts_view.dart';
 import '../../profile/views/profile_view.dart';
 import '../views/map_placeholder_view.dart';
 
@@ -19,6 +20,7 @@ class _MainShellState extends State<MainShell> {
 
   static const _tabs = [
     _TabItem(icon: Icons.home_rounded, label: 'Home'),
+    _TabItem(icon: Icons.near_me_rounded, label: 'Nearby'),
     _TabItem(icon: Icons.map_rounded, label: 'Map'),
     _TabItem(icon: Icons.person_rounded, label: 'Profile'),
   ];
@@ -30,6 +32,7 @@ class _MainShellState extends State<MainShell> {
         index: _index,
         children: const [
           DashboardView(),
+          NearbyPostsView(),
           MapPostsView(),
           ProfileView(),
         ],

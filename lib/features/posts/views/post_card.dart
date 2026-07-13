@@ -7,10 +7,12 @@ class PostCard extends StatelessWidget {
     super.key,
     required this.post,
     this.onTap,
+    this.distanceLabel,
   });
 
   final PostModel post;
   final VoidCallback? onTap;
+  final String? distanceLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +61,22 @@ class PostCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (distanceLabel != null) ...[
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.near_me_rounded,
+                          size: 14,
+                          color: theme.colorScheme.secondary,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          distanceLabel!,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.secondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                       if (post.categoryDisplayLabel != null &&
                           !PostModule.values.any((m) => m.label == post.category)) ...[
                         const SizedBox(width: 8),

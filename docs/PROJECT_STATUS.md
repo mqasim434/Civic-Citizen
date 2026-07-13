@@ -13,7 +13,8 @@ Short overview of what is **built** vs what the **proposal still requires**.
 | **Civic posts** | Lost, Found, Charity, Resources, Lend, Borrow — create (with images + location), edit, delete, detail view |
 | **Location** | Manual address, map pin picker, reverse geocoding |
 | **Home** | Real-time feed with module chips, keyword search, category + radius filters |
-| **Map** | Post markers, module + category filters, info windows, user location |
+| **Nearby** | Dedicated tab — posts within 1–10 km, sorted nearest first, distance on cards |
+| **Map** | Post markers, module + category + radius filters, nearby circle, info windows, user location |
 | **Profile** | View account, list/manage own posts, settings link |
 | **Settings** | Dark mode + system theme (saved locally) |
 | **Admin** | KYC review, flag/delete posts, ban/unban/delete users, posts timeline, map |
@@ -27,7 +28,6 @@ Short overview of what is **built** vs what the **proposal still requires**.
 
 | Module | What's missing |
 |--------|----------------|
-| **Nearby items (map)** | Dedicated nearby tab / map radius circle (home feed has radius filter) |
 | **Lost/found (advanced)** | Claim flow with QR confirmation on recovery |
 | **Broadcasting** | Mass broadcasts, polls, audience feedback |
 | **Mutual confidence** | Secure mediated contact, trust cards, safe meetup suggestions |
