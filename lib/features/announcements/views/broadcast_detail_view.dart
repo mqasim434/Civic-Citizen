@@ -23,7 +23,21 @@ class _BroadcastDetailViewState extends State<BroadcastDetailView> {
   @override
   void initState() {
     super.initState();
+    _markSeen();
     _loadFeedback();
+  }
+
+  Future<void> _markSeen() async {
+    final user = context.read<AuthController>().user;
+    if (user == null) return;
+    try {
+      await context.read<AnnouncementService>().markSeen(
+            user.uid,
+            widget.announcement.id,
+          );
+    } catch (_) {
+      // Best-effort; popup filter uses the same mark.
+    }
   }
 
   Future<void> _loadFeedback() async {

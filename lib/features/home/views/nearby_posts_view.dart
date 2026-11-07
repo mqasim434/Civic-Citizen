@@ -37,15 +37,18 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
   }
 
   Future<void> _loadLocation() async {
+    if (!mounted) return;
     setState(() {
       _loadingLocation = true;
       _locationError = null;
     });
     try {
       var permission = await Geolocator.checkPermission();
+      if (!mounted) return;
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
+      if (!mounted) return;
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         setState(() {
@@ -56,12 +59,14 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
         return;
       }
       final pos = await Geolocator.getCurrentPosition();
+      if (!mounted) return;
       setState(() {
         _userLatitude = pos.latitude;
         _userLongitude = pos.longitude;
         _loadingLocation = false;
       });
     } catch (_) {
+      if (!mounted) return;
       setState(() {
         _locationError = 'Could not get your location. Pull to retry.';
         _loadingLocation = false;
@@ -129,7 +134,7 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      FilterChip(
+                      ChoiceChip(
                         label: const Text('All'),
                         selected: _module == null,
                         onSelected: (_) => setState(() => _module = null),
@@ -138,7 +143,7 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
                       ...PostModule.values.map(
                         (m) => Padding(
                           padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
+                          child: ChoiceChip(
                             label: Text(m.label),
                             selected: _module == m,
                             onSelected: (_) => setState(() => _module = m),

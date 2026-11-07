@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
+import '../../../core/constants/app_constants.dart';
+import '../../ads/widgets/boost_post_sheet.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../lend_borrow/widgets/lend_borrow_contract_section.dart';
 import '../../lost_found/widgets/lost_found_claim_section.dart';
 import '../../mutual_confidence/widgets/contact_section.dart';
 import '../models/post_model.dart';
+import '../services/post_service.dart';
+import '../widgets/post_comments_section.dart';
+import '../widgets/post_engagement_bar.dart';
+import '../widgets/post_image_gallery.dart';
 
 class PostDetailView extends StatelessWidget {
   const PostDetailView({super.key, required this.post});
@@ -12,31 +21,51 @@ class PostDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return StreamBuilder<PostModel?>(
+      stream: context.read<PostService>().watchPost(post.id),
+      builder: (context, snap) => _PostDetailBody(post: snap.data ?? post),
+    );
+  }
+}
+
+class _PostDetailBody extends StatelessWidget {
+  const _PostDetailBody({required this.post});
+
+  final PostModel post;
+
+  Future<void> _share() async {
+    final link = AppConstants.sharePostUrl(post.id);
+    await SharePlus.instance.share(
+      ShareParams(
+        text: '${post.title}\n\n${post.description}\n\n$link',
+        subject: post.title,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final uid = context.watch<AuthController>().user?.uid;
+    final mine = uid != null && uid == post.authorId;
     return Scaffold(
       appBar: AppBar(
         title: Text(post.title),
+        actions: [
+          IconButton(
+            tooltip: 'Share',
+            icon: const Icon(Icons.share_rounded),
+            onPressed: _share,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (post.isSponsored) SponsoredImpression(post: post),
             if (post.imageUrls.isNotEmpty)
-              Image.network(
-                post.imageUrls.first,
-                height: 240,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 240,
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  child: Icon(
-                    Icons.broken_image_outlined,
-                    size: 64,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-              ),
+              PostImageGallery(imageUrls: post.imageUrls),
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -100,6 +129,32 @@ class PostDetailView extends StatelessWidget {
                       ],
                     ],
                   ),
+                  if (post.isSponsored) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Sponsored',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.tertiary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                  if (mine && !post.isFulfilled && !post.isSponsored) ...[
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () => showBoostPostDialog(context, post),
+                      icon: const Icon(Icons.campaign_outlined),
+                      label: const Text('Boost post'),
+                    ),
+                  ],
+                  if (mine && post.hasAdHistory) ...[
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      onPressed: () => showPostInsights(context, post),
+                      icon: const Icon(Icons.insights_rounded),
+                      label: const Text('View ad insights'),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Text(
                     post.title,
@@ -156,6 +211,12 @@ class PostDetailView extends StatelessWidget {
                   ContactSection(post: post),
                   LendBorrowContractSection(post: post),
                   LostFoundClaimSection(post: post),
+                  PostEngagementBar(
+                    post: post,
+                    showInsights: mine && post.hasAdHistory,
+                    onInsights: () => showPostInsights(context, post),
+                  ),
+                  PostCommentsSection(postId: post.id),
                 ],
               ),
             ),

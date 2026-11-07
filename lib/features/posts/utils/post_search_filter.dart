@@ -11,6 +11,9 @@ class PostSearchFilter {
   /// Default radius for the Nearby tab (proposal: 1–5 km).
   static const double defaultNearbyRadiusKm = 5;
 
+  /// Home feed radius around the selected city or area.
+  static const double homePlaceRadiusKm = 30;
+
   /// Posts within [radiusKm] of the user, sorted nearest first.
   static List<({PostModel post, double distanceKm})> nearbyPosts({
     required List<PostModel> posts,
@@ -52,6 +55,7 @@ class PostSearchFilter {
     double? radiusKm,
     double? userLatitude,
     double? userLongitude,
+    String? placeLabel,
   }) {
     var result = posts
         .where((p) => p.isPubliclyListed && !p.isInappropriate)
@@ -63,8 +67,36 @@ class PostSearchFilter {
     }
 
     if (category != null && category.isNotEmpty) {
-      result =
-          result.where((p) => p.categoryDisplayLabel == category).toList();
+      final needle = category.trim().toLowerCase();
+      result = result.where((p) {
+        final label = p.categoryDisplayLabel?.trim().toLowerCase();
+        final raw = p.category?.trim().toLowerCase();
+        return label == needle || raw == needle;
+      }).toList();
+    }
+
+    final place = placeLabel?.trim().toLowerCase() ?? '';
+    final placeLat = userLatitude;
+    final placeLng = userLongitude;
+    final filterByPlace = place.isNotEmpty &&
+        place != 'set location' &&
+        place != 'selected location' &&
+        placeLat != null &&
+        placeLng != null;
+    if (filterByPlace) {
+      result = result.where((p) {
+        final loc = (p.location ?? '').toLowerCase();
+        if (loc.contains(place)) return true;
+        final coords = coordinatesFor(p);
+        if (coords == null) return false;
+        return distanceKm(
+              placeLat,
+              placeLng,
+              coords.lat,
+              coords.lng,
+            ) <=
+            homePlaceRadiusKm;
+      }).toList();
     }
 
     if (radiusKm != null &&

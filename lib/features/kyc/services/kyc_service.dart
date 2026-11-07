@@ -8,6 +8,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/config/imagekit_config.dart';
 import '../../../core/services/imagekit_service.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/utils/firestore_retry.dart';
 import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../models/kyc_status.dart';
 
@@ -126,8 +127,10 @@ class KycService {
 
   /// Get user KYC profile.
   Future<Map<String, dynamic>?> getUserProfile(String uid) async {
-    final doc = await _users.doc(uid).get();
-    return doc.data();
+    return firestoreWithRetry(() async {
+      final doc = await _users.doc(uid).get();
+      return doc.data();
+    });
   }
 
   /// Stream user profile for verification status.

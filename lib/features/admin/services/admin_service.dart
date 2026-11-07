@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/emailjs_service.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/utils/firestore_retry.dart';
 import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../../posts/models/post_model.dart';
 
@@ -12,10 +13,10 @@ class AdminService {
     EmailJsService? emailJs,
     NotificationService? notifications,
     TrustProfileService? trustProfiles,
-  })  : _firestore = FirebaseFirestore.instance,
-        _emailJs = emailJs ?? EmailJsService(),
-        _notifications = notifications,
-        _trustProfiles = trustProfiles;
+  }) : _firestore = FirebaseFirestore.instance,
+       _emailJs = emailJs ?? EmailJsService(),
+       _notifications = notifications,
+       _trustProfiles = trustProfiles;
 
   final FirebaseFirestore _firestore;
   final EmailJsService _emailJs;
@@ -33,8 +34,10 @@ class AdminService {
 
   /// True if [uid] has an admin document (managed only in Firebase).
   Future<bool> isAdmin(String uid) async {
-    final doc = await _admins.doc(uid).get();
-    return doc.exists;
+    return firestoreWithRetry(() async {
+      final doc = await _admins.doc(uid).get();
+      return doc.exists;
+    });
   }
 
   /// Users waiting for identity verification.
@@ -47,12 +50,15 @@ class AdminService {
 
   /// Stream all posts for moderation, optionally filtered by module.
   Stream<List<PostModel>> watchPosts({PostModule? module}) {
-    final Query<Map<String, dynamic>> q = module != null
-        ? _posts.where('module', isEqualTo: module.value).orderBy('createdAt', descending: true)
-        : _posts.orderBy('createdAt', descending: true);
-    return q.snapshots().map(
-      (snap) => snap.docs.map((doc) => PostModel.fromFirestore(doc)).toList(),
-    );
+    return _posts.orderBy('createdAt', descending: true).snapshots().map((
+      snap,
+    ) {
+      var posts = snap.docs.map(PostModel.fromFirestore).toList();
+      if (module != null) {
+        posts = posts.where((p) => p.module == module).toList();
+      }
+      return posts;
+    });
   }
 
   /// Mark or unmark a post as inappropriate for moderation.

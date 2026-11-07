@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../shared/widgets/notification_bell_button.dart';
+import '../../ads/views/admin_ads_moderation_view.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../events/views/admin_events_view.dart';
 import '../../home/views/map_placeholder_view.dart';
 import 'admin_announcements_view.dart';
 import 'admin_posts_timeline_view.dart';
@@ -48,6 +50,16 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
       label: 'Broadcast',
       title: 'Admin - announcements',
     ),
+    _AdminTab(
+      icon: Icons.event_rounded,
+      label: 'Events',
+      title: 'Admin - events',
+    ),
+    _AdminTab(
+      icon: Icons.ads_click_rounded,
+      label: 'Ads',
+      title: 'Admin - ads',
+    ),
   ];
 
   @override
@@ -80,6 +92,8 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
           MapPostsView(),
           AdminUserManagementView(),
           AdminAnnouncementsView(),
+          AdminEventsView(),
+          AdminAdsModerationView(),
         ],
       ),
       bottomNavigationBar: NavigationBar(

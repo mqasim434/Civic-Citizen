@@ -8,6 +8,7 @@ import '../config/imagekit_config.dart';
 import '../constants/app_constants.dart';
 import '../models/announcement_poll.dart';
 import '../models/app_announcement.dart';
+import '../utils/firestore_retry.dart';
 import 'imagekit_service.dart';
 
 /// In-app admin broadcasts — Firestore only (Spark plan, no Cloud Functions).
@@ -33,7 +34,7 @@ class AnnouncementService {
         'announcementId': announcementId,
       };
 
-  /// Active announcements the user has not dismissed yet.
+  /// Active announcements the user has not seen yet.
   Future<List<AppAnnouncement>> getPendingForUser(String userId) async {
     if (userId.isEmpty) return [];
 
@@ -47,12 +48,20 @@ class AnnouncementService {
       rethrow;
     }
 
-    final readsSnap = await _reads(userId).get();
-    final dismissed = readsSnap.docs.map((d) => d.id).toSet();
+    // Prefer server so a prior "seen" write is not missed after restart.
+    QuerySnapshot<Map<String, dynamic>> readsSnap;
+    try {
+      readsSnap = await _reads(userId).get(
+        const GetOptions(source: Source.server),
+      );
+    } on FirebaseException {
+      readsSnap = await _reads(userId).get();
+    }
+    final seenIds = readsSnap.docs.map((d) => d.id).toSet();
 
     final pending = activeSnap.docs
         .map(AppAnnouncement.fromFirestore)
-        .where((a) => !dismissed.contains(a.id))
+        .where((a) => !seenIds.contains(a.id))
         .toList();
 
     pending.sort((a, b) {
@@ -63,12 +72,20 @@ class AnnouncementService {
     return pending;
   }
 
-  Future<void> dismiss(String userId, String announcementId) async {
+  /// Marks a broadcast as shown for this user so the popup never repeats.
+  Future<void> markSeen(String userId, String announcementId) async {
     if (userId.isEmpty || announcementId.isEmpty) return;
-    await _reads(userId).doc(announcementId).set({
-      ..._readBase(announcementId),
-      'dismissedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    await firestoreWithRetry(() async {
+      await _reads(userId).doc(announcementId).set({
+        ..._readBase(announcementId),
+        'seenAt': FieldValue.serverTimestamp(),
+        'dismissedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    });
+  }
+
+  Future<void> dismiss(String userId, String announcementId) async {
+    await markSeen(userId, announcementId);
   }
 
   Future<void> submitFeedback({

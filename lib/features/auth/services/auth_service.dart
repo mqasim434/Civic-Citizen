@@ -84,6 +84,17 @@ class AuthService {
     await user.reload();
   }
 
+  /// Pass null to remove the profile photo.
+  Future<void> updatePhotoUrl(String? photoUrl) async {
+    if (!_isFirebaseReady) {
+      throw Exception('Firebase is not configured.');
+    }
+    final user = _auth!.currentUser;
+    if (user == null) throw Exception('Not signed in.');
+    await user.updatePhotoURL(photoUrl);
+    await user.reload();
+  }
+
   Future<UserModel?> reloadCurrentUser() async {
     final auth = _auth;
     if (auth == null) return null;

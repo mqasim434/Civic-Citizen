@@ -1,6 +1,6 @@
 {
-    "name": "civic_citizen",
-    "short_name": "civic_citizen",
+    "name": "Civic Citizen",
+    "short_name": "Civic Citizen",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

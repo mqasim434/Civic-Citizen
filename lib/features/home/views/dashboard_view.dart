@@ -10,6 +10,7 @@ import '../../posts/models/post_model.dart';
 import '../../posts/utils/post_search_filter.dart';
 import '../../posts/views/post_card.dart';
 import '../../posts/widgets/post_filter_sheet.dart';
+import '../widgets/location_search_sheet.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -29,7 +30,15 @@ class _DashboardViewState extends State<DashboardView> {
   double? _radiusKm;
   double? _userLatitude;
   double? _userLongitude;
+  String _locationLabel = 'Set location';
+  bool _locationLoading = true;
   String? _locationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveCurrentLocation();
+  }
 
   @override
   void dispose() {
@@ -48,9 +57,11 @@ class _DashboardViewState extends State<DashboardView> {
   bool get _hasActiveFilters =>
       _searchQuery.isNotEmpty || _categoryFilter != null || _radiusKm != null;
 
-  Future<void> _ensureUserLocation() async {
-    if (_userLatitude != null && _userLongitude != null) return;
-    setState(() => _locationError = null);
+  Future<void> _resolveCurrentLocation() async {
+    setState(() {
+      _locationLoading = true;
+      _locationError = null;
+    });
     try {
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -58,18 +69,52 @@ class _DashboardViewState extends State<DashboardView> {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        setState(() => _locationError = 'Location permission is required for nearby filter.');
+        if (!mounted) return;
+        setState(() {
+          _locationLoading = false;
+          _locationLabel = 'Set location';
+          _locationError = 'Location permission is required.';
+        });
         return;
       }
       final pos = await Geolocator.getCurrentPosition();
+      final label = await labelForCoordinates(pos.latitude, pos.longitude);
+      if (!mounted) return;
       setState(() {
         _userLatitude = pos.latitude;
         _userLongitude = pos.longitude;
+        _locationLabel = label;
+        _locationLoading = false;
         _locationError = null;
       });
-    } catch (e) {
-      setState(() => _locationError = 'Could not get your location.');
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _locationLoading = false;
+        _locationLabel = 'Set location';
+        _locationError = 'Could not get your location.';
+      });
     }
+  }
+
+  Future<void> _ensureUserLocation() async {
+    if (_userLatitude != null && _userLongitude != null) return;
+    await _resolveCurrentLocation();
+  }
+
+  Future<void> _openLocationSheet() async {
+    final result = await LocationSearchSheet.show(
+      context,
+      initialQuery: _locationLabel == 'Set location' ? null : _locationLabel,
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _userLatitude = result.latitude;
+      _userLongitude = result.longitude;
+      _locationLabel = result.address;
+      _locationError = null;
+      _locationLoading = false;
+    });
   }
 
   Future<void> _openFilters(List<PostModel> allPosts) async {
@@ -85,10 +130,6 @@ class _DashboardViewState extends State<DashboardView> {
       _categoryFilter = result.category;
       _radiusKm = result.radiusKm;
       _locationError = null;
-      if (result.radiusKm == null) {
-        _userLatitude = null;
-        _userLongitude = null;
-      }
     });
 
     if (result.radiusKm != null) {
@@ -102,8 +143,6 @@ class _DashboardViewState extends State<DashboardView> {
       _searchQuery = '';
       _categoryFilter = null;
       _radiusKm = null;
-      _userLatitude = null;
-      _userLongitude = null;
       _locationError = null;
     });
   }
@@ -116,55 +155,233 @@ class _DashboardViewState extends State<DashboardView> {
         slivers: [
           SliverAppBar(
             floating: true,
-            title: Text(
-              AppConstants.appName,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
+            toolbarHeight: 72,
+            title: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(9),
+                  child: Image.asset(
+                    'assets/app_icon.png',
+                    width: 36,
+                    height: 36,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        AppConstants.appName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w800,
+                          height: 1.1,
+                        ),
+                      ),
+                      InkWell(
+                        onTap: _locationLoading ? null : _openLocationSheet,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_rounded,
+                                size: 16,
+                                color: theme.colorScheme.secondary,
+                              ),
+                              const SizedBox(width: 2),
+                              if (_locationLoading)
+                                SizedBox(
+                                  width: 12,
+                                  height: 12,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: theme.colorScheme.secondary,
+                                  ),
+                                )
+                              else
+                                Flexible(
+                                  child: Text(
+                                    _locationLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                              Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 18,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            actions: const [NotificationBellButton(), SizedBox(width: 4)],
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: SizedBox(
+                  height: 148,
+                  width: double.infinity,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      const Image(
+                        image: AssetImage('assets/home_banner.jpg'),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.centerRight,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Stronger\nCommunity Together',
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                height: 1.15,
+                              ),
+                            ),
+                            const Spacer(),
+                            TextButton.icon(
+                              onPressed: () => navigatorKey.currentState
+                                  ?.pushNamed(AppConstants.routeEvents),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.zero,
+                              ),
+                              icon: const Text('Learn More'),
+                              label: const Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            actions: [
-              IconButton(
-                icon: Badge(
-                  isLabelVisible: _hasActiveFilters,
-                  child: const Icon(Icons.tune_rounded),
-                ),
-                tooltip: 'Filters',
-                onPressed: () async {
-                  final snap = await _getPostsStream().first;
-                  if (!mounted) return;
-                  await _openFilters(snap);
-                },
-              ),
-              const NotificationBellButton(),
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline_rounded),
-                onPressed: () => navigatorKey.currentState?.pushNamed(
-                  AppConstants.routeCreatePost,
-                ),
-              ),
-            ],
           ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: SearchBar(
                 controller: _searchController,
-                hintText: 'Search posts…',
+                hintText: 'Search posts...',
                 leading: const Icon(Icons.search_rounded),
-                trailing: _searchQuery.isEmpty
-                    ? null
-                    : [
-                        IconButton(
-                          icon: const Icon(Icons.clear_rounded),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        ),
-                      ],
+                trailing: [
+                  if (_searchQuery.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.clear_rounded),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    ),
+                  IconButton(
+                    tooltip: 'Filters',
+                    icon: Badge(
+                      isLabelVisible: _hasActiveFilters,
+                      child: const Icon(Icons.tune_rounded),
+                    ),
+                    onPressed: () async {
+                      final allForCategories = await context
+                          .read<PostController>()
+                          .watchPosts()
+                          .first;
+                      if (!mounted) return;
+                      await _openFilters(allForCategories);
+                    },
+                  ),
+                ],
                 onChanged: (v) => setState(() => _searchQuery = v),
                 onSubmitted: (v) => setState(() => _searchQuery = v),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 18, 8, 4),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  const filters =
+                      <({PostModule? module, IconData icon, String label})>[
+                        (module: null, icon: Icons.apps_rounded, label: 'All'),
+                        (
+                          module: PostModule.lost,
+                          icon: Icons.pets_rounded,
+                          label: 'Lost',
+                        ),
+                        (
+                          module: PostModule.found,
+                          icon: Icons.inventory_2_outlined,
+                          label: 'Found',
+                        ),
+                        (
+                          module: PostModule.charity,
+                          icon: Icons.favorite_border_rounded,
+                          label: 'Charity',
+                        ),
+                        (
+                          module: PostModule.resources,
+                          icon: Icons.shield_outlined,
+                          label: 'Rescue',
+                        ),
+                        (
+                          module: PostModule.lend,
+                          icon: Icons.handshake_outlined,
+                          label: 'Lend',
+                        ),
+                        (
+                          module: PostModule.borrow,
+                          icon: Icons.shopping_bag_outlined,
+                          label: 'Borrow',
+                        ),
+                      ];
+                  final itemWidth = constraints.maxWidth / 5;
+                  return SizedBox(
+                    height: 84,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: filters.length,
+                      itemBuilder: (context, i) {
+                        final item = filters[i];
+                        return SizedBox(
+                          width: itemWidth,
+                          child: _HomeCat(
+                            icon: item.icon,
+                            label: item.label,
+                            selected: _module == item.module,
+                            onTap: () => setState(() => _module = item.module),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -186,12 +403,10 @@ class _DashboardViewState extends State<DashboardView> {
                       ),
                     if (_radiusKm != null)
                       InputChip(
-                        label: Text('Within ${_radiusKm!.toStringAsFixed(0)} km'),
-                        onDeleted: () => setState(() {
-                          _radiusKm = null;
-                          _userLatitude = null;
-                          _userLongitude = null;
-                        }),
+                        label: Text(
+                          'Within ${_radiusKm!.toStringAsFixed(0)} km',
+                        ),
+                        onDeleted: () => setState(() => _radiusKm = null),
                       ),
                     if (_categoryFilter != null)
                       InputChip(
@@ -210,7 +425,7 @@ class _DashboardViewState extends State<DashboardView> {
           if (_locationError != null)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Text(
                   _locationError!,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -221,29 +436,18 @@ class _DashboardViewState extends State<DashboardView> {
             ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: const Text('All'),
-                        selected: _module == null,
-                        onSelected: (_) => setState(() => _module = null),
-                      ),
+              padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+              child: Row(
+                children: [
+                  Text('Latest Posts', style: theme.textTheme.titleLarge),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => navigatorKey.currentState?.pushNamed(
+                      AppConstants.routeCreatePost,
                     ),
-                    ...PostModule.values.map((m) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(m.label),
-                            selected: _module == m,
-                            onSelected: (_) => setState(() => _module = m),
-                          ),
-                        )),
-                  ],
-                ),
+                    child: const Text('Create'),
+                  ),
+                ],
               ),
             ),
           ),
@@ -258,6 +462,11 @@ class _DashboardViewState extends State<DashboardView> {
                   );
                 }
                 final allPosts = snap.data ?? [];
+                if (_locationLoading) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
                 final posts = PostSearchFilter.apply(
                   posts: allPosts,
                   keyword: _searchQuery,
@@ -265,7 +474,19 @@ class _DashboardViewState extends State<DashboardView> {
                   radiusKm: _radiusKm,
                   userLatitude: _userLatitude,
                   userLongitude: _userLongitude,
+                  placeLabel: _userLatitude == null ? null : _locationLabel,
                 );
+                posts.sort((a, b) {
+                  final sponsor = (b.isSponsored ? 1 : 0).compareTo(
+                    a.isSponsored ? 1 : 0,
+                  );
+                  if (sponsor != 0) return sponsor;
+                  final ad =
+                      a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  final bd =
+                      b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+                  return bd.compareTo(ad);
+                });
 
                 if (posts.isEmpty) {
                   return SliverFillRemaining(
@@ -279,24 +500,29 @@ class _DashboardViewState extends State<DashboardView> {
                                 ? Icons.search_off_rounded
                                 : Icons.inbox_rounded,
                             size: 64,
-                            color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.45),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             _hasActiveFilters
                                 ? 'No posts match your search'
+                                : _userLatitude != null
+                                ? 'No posts in $_locationLabel'
                                 : 'No posts yet',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
+                            style: theme.textTheme.titleMedium,
+                            textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 8),
                           Text(
                             _hasActiveFilters
                                 ? 'Try different keywords or filters'
+                                : _userLatitude != null
+                                ? 'Posts from this place will show up here.'
                                 : 'Be the first to share!',
+                            textAlign: TextAlign.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                           if (_hasActiveFilters) ...[
@@ -308,9 +534,8 @@ class _DashboardViewState extends State<DashboardView> {
                           ] else ...[
                             const SizedBox(height: 24),
                             FilledButton.icon(
-                              onPressed: () => navigatorKey.currentState?.pushNamed(
-                                AppConstants.routeCreatePost,
-                              ),
+                              onPressed: () => navigatorKey.currentState
+                                  ?.pushNamed(AppConstants.routeCreatePost),
                               icon: const Icon(Icons.add_rounded),
                               label: const Text('Create post'),
                             ),
@@ -321,26 +546,74 @@ class _DashboardViewState extends State<DashboardView> {
                   );
                 }
                 return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, i) {
-                      final post = posts[i];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: PostCard(
-                          key: ValueKey(post.id),
-                          post: post,
-                          onTap: () => navigatorKey.currentState?.pushNamed(
-                            AppConstants.routePostDetail,
-                            arguments: post,
-                          ),
+                  delegate: SliverChildBuilderDelegate((_, i) {
+                    final post = posts[i];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: PostCard(
+                        key: ValueKey(post.id),
+                        post: post,
+                        onTap: () => navigatorKey.currentState?.pushNamed(
+                          AppConstants.routePostDetail,
+                          arguments: post,
                         ),
-                      );
-                    },
-                    childCount: posts.length,
-                  ),
+                      ),
+                    );
+                  }, childCount: posts.length),
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeCat extends StatelessWidget {
+  const _HomeCat({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              icon,
+              color: selected
+                  ? theme.colorScheme.onPrimary
+                  : theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.labelMedium,
           ),
         ],
       ),

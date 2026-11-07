@@ -8,7 +8,7 @@ import '../../admin/services/admin_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import 'announcement_dialog.dart';
 
-/// Shows undismissed admin broadcasts after login / app start.
+/// Shows each active broadcast popup at most once per user.
 class AnnouncementListener extends StatefulWidget {
   const AnnouncementListener({super.key, this.child});
 
@@ -23,6 +23,7 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
   bool _running = false;
   bool _scheduled = false;
   int _routeWaitAttempts = 0;
+  final Set<String> _sessionShownIds = {};
 
   static const _maxRouteWaitAttempts = 40;
   static const _routePollDelay = Duration(milliseconds: 500);
@@ -70,6 +71,7 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
     if (user == null) {
       _handledUserId = null;
       _routeWaitAttempts = 0;
+      _sessionShownIds.clear();
       return;
     }
     if (_running || _handledUserId == user.uid) return;
@@ -87,7 +89,6 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
     }
 
     _routeWaitAttempts = 0;
-
     _running = true;
     final announcementService = context.read<AnnouncementService>();
     try {
@@ -97,7 +98,10 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
       }
 
       final pending = await announcementService.getPendingForUser(user.uid);
-      if (pending.isEmpty) {
+      final toShow = pending
+          .where((a) => !_sessionShownIds.contains(a.id))
+          .toList();
+      if (toShow.isEmpty) {
         _handledUserId = user.uid;
         return;
       }
@@ -107,20 +111,30 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
 
       _handledUserId = user.uid;
 
-      for (final announcement in pending) {
+      for (final announcement in toShow) {
+        // Mark seen before showing so force-close / crash never re-pops it.
+        _sessionShownIds.add(announcement.id);
+        try {
+          await announcementService.markSeen(user.uid, announcement.id);
+        } catch (e, st) {
+          debugPrint('Failed to mark broadcast seen: $e\n$st');
+        }
+        if (!mounted) break;
+
         final dialogContext = navigatorKey.currentContext;
         if (dialogContext == null || !dialogContext.mounted) break;
 
         await showAnnouncementDialog(dialogContext, announcement);
-
         if (!mounted) break;
-        await announcementService.dismiss(user.uid, announcement.id);
       }
     } catch (e, st) {
       debugPrint('AnnouncementListener failed: $e\n$st');
       if (_routeWaitAttempts++ < 3) {
         await Future<void>.delayed(const Duration(seconds: 2));
-        if (mounted) _scheduleCheck();
+        if (mounted) {
+          _handledUserId = null;
+          _scheduleCheck();
+        }
       }
     } finally {
       _running = false;

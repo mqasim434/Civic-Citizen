@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.example.civic_citizen",
+      "sha256_cert_fingerprints": [
+        "0A:A6:CE:4A:9D:09:43:A0:93:88:46:D4:9F:42:25:0A:94:A1:27:38:AC:3A:BF:27:30:BB:A6:C1:D6:B9:26:E1"
+      ]
+    }
+  }
+]

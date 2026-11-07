@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../core/theme/app_atmosphere.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/kyc_controller.dart';
@@ -52,18 +53,7 @@ class _KycViewState extends State<KycView> {
             ),
           ],
         ),
-        body: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                theme.colorScheme.primary.withValues(alpha: 0.08),
-                theme.colorScheme.surface,
-              ],
-            ),
-          ),
+        body: AppAtmosphere(
           child: SafeArea(
             child: Column(
               children: [
@@ -71,7 +61,9 @@ class _KycViewState extends State<KycView> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: _step == 0 ? _buildCnicStep(theme) : _buildSelfieStep(theme),
+                    child: _step == 0
+                        ? _buildCnicStep(theme)
+                        : _buildSelfieStep(theme),
                   ),
                 ),
               ],

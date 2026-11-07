@@ -399,6 +399,147 @@ class NotificationService {
     );
   }
 
+  Map<String, dynamic> _newPostNotificationMap({
+    required String authorId,
+    required String authorName,
+    required String postId,
+    required String postTitle,
+    required String moduleLabel,
+  }) {
+    final name =
+        authorName.trim().isEmpty ? 'A community member' : authorName.trim();
+    final listing =
+        postTitle.trim().isEmpty ? 'a new listing' : '"${postTitle.trim()}"';
+    return AppNotification(
+      id: '',
+      type: AppNotificationType.postCreated,
+      title: 'New community post',
+      body: '$name posted a $moduleLabel listing: $listing',
+      read: false,
+      actorUserId: authorId,
+      actorName: name,
+      postId: postId,
+      routeName: AppConstants.routePostDetail,
+    ).toMap();
+  }
+
+  /// One shared alert so other signed-in users can pick it up without listing private profiles.
+  Future<void> publishPostAlert({
+    required String authorId,
+    required String authorName,
+    required String postId,
+    required String postTitle,
+    required String moduleLabel,
+  }) async {
+    if (postId.isEmpty || authorId.isEmpty) return;
+    await _firestore.collection(AppConstants.postAlertsCollection).doc(postId).set({
+      'postId': postId,
+      'authorId': authorId,
+      'authorName': authorName.trim(),
+      'postTitle': postTitle.trim(),
+      'moduleLabel': moduleLabel,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Writes a new-post notification to this user's inbox (idempotent per post).
+  Future<void> ingestPostAlertForUser({
+    required String recipientUserId,
+    required String authorId,
+    required String authorName,
+    required String postId,
+    required String postTitle,
+    required String moduleLabel,
+  }) async {
+    if (recipientUserId.isEmpty || recipientUserId == authorId || postId.isEmpty) {
+      return;
+    }
+    await _userNotifications(recipientUserId).doc('post_$postId').set(
+          _newPostNotificationMap(
+            authorId: authorId,
+            authorName: authorName,
+            postId: postId,
+            postTitle: postTitle,
+            moduleLabel: moduleLabel,
+          ),
+          SetOptions(merge: true),
+        );
+  }
+
+  Future<void> notifyNewPost({
+    required String authorId,
+    required String authorName,
+    required String postId,
+    required String postTitle,
+    required String moduleLabel,
+  }) async {
+    if (postId.isEmpty) return;
+
+    try {
+      await publishPostAlert(
+        authorId: authorId,
+        authorName: authorName,
+        postId: postId,
+        postTitle: postTitle,
+        moduleLabel: moduleLabel,
+      );
+    } catch (e, st) {
+      // ignore: avoid_print
+      print('Could not publish post alert: $e');
+      // ignore: avoid_print
+      print(st);
+    }
+
+    final recipientIds = <String>{};
+    for (final collection in [
+      AppConstants.userIndexCollection,
+      AppConstants.publicTrustCollection,
+      AppConstants.adminsCollection,
+    ]) {
+      try {
+        final snap = await _firestore.collection(collection).get();
+        recipientIds.addAll(snap.docs.map((d) => d.id));
+      } catch (e, st) {
+        // ignore: avoid_print
+        print('Could not list $collection for post alert: $e');
+        // ignore: avoid_print
+        print(st);
+      }
+    }
+    recipientIds.remove(authorId);
+    if (recipientIds.isEmpty) return;
+
+    final payload = _newPostNotificationMap(
+      authorId: authorId,
+      authorName: authorName,
+      postId: postId,
+      postTitle: postTitle,
+      moduleLabel: moduleLabel,
+    );
+    final ids = recipientIds.toList();
+    const chunkSize = 450;
+
+    for (var i = 0; i < ids.length; i += chunkSize) {
+      final end = i + chunkSize > ids.length ? ids.length : i + chunkSize;
+      final batch = _firestore.batch();
+      for (final uid in ids.sublist(i, end)) {
+        batch.set(
+          _userNotifications(uid).doc('post_$postId'),
+          payload,
+          SetOptions(merge: true),
+        );
+      }
+      try {
+        await batch.commit();
+      } catch (e, st) {
+        // ignore: avoid_print
+        print('Post alert batch failed: $e');
+        // ignore: avoid_print
+        print(st);
+      }
+    }
+  }
+
   Future<void> notifyPostFlagged({
     required String authorId,
     required String postId,

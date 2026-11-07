@@ -91,6 +91,12 @@ class PostModel {
     this.longitude,
     this.isInappropriate = false,
     this.inappropriateReason,
+    this.commentCount = 0,
+    this.likeCount = 0,
+    this.viewCount = 0,
+    this.isStandaloneAd = false,
+    this.sponsorPointsSpent = 0,
+    this.sponsoredUntil,
     this.createdAt,
     this.updatedAt,
   });
@@ -117,6 +123,12 @@ class PostModel {
       longitude: (d['longitude'] as num?)?.toDouble(),
       isInappropriate: d['isInappropriate'] as bool? ?? false,
       inappropriateReason: d['inappropriateReason'] as String?,
+      commentCount: (d['commentCount'] as num?)?.toInt() ?? 0,
+      likeCount: (d['likeCount'] as num?)?.toInt() ?? 0,
+      viewCount: (d['viewCount'] as num?)?.toInt() ?? 0,
+      isStandaloneAd: d['isStandaloneAd'] as bool? ?? false,
+      sponsorPointsSpent: (d['sponsorPointsSpent'] as num?)?.toInt() ?? 0,
+      sponsoredUntil: (d['sponsoredUntil'] as Timestamp?)?.toDate(),
       createdAt: (d['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (d['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -142,11 +154,24 @@ class PostModel {
   final double? longitude;
   final bool isInappropriate;
   final String? inappropriateReason;
+  final int commentCount;
+  final int likeCount;
+  final int viewCount;
+  /// A paid ad created from the ad form, not a boosted community post.
+  final bool isStandaloneAd;
+  final int sponsorPointsSpent;
+  final DateTime? sponsoredUntil;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   /// Hidden from home feed and map after lend/borrow handshake.
   bool get isFulfilled => listingStatus == PostListingStatus.fulfilled;
+
+  bool get isSponsored =>
+      sponsoredUntil != null && sponsoredUntil!.isAfter(DateTime.now());
+
+  bool get hasAdHistory =>
+      isStandaloneAd || sponsorPointsSpent > 0 || sponsoredUntil != null;
 
   bool get isPubliclyListed => !isFulfilled;
 
@@ -178,6 +203,13 @@ class PostModel {
         'imageUrls': imageUrls,
         'isInappropriate': isInappropriate,
         if (inappropriateReason != null) 'inappropriateReason': inappropriateReason,
+        'commentCount': commentCount,
+        'likeCount': likeCount,
+        'viewCount': viewCount,
+        if (isStandaloneAd) 'isStandaloneAd': true,
+        if (sponsorPointsSpent > 0) 'sponsorPointsSpent': sponsorPointsSpent,
+        if (sponsoredUntil != null)
+          'sponsoredUntil': Timestamp.fromDate(sponsoredUntil!),
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       };

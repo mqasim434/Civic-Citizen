@@ -10,18 +10,18 @@ class ThemeController extends ChangeNotifier {
   }
 
   final SharedPreferences _prefs;
-  ThemeMode _mode = ThemeMode.system;
+  ThemeMode _mode = ThemeMode.light;
   ThemeMode get mode => _mode;
 
   ThemeMode _loadMode() {
     final v = _prefs.getString(AppConstants.keyThemeMode);
     switch (v) {
-      case 'light':
-        return ThemeMode.light;
       case 'dark':
         return ThemeMode.dark;
-      default:
+      case 'system':
         return ThemeMode.system;
+      default:
+        return ThemeMode.light;
     }
   }
 

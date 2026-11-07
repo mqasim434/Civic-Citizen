@@ -7,6 +7,7 @@ enum AppNotificationType {
   kycRejected,
   accountBanned,
   postFlagged,
+  postCreated,
   contractCreated,
   contractLenderSigned,
   contractBorrowerSigned,
@@ -17,6 +18,7 @@ enum AppNotificationType {
   contactRequested,
   contactAccepted,
   contactDeclined,
+  eventPublished,
 }
 
 extension AppNotificationTypeX on AppNotificationType {
@@ -32,6 +34,8 @@ extension AppNotificationTypeX on AppNotificationType {
         return 'account_banned';
       case AppNotificationType.postFlagged:
         return 'post_flagged';
+      case AppNotificationType.postCreated:
+        return 'post_created';
       case AppNotificationType.contractCreated:
         return 'contract_created';
       case AppNotificationType.contractLenderSigned:
@@ -52,6 +56,8 @@ extension AppNotificationTypeX on AppNotificationType {
         return 'contact_accepted';
       case AppNotificationType.contactDeclined:
         return 'contact_declined';
+      case AppNotificationType.eventPublished:
+        return 'event_published';
     }
   }
 
@@ -67,6 +73,8 @@ extension AppNotificationTypeX on AppNotificationType {
         return AppNotificationType.accountBanned;
       case 'post_flagged':
         return AppNotificationType.postFlagged;
+      case 'post_created':
+        return AppNotificationType.postCreated;
       case 'contract_created':
         return AppNotificationType.contractCreated;
       case 'contract_lender_signed':
@@ -87,6 +95,8 @@ extension AppNotificationTypeX on AppNotificationType {
         return AppNotificationType.contactAccepted;
       case 'contact_declined':
         return AppNotificationType.contactDeclined;
+      case 'event_published':
+        return AppNotificationType.eventPublished;
       default:
         return AppNotificationType.contractCreated;
     }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../core/theme/app_atmosphere.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../controllers/auth_controller.dart';
@@ -54,19 +55,7 @@ class _SignupViewState extends State<SignupView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      body: SizedBox.expand(
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              theme.colorScheme.primary.withValues(alpha: 0.08),
-              theme.colorScheme.surface,
-            ],
-          ),
-        ),
+      body: AppAtmosphere(
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -76,28 +65,26 @@ class _SignupViewState extends State<SignupView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 32),
-                  Icon(
-                    Icons.person_add_rounded,
-                    size: 56,
-                    color: theme.colorScheme.primary,
-                  )
-                      .animate()
-                      .fadeIn()
-                      .scale(begin: const Offset(0.9, 0.9)),
-                  const SizedBox(height: 24),
+                  Text(
+                    AppConstants.appName,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.secondary,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                    ),
+                  ).animate().fadeIn(),
+                  const SizedBox(height: 18),
                   Text(
                     'Create account',
-                    style: theme.textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.1, end: 0),
+                    style: theme.textTheme.displaySmall,
+                  ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.08, end: 0),
                   const SizedBox(height: 8),
                   Text(
-                    'Join ${AppConstants.appName} to connect with your community',
+                    'Join your neighbors to share lost items, resources, and help.',
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ).animate().fadeIn(delay: 200.ms).slideX(begin: -0.1, end: 0),
+                  ).animate().fadeIn(delay: 140.ms).slideY(begin: 0.08, end: 0),
                   const SizedBox(height: 32),
                   AppTextField(
                     controller: _nameController,
@@ -107,13 +94,13 @@ class _SignupViewState extends State<SignupView> {
                     autofillHints: const [AutofillHints.name],
                     prefixIcon: Icon(
                       Icons.person_outline_rounded,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return 'Enter your name';
                       return null;
                     },
-                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05, end: 0),
+                  ).animate().fadeIn(delay: 220.ms).slideY(begin: 0.05, end: 0),
                   const SizedBox(height: 20),
                   AppTextField(
                     controller: _emailController,
@@ -124,25 +111,28 @@ class _SignupViewState extends State<SignupView> {
                     autofillHints: const [AutofillHints.email],
                     prefixIcon: Icon(
                       Icons.email_outlined,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return 'Enter your email';
-                      if (!v.contains('@') || !v.contains('.')) return 'Enter a valid email';
+                      if (!v.contains('@') || !v.contains('.')) {
+                        return 'Enter a valid email';
+                      }
                       return null;
                     },
-                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05, end: 0),
+                  ).animate().fadeIn(delay: 280.ms).slideY(begin: 0.05, end: 0),
                   const SizedBox(height: 20),
                   AppTextField(
                     controller: _passwordController,
                     label: 'Password',
-                    hint: 'At least ${AppConstants.minPasswordLength} characters',
+                    hint:
+                        'At least ${AppConstants.minPasswordLength} characters',
                     obscureText: true,
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.newPassword],
                     prefixIcon: Icon(
                       Icons.lock_outline_rounded,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     onSubmitted: (_) => _submit(),
                     validator: (v) {
@@ -152,7 +142,7 @@ class _SignupViewState extends State<SignupView> {
                       }
                       return null;
                     },
-                  ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.05, end: 0),
+                  ).animate().fadeIn(delay: 340.ms).slideY(begin: 0.05, end: 0),
                   const SizedBox(height: 12),
                   Consumer<AuthController>(
                     builder: (_, auth, __) {
@@ -174,14 +164,16 @@ class _SignupViewState extends State<SignupView> {
                       onPressed: _submit,
                       loading: auth.isLoading,
                     ),
-                  ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.05, end: 0),
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05, end: 0),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         'Already have an account? ',
-                        style: theme.textTheme.bodyMedium,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       TextButton(
                         onPressed: () {
@@ -192,13 +184,12 @@ class _SignupViewState extends State<SignupView> {
                         child: const Text('Sign in'),
                       ),
                     ],
-                  ).animate().fadeIn(delay: 700.ms),
+                  ).animate().fadeIn(delay: 460.ms),
                 ],
               ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

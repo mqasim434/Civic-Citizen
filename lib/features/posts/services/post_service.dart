@@ -22,17 +22,24 @@ class PostService {
   CollectionReference<Map<String, dynamic>> get _posts =>
       _firestore.collection(AppConstants.postsCollection);
 
-  /// Stream publicly listed posts (excludes fulfilled lend/borrow listings).
+  /// Stream publicly listed posts (excludes fulfilled / flagged).
+  /// Module filtering is client-side so legacy values like `lost_found` still match.
   Stream<List<PostModel>> watchPosts({PostModule? module}) {
-    final Query<Map<String, dynamic>> q = module != null
-        ? _posts
-            .where('module', isEqualTo: module.value)
-            .orderBy('createdAt', descending: true)
-        : _posts.orderBy('createdAt', descending: true);
-    return q.snapshots().map((snap) => snap.docs
-        .map((d) => PostModel.fromFirestore(d))
-        .where((p) => p.isPubliclyListed && !p.isInappropriate)
-        .toList());
+    return _posts
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) {
+      var posts = snap.docs
+          .map(PostModel.fromFirestore)
+          .where((p) => p.isPubliclyListed && !p.isInappropriate)
+          .toList();
+      if (module != null) {
+        posts = posts
+            .where((p) => p.module == module && !p.isStandaloneAd)
+            .toList();
+      }
+      return posts;
+    });
   }
 
   /// All posts by author (active + fulfilled).
@@ -50,6 +57,13 @@ class PostService {
     return watchPostsByAuthor(authorId).map(
       (posts) => posts.where((p) => p.isPubliclyListed).toList(),
     );
+  }
+
+  Stream<PostModel?> watchPost(String id) {
+    return _posts.doc(id).snapshots().map((doc) {
+      if (!doc.exists || doc.data() == null) return null;
+      return PostModel.fromFirestore(doc);
+    });
   }
 
   /// Get single post by id.
@@ -77,6 +91,60 @@ class PostService {
   Future<void> updatePost(String id, Map<String, dynamic> data) async {
     data['updatedAt'] = FieldValue.serverTimestamp();
     await _posts.doc(id).update(data);
+  }
+
+  Stream<bool> watchLiked({required String postId, required String uid}) {
+    return _posts
+        .doc(postId)
+        .collection('likes')
+        .doc(uid)
+        .snapshots()
+        .map((doc) => doc.exists);
+  }
+
+  Future<void> toggleLike({required String postId, required String uid}) async {
+    final postRef = _posts.doc(postId);
+    final likeRef = postRef.collection('likes').doc(uid);
+    await _firestore.runTransaction((tx) async {
+      final postSnap = await tx.get(postRef);
+      if (!postSnap.exists) throw Exception('Post not found.');
+      final likeSnap = await tx.get(likeRef);
+      final current = (postSnap.data()?['likeCount'] as num?)?.toInt() ?? 0;
+      if (likeSnap.exists) {
+        tx.delete(likeRef);
+        tx.update(postRef, {
+          'likeCount': current > 0 ? current - 1 : 0,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        tx.set(likeRef, {'createdAt': FieldValue.serverTimestamp()});
+        tx.update(postRef, {
+          'likeCount': current + 1,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    });
+  }
+
+  /// Counts one unique viewer. Safe to call more than once for the same user.
+  Future<void> recordUniqueView({
+    required String postId,
+    required String uid,
+  }) async {
+    final postRef = _posts.doc(postId);
+    final viewRef = postRef.collection('views').doc(uid);
+    await _firestore.runTransaction((tx) async {
+      final viewSnap = await tx.get(viewRef);
+      if (viewSnap.exists) return;
+      final postSnap = await tx.get(postRef);
+      if (!postSnap.exists) return;
+      final current = (postSnap.data()?['viewCount'] as num?)?.toInt() ?? 0;
+      tx.set(viewRef, {'createdAt': FieldValue.serverTimestamp()});
+      tx.update(postRef, {
+        'viewCount': current + 1,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
   }
 
   /// Delete post.

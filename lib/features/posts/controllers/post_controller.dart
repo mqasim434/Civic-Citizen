@@ -3,14 +3,17 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../core/services/notification_service.dart';
 import '../models/post_model.dart';
 import '../services/post_service.dart';
 
 /// Posts state and actions.
 class PostController extends ChangeNotifier {
-  PostController(this._postService);
+  PostController(this._postService, {NotificationService? notifications})
+      : _notifications = notifications;
 
   final PostService _postService;
+  final NotificationService? _notifications;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -64,6 +67,19 @@ class PostController extends ChangeNotifier {
         itemCondition: itemCondition,
       );
       final id = await _postService.createPost(post);
+      if (id.isNotEmpty && _notifications != null) {
+        try {
+          await _notifications.notifyNewPost(
+            authorId: authorId,
+            authorName: authorName,
+            postId: id,
+            postTitle: title,
+            moduleLabel: module.label,
+          );
+        } catch (e) {
+          debugPrint('New post notification failed: $e');
+        }
+      }
       if (images != null && images.isNotEmpty && id.isNotEmpty) {
         final urls = <String>[];
         for (final img in images) {

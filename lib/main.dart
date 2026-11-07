@@ -3,8 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core/navigation/deep_link_listener.dart';
 import 'core/routes/app_router.dart';
+import 'features/ads/services/ad_service.dart';
 import 'features/announcements/widgets/announcement_listener.dart';
+import 'features/events/services/event_service.dart';
+import 'features/events/widgets/event_alert_listener.dart';
+import 'features/points/services/points_service.dart';
+import 'features/posts/services/comment_service.dart';
+import 'features/posts/widgets/post_alert_listener.dart';
 import 'core/services/announcement_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/profile_service.dart';
@@ -73,6 +80,12 @@ class CivicCitizenApp extends StatelessWidget {
           create: (ctx) => KycController(ctx.read<KycService>()),
         ),
         Provider<PostService>(create: (_) => PostService()),
+        Provider<CommentService>(create: (_) => CommentService()),
+        Provider<PointsService>(create: (_) => PointsService()),
+        Provider<AdService>(
+          create: (ctx) => AdService(points: ctx.read<PointsService>()),
+        ),
+        Provider<EventService>(create: (_) => EventService()),
         Provider<LendBorrowContractService>(
           create: (ctx) => LendBorrowContractService(
             notifications: ctx.read<NotificationService>(),
@@ -91,7 +104,10 @@ class CivicCitizenApp extends StatelessWidget {
           ),
         ),
         ChangeNotifierProvider<PostController>(
-          create: (ctx) => PostController(ctx.read<PostService>()),
+          create: (ctx) => PostController(
+            ctx.read<PostService>(),
+            notifications: ctx.read<NotificationService>(),
+          ),
         ),
         ChangeNotifierProvider<ThemeController>(
           create: (_) => ThemeController(prefs),
@@ -110,8 +126,13 @@ class CivicCitizenApp extends StatelessWidget {
               navigatorKey: navigatorKey,
               onGenerateRoute: AppRouter.onGenerateRoute,
               initialRoute: '/',
-              builder: (context, child) =>
-                  AnnouncementListener(child: child),
+              builder: (context, child) => DeepLinkListener(
+                child: AnnouncementListener(
+                  child: PostAlertListener(
+                    child: EventAlertListener(child: child),
+                  ),
+                ),
+              ),
             ),
           );
         },

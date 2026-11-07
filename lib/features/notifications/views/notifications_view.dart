@@ -6,8 +6,15 @@ import '../../../features/posts/services/post_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class NotificationsView extends StatelessWidget {
+class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
+
+  @override
+  State<NotificationsView> createState() => _NotificationsViewState();
+}
+
+class _NotificationsViewState extends State<NotificationsView> {
+  String _filter = 'All';
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +30,33 @@ class NotificationsView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-          TextButton(
+          IconButton(
+            tooltip: 'Clear read state',
             onPressed: () => service.markAllRead(user.uid),
-            child: const Text('Mark all read'),
+            icon: const Icon(Icons.delete_outline_rounded),
           ),
         ],
       ),
-      body: StreamBuilder<List<AppNotification>>(
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Row(
+              children: [
+                for (final label in const ['All', 'Important', 'Updates'])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(label),
+                      selected: _filter == label,
+                      onSelected: (_) => setState(() => _filter = label),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<List<AppNotification>>(
         stream: service.watchNotifications(user.uid),
         builder: (context, snap) {
           if (snap.hasError) {
@@ -48,7 +75,20 @@ class NotificationsView extends StatelessWidget {
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          final items = snap.data ?? [];
+          final items = (snap.data ?? []).where((n) {
+            if (_filter == 'Important') {
+              return n.type == AppNotificationType.accountBanned ||
+                  n.type == AppNotificationType.kycRejected ||
+                  n.type == AppNotificationType.postFlagged ||
+                  n.type == AppNotificationType.claimCreated;
+            }
+            if (_filter == 'Updates') {
+              return n.type == AppNotificationType.eventPublished ||
+                  n.type == AppNotificationType.postCreated ||
+                  n.type == AppNotificationType.kycApproved;
+            }
+            return true;
+          }).toList();
           if (items.isEmpty) {
             return Center(
               child: Column(
@@ -66,9 +106,9 @@ class NotificationsView extends StatelessWidget {
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             itemCount: items.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
               final n = items[i];
               return ListTile(
@@ -122,6 +162,9 @@ class NotificationsView extends StatelessWidget {
           );
         },
       ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -137,6 +180,8 @@ class NotificationsView extends StatelessWidget {
         return Icons.block;
       case AppNotificationType.postFlagged:
         return Icons.flag_outlined;
+      case AppNotificationType.postCreated:
+        return Icons.post_add_rounded;
       case AppNotificationType.contractCreated:
       case AppNotificationType.contractLenderSigned:
       case AppNotificationType.contractBorrowerSigned:
@@ -152,6 +197,8 @@ class NotificationsView extends StatelessWidget {
         return Icons.check_circle_outline;
       case AppNotificationType.contactDeclined:
         return Icons.person_off_outlined;
+      case AppNotificationType.eventPublished:
+        return Icons.event_available_rounded;
     }
   }
 

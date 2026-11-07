@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Open post · Civic Citizen</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f3f1ec;
+      color: #1a2b45;
+      display: flex;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 24px;
+      text-align: center;
+    }
+    a.button {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 14px 22px;
+      background: #2f6b4f;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    .muted { color: #5a6578; font-size: 14px; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>Open in Civic Citizen</h1>
+    <p class="muted">If the app does not open automatically, tap the button below.</p>
+    <a id="open" class="button" href="#">Open post</a>
+  </div>
+  <script>
+    (function () {
+      var parts = location.pathname.split('/').filter(Boolean);
+      var postIdx = parts.indexOf('post');
+      var id = postIdx >= 0 && parts[postIdx + 1] ? parts[postIdx + 1] : '';
+      var appLink = id ? ('civiccitizen://post/' + encodeURIComponent(id)) : 'civiccitizen://post/';
+      var intentLink = id
+        ? ('intent://post/' + encodeURIComponent(id) +
+           '#Intent;scheme=civiccitizen;package=com.example.civic_citizen;end')
+        : appLink;
+
+      var btn = document.getElementById('open');
+      btn.href = appLink;
+
+      // Try app scheme, then Android intent URL as fallback.
+      window.location.replace(appLink);
+      setTimeout(function () {
+        if (document.visibilityState === 'visible') {
+          window.location.href = intentLink;
+        }
+      }, 700);
+    })();
+  </script>
+</body>
+</html>

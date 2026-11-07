@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/navigation/shell_tab.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/routes/app_router.dart';
-import '../../../shared/widgets/notification_bell_button.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../lend_borrow/widgets/completed_exchanges_section.dart';
 import '../../lost_found/widgets/completed_recoveries_section.dart';
+import '../../ads/widgets/boost_post_sheet.dart';
+import '../../points/services/points_service.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
 
@@ -34,9 +37,9 @@ Future<void> _showDeleteConfirm(BuildContext context, PostModel post) async {
   if (confirmed == true && context.mounted) {
     await context.read<PostController>().deletePost(post.id);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Post deleted')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Post deleted')));
     }
   }
 }
@@ -52,166 +55,352 @@ class ProfileView extends StatelessWidget {
     if (user == null) {
       return Scaffold(
         body: Center(
-          child: Text(
-            'Please sign in',
-            style: theme.textTheme.bodyLarge,
-          ),
+          child: Text('Please sign in', style: theme.textTheme.bodyLarge),
         ),
       );
     }
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        actions: [
-          const NotificationBellButton(),
-          IconButton(
-            icon: const Icon(Icons.settings_rounded),
-            onPressed: () => navigatorKey.currentState?.pushNamed(
-              AppConstants.routeSettings,
-            ),
-          ),
-        ],
-      ),
+      backgroundColor: AppTheme.warmCream,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CircleAvatar(
-              radius: 48,
-              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-              child: Text(
-                (user.displayName?.isNotEmpty == true
-                        ? user.displayName![0]
-                        : user.email?[0] ?? '?')
-                    .toUpperCase(),
-                style: theme.textTheme.displaySmall?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w700,
-                ),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(28),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              user.displayName ?? 'User',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (user.email != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                user.email!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: 20),
-            FilledButton.tonalIcon(
-              onPressed: () => navigatorKey.currentState?.pushNamed(
-                AppConstants.routeEditProfile,
-              ),
-              icon: const Icon(Icons.edit_rounded, size: 18),
-              label: const Text('Edit profile'),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () => navigatorKey.currentState?.pushNamed(
-                AppConstants.routeBroadcasts,
-              ),
-              icon: const Icon(Icons.campaign_outlined, size: 18),
-              label: const Text('Community broadcasts'),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'My posts',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Active listings only — completed lend/borrow items move to Completed exchanges.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            ),
-            const SizedBox(height: 12),
-            StreamBuilder<List<PostModel>>(
-              stream: context.read<PostController>().watchMyPosts(user.uid),
-              builder: (context, snap) {
-                final posts = snap.data ?? [];
-                if (posts.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Stack(
+                children: [
+                  const Positioned.fill(
+                    child: Image(
+                      image: AssetImage('assets/home_banner.jpg'),
+                      fit: BoxFit.cover,
+                      alignment: Alignment.centerRight,
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: ColoredBox(
+                      color: AppTheme.burgundy.withValues(alpha: 0.82),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 48, 12, 28),
                     child: Column(
                       children: [
-                        Text(
-                          'No posts yet',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            onPressed: () => navigatorKey.currentState
+                                ?.pushNamed(AppConstants.routeSettings),
+                            icon: const Icon(
+                              Icons.settings_rounded,
+                              color: Colors.white,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(
+                          width: 84,
+                          height: 84,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              CircleAvatar(
+                                radius: 42,
+                                backgroundColor: Colors.white,
+                                backgroundImage:
+                                    user.photoUrl?.trim().isNotEmpty == true
+                                    ? NetworkImage(user.photoUrl!)
+                                    : null,
+                                child: user.photoUrl?.trim().isNotEmpty == true
+                                    ? null
+                                    : Text(
+                                        (user.displayName?.isNotEmpty == true
+                                                ? user.displayName![0]
+                                                : user.email?[0] ?? '?')
+                                            .toUpperCase(),
+                                        style: theme.textTheme.headlineMedium
+                                            ?.copyWith(
+                                              color: AppTheme.burgundy,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                      ),
+                              ),
+                              Positioned(
+                                right: -2,
+                                bottom: -2,
+                                child: Material(
+                                  color: Colors.white,
+                                  elevation: 2,
+                                  shadowColor: Colors.black26,
+                                  shape: const CircleBorder(
+                                    side: BorderSide(
+                                      color: AppTheme.burgundy,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: () =>
+                                        navigatorKey.currentState?.pushNamed(
+                                          AppConstants.routeEditProfile,
+                                        ),
+                                    child: const SizedBox(
+                                      width: 28,
+                                      height: 28,
+                                      child: Icon(
+                                        Icons.edit_rounded,
+                                        size: 15,
+                                        color: AppTheme.burgundy,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 12),
-                        FilledButton.icon(
-                          onPressed: () => navigatorKey.currentState?.pushNamed(
-                            AppConstants.routeCreatePost,
+                        Text(
+                          user.displayName ?? 'User',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
                           ),
-                          icon: const Icon(Icons.add_rounded, size: 18),
-                          label: const Text('Create your first post'),
                         ),
+                        if (user.email != null)
+                          Text(
+                            user.email!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
+                          ),
                       ],
                     ),
-                  );
-                }
-                return Column(
-                  children: posts
-                      .map((p) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _MyPostCard(
-                              post: p,
-                              onView: () => navigatorKey.currentState?.pushNamed(
-                                AppConstants.routePostDetail,
-                                arguments: p,
-                              ),
-                              onEdit: () => navigatorKey.currentState?.pushNamed(
-                                AppConstants.routeEditPost,
-                                arguments: p,
-                              ),
-                              onDelete: () => _showDeleteConfirm(context, p),
-                            ),
-                          ))
-                      .toList(),
-                );
-              },
+                  ),
+                ],
+              ),
             ),
-            CompletedExchangesSection(userId: user.uid),
-            CompletedRecoveriesSection(userId: user.uid),
-            const SizedBox(height: 32),
-            OutlinedButton.icon(
-              onPressed: () async {
-                await auth.signOut();
-                if (context.mounted) {
-                  navigatorKey.currentState?.pushNamedAndRemoveUntil(
-                    AppConstants.routeLogin,
-                    (_) => false,
-                  );
-                }
-              },
-              icon: const Icon(Icons.logout_rounded),
-              label: const Text('Sign out'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.error,
-                side: BorderSide(color: theme.colorScheme.error),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  StreamBuilder<int>(
+                    stream: context.read<PointsService>().watchBalance(
+                      user.uid,
+                    ),
+                    builder: (context, snap) {
+                      return Row(
+                        children: [
+                          _Stat(label: 'Points', value: '${snap.data ?? 0}'),
+                          _Stat(label: 'Helps', value: '—'),
+                          const _Stat(label: 'Badges', value: '0'),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  _MenuTile(
+                    icon: Icons.bookmark_border_rounded,
+                    label: 'My Posts',
+                    onTap: () {},
+                  ),
+                  _MenuTile(
+                    icon: Icons.card_giftcard_rounded,
+                    label: 'Daily Rewards',
+                    onTap: () => ShellTab.go(3),
+                  ),
+                  _MenuTile(
+                    icon: Icons.notifications_none_rounded,
+                    label: 'Notifications',
+                    onTap: () => navigatorKey.currentState?.pushNamed(
+                      AppConstants.routeNotifications,
+                    ),
+                  ),
+                  _MenuTile(
+                    icon: Icons.headset_mic_outlined,
+                    label: 'Help & Support',
+                    onTap: () => navigatorKey.currentState?.pushNamed(
+                      AppConstants.routeHelpSupport,
+                    ),
+                  ),
+                  _MenuTile(
+                    icon: Icons.settings_outlined,
+                    label: 'Settings',
+                    onTap: () => navigatorKey.currentState?.pushNamed(
+                      AppConstants.routeSettings,
+                    ),
+                  ),
+                  _MenuTile(
+                    icon: Icons.event_outlined,
+                    label: 'Community events',
+                    onTap: () => navigatorKey.currentState?.pushNamed(
+                      AppConstants.routeEvents,
+                    ),
+                  ),
+                  _MenuTile(
+                    icon: Icons.campaign_outlined,
+                    label: 'Run an ad',
+                    onTap: () => navigatorKey.currentState?.pushNamed(
+                      AppConstants.routeCreateAd,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await auth.signOut();
+                      if (context.mounted) {
+                        navigatorKey.currentState?.pushNamedAndRemoveUntil(
+                          AppConstants.routeLogin,
+                          (_) => false,
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.logout_rounded),
+                    label: const Text('Log Out'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.burgundy,
+                      side: const BorderSide(color: AppTheme.beige),
+                      backgroundColor: AppTheme.ivory,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'My posts',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Active listings only — completed lend/borrow items move to Completed exchanges.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.55,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  StreamBuilder<List<PostModel>>(
+                    stream: context.read<PostController>().watchMyPosts(
+                      user.uid,
+                    ),
+                    builder: (context, snap) {
+                      final posts = snap.data ?? [];
+                      if (posts.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Column(
+                            children: [
+                              Text(
+                                'No posts yet',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.5,
+                                  ),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              FilledButton.icon(
+                                onPressed: () => navigatorKey.currentState
+                                    ?.pushNamed(AppConstants.routeCreatePost),
+                                icon: const Icon(Icons.add_rounded, size: 18),
+                                label: const Text('Create your first post'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return Column(
+                        children: posts
+                            .map(
+                              (p) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _MyPostCard(
+                                  post: p,
+                                  onView: () =>
+                                      navigatorKey.currentState?.pushNamed(
+                                        AppConstants.routePostDetail,
+                                        arguments: p,
+                                      ),
+                                  onEdit: () =>
+                                      navigatorKey.currentState?.pushNamed(
+                                        AppConstants.routeEditPost,
+                                        arguments: p,
+                                      ),
+                                  onDelete: () =>
+                                      _showDeleteConfirm(context, p),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
+                  ),
+                  CompletedExchangesSection(userId: user.uid),
+                  CompletedRecoveriesSection(userId: user.uid),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  const _MenuTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: AppTheme.inkMuted),
+      title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+      trailing: const Icon(Icons.chevron_right_rounded),
+      onTap: onTap,
     );
   }
 }
@@ -254,7 +443,9 @@ class _MyPostCard extends StatelessWidget {
                       child: Icon(
                         Icons.broken_image_outlined,
                         size: 40,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.4,
+                        ),
                       ),
                     ),
                   ),
@@ -266,19 +457,36 @@ class _MyPostCard extends StatelessWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.15,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              post.module.label,
+                              post.isStandaloneAd
+                                  ? 'Sponsored'
+                                  : post.module.label,
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
+                          if (post.isSponsored && !post.isStandaloneAd) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              'Sponsored',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.tertiary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -292,7 +500,9 @@ class _MyPostCard extends StatelessWidget {
                       Text(
                         post.description,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.8,
+                          ),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -314,6 +524,18 @@ class _MyPostCard extends StatelessWidget {
                   onPressed: onView,
                   child: const Text('View'),
                 ),
+                if (!post.isFulfilled && !post.isSponsored)
+                  OutlinedButton.icon(
+                    onPressed: () => showBoostPostDialog(context, post),
+                    icon: const Icon(Icons.campaign_outlined, size: 18),
+                    label: const Text('Boost'),
+                  ),
+                if (post.hasAdHistory)
+                  OutlinedButton.icon(
+                    onPressed: () => showPostInsights(context, post),
+                    icon: const Icon(Icons.insights_rounded, size: 18),
+                    label: const Text('Insights'),
+                  ),
                 OutlinedButton(
                   onPressed: post.isFulfilled ? null : onEdit,
                   child: const Text('Edit'),

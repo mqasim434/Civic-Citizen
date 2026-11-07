@@ -20,54 +20,35 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final child = loading
+        ? SizedBox(
+            height: 22,
+            width: 22,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: outlined
+                  ? theme.colorScheme.secondary
+                  : theme.colorScheme.onSecondary,
+            ),
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[icon!, const SizedBox(width: 8)],
+              Text(label),
+            ],
+          );
+
     if (outlined) {
       return OutlinedButton(
         onPressed: loading ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          side: BorderSide(color: theme.colorScheme.primary),
-        ),
-        child: loading
-            ? SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: theme.colorScheme.primary,
-                ),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (icon != null) ...[icon!, const SizedBox(width: 8)],
-                  Text(label),
-                ],
-              ),
+        child: child,
       );
     }
-    return ElevatedButton(
+    return FilledButton(
       onPressed: loading ? null : onPressed,
-      child: loading
-          ? SizedBox(
-              height: 22,
-              width: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: theme.colorScheme.onPrimary,
-              ),
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null) ...[icon!, const SizedBox(width: 8)],
-                Text(label),
-              ],
-            ),
+      child: child,
     );
   }
 }

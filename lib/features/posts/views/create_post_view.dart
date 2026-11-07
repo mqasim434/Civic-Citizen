@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../../shared/widgets/civic_brand.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/post_controller.dart';
 import '../models/location_pick_result.dart';
@@ -28,6 +29,7 @@ class _CreatePostViewState extends State<CreatePostView> {
   final _categoryOtherController = TextEditingController();
   final _conditionController = TextEditingController();
   PostModule _module = PostModule.lost;
+  int _step = 0;
   String? _category;
   final List<File> _images = [];
   double? _latitude;
@@ -103,30 +105,49 @@ class _CreatePostViewState extends State<CreatePostView> {
     final categories = _categoriesForModule(_module);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create post'),
+        title: const Text('Create Post'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              DropdownButtonFormField<PostModule>(
-                value: _module,
-                decoration: const InputDecoration(labelText: 'Module'),
-                items: PostModule.values
-                    .map((m) => DropdownMenuItem(value: m, child: Text(m.label)))
-                    .toList(),
-                onChanged: (m) => setState(() {
-                  _module = m ?? PostModule.lost;
-                  _category = null;
-                  _categoryOtherController.clear();
-                  if (!_isLendBorrow(_module)) _conditionController.clear();
-                }),
+              Row(
+                children: [
+                  _StepDot(index: 1, label: 'Details', active: _step >= 0),
+                  _StepDot(index: 2, label: 'Photos', active: _step >= 1),
+                  _StepDot(index: 3, label: 'Location', active: _step >= 2),
+                ],
               ),
               const SizedBox(height: 20),
-              if (categories.isNotEmpty) ...[
+              if (_step == 0) ...[
+                Text('Select Category', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final m in PostModule.values)
+                      CivicCategoryTile(
+                        icon: civicIconForLabel(
+                          m == PostModule.resources ? 'Rescue' : m.label,
+                        ),
+                        label: m == PostModule.resources ? 'Rescue' : m.label,
+                        selected: _module == m,
+                        onTap: () => setState(() {
+                          _module = m;
+                          _category = null;
+                          _categoryOtherController.clear();
+                          if (!_isLendBorrow(m)) _conditionController.clear();
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+              if (_step == 0 && categories.isNotEmpty) ...[
                 DropdownButtonFormField<String>(
                   value: _category,
                   decoration: const InputDecoration(labelText: 'Category'),
@@ -156,7 +177,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                 ],
                 const SizedBox(height: 20),
               ],
-              if (_isLendBorrow(_module)) ...[
+              if (_step == 2 && _isLendBorrow(_module)) ...[
                 AppTextField(
                   controller: _conditionController,
                   label: 'Item condition',
@@ -164,6 +185,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                 ),
                 const SizedBox(height: 20),
               ],
+              if (_step == 0)
               AppTextField(
                 controller: _titleController,
                 label: 'Title',
@@ -171,6 +193,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 20),
+              if (_step == 0)
               AppTextField(
                 controller: _descController,
                 label: 'Description',
@@ -179,6 +202,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 20),
+              if (_step == 2)
               AppTextField(
                 controller: _contactController,
                 label: 'Contact number',
@@ -187,6 +211,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 20),
+              if (_step == 2)
               AppTextField(
                 controller: _locationController,
                 label: 'Location',
@@ -212,9 +237,10 @@ class _CreatePostViewState extends State<CreatePostView> {
                   },
                 ),
               ),
+              if (_step == 1) ...[
               const SizedBox(height: 24),
               Text(
-                'Images (required - at least 1)',
+                'Photos',
                 style: theme.textTheme.labelLarge,
               ),
               const SizedBox(height: 8),
@@ -270,6 +296,7 @@ class _CreatePostViewState extends State<CreatePostView> {
                     ),
                 ],
               ),
+              ],
               const SizedBox(height: 24),
               Consumer<PostController>(
                 builder: (_, pc, __) => Column(
@@ -285,11 +312,36 @@ class _CreatePostViewState extends State<CreatePostView> {
                           ),
                         ),
                       ),
-                    AppButton(
-                      label: 'Create post',
-                      loading: pc.isLoading,
-                      onPressed: _submit,
-                    ),
+                    if (_step < 2)
+                      AppButton(
+                        label: _step == 0 ? 'Next: Add Photos' : 'Next: Location',
+                        onPressed: () {
+                          if (_step == 0) {
+                            if (_titleController.text.trim().isEmpty ||
+                                _descController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Add a title and description'),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+                          setState(() => _step += 1);
+                        },
+                      )
+                    else ...[
+                      if (_step > 0)
+                        TextButton(
+                          onPressed: () => setState(() => _step -= 1),
+                          child: const Text('Back'),
+                        ),
+                      AppButton(
+                        label: 'Create post',
+                        loading: pc.isLoading,
+                        onPressed: _submit,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -317,4 +369,51 @@ class _CreatePostViewState extends State<CreatePostView> {
 
   bool _isLendBorrow(PostModule m) =>
       m == PostModule.lend || m == PostModule.borrow;
+}
+
+class _StepDot extends StatelessWidget {
+  const _StepDot({
+    required this.index,
+    required this.label,
+    required this.active,
+  });
+
+  final int index;
+  final String label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = active
+        ? theme.colorScheme.primary
+        : theme.colorScheme.outline;
+    return Expanded(
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: active
+                ? theme.colorScheme.primary
+                : theme.colorScheme.surfaceContainerHigh,
+            child: Text(
+              '$index',
+              style: TextStyle(
+                color: active ? Colors.white : theme.colorScheme.onSurfaceVariant,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

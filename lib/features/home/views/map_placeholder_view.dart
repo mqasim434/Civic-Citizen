@@ -12,6 +12,7 @@ import '../../../core/routes/app_router.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
 import '../../posts/utils/post_search_filter.dart';
+import '../widgets/location_search_sheet.dart';
 
 class MapPostsView extends StatefulWidget {
   const MapPostsView({super.key});
@@ -32,6 +33,7 @@ class _MapPostsViewState extends State<MapPostsView> {
       CustomInfoWindowController();
   final Map<String, LatLng> _resolvedByLocation = {};
   final Map<String, Future<LatLng?>> _pendingLocationLookups = {};
+  final TextEditingController _locationController = TextEditingController();
 
   PostModule? _moduleFilter;
   String? _categoryFilter;
@@ -39,24 +41,89 @@ class _MapPostsViewState extends State<MapPostsView> {
   double? _userLatitude;
   double? _userLongitude;
   bool _didCenterOnUser = false;
+  bool _locationLoading = false;
+  Stream<List<PostModel>>? _postsStream;
+  PostModule? _cachedModule;
 
   @override
   void dispose() {
+    _locationController.dispose();
     _customInfoWindowController.dispose();
     super.dispose();
   }
 
+  Stream<List<PostModel>> _getPostsStream() {
+    if (_postsStream == null || _cachedModule != _moduleFilter) {
+      _cachedModule = _moduleFilter;
+      _postsStream =
+          context.read<PostController>().watchPosts(module: _moduleFilter);
+    }
+    return _postsStream!;
+  }
+
+  Future<void> _ensureUserLocation({bool force = false}) async {
+    if (!force && _userLatitude != null && _userLongitude != null) return;
+    await _useCurrentLocation(moveCamera: false);
+  }
+
+  Future<void> _openLocationSearch() async {
+    final result = await LocationSearchSheet.show(
+      context,
+      initialQuery: _locationController.text.trim().isEmpty
+          ? null
+          : _locationController.text.trim(),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _userLatitude = result.latitude;
+      _userLongitude = result.longitude;
+      _locationController.text = result.address;
+      _locationLoading = false;
+    });
+    _customInfoWindowController.hideInfoWindow!();
+    await _moveTo(LatLng(result.latitude, result.longitude));
+  }
+
+  Future<void> _useCurrentLocation({bool moveCamera = true}) async {
+    setState(() => _locationLoading = true);
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        setState(() => _locationLoading = false);
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition();
+      final label = await labelForCoordinates(pos.latitude, pos.longitude);
+      if (!mounted) return;
+      setState(() {
+        _userLatitude = pos.latitude;
+        _userLongitude = pos.longitude;
+        _locationController.text = label;
+        _locationLoading = false;
+      });
+      if (moveCamera) {
+        await _moveTo(LatLng(pos.latitude, pos.longitude));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _locationLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final postsStream = context.read<PostController>().watchPosts(
-      module: _moduleFilter,
-    );
     return Scaffold(
-      appBar: AppBar(title: const Text('Map')),
+      appBar: AppBar(title: const Text('Nearby & Map')),
       body: StreamBuilder<List<PostModel>>(
-        stream: postsStream,
+        stream: _getPostsStream(),
         builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
+          if (snap.connectionState == ConnectionState.waiting &&
+              snap.data == null) {
             return const Center(child: CircularProgressIndicator());
           }
           final allPosts = snap.data ?? const <PostModel>[];
@@ -115,12 +182,14 @@ class _MapPostsViewState extends State<MapPostsView> {
                     myLocationButtonEnabled: true,
                     myLocationEnabled: true,
                     onTap: (_) => _customInfoWindowController.hideInfoWindow!(),
-                    onCameraMove: (_) => _customInfoWindowController.onCameraMove!(),
+                    onCameraMove: (_) =>
+                        _customInfoWindowController.onCameraMove!(),
                     onMapCreated: (controller) {
                       if (!_mapController.isCompleted) {
                         _mapController.complete(controller);
                       }
-                      _customInfoWindowController.googleMapController = controller;
+                      _customInfoWindowController.googleMapController =
+                          controller;
                       _centerOnCurrentLocation();
                     },
                   ),
@@ -128,23 +197,44 @@ class _MapPostsViewState extends State<MapPostsView> {
                     top: 12,
                     left: 12,
                     right: 12,
-                    child: _MapFilters(
-                      moduleFilter: _moduleFilter,
-                      categoryFilter: _categoryFilter,
-                      radiusKm: _radiusKm,
-                      categories: availableCategories,
-                      onModuleSelected: (module) => setState(() {
-                        _moduleFilter = module;
-                        _customInfoWindowController.hideInfoWindow!();
-                      }),
-                      onCategorySelected: (category) => setState(() {
-                        _categoryFilter = category;
-                        _customInfoWindowController.hideInfoWindow!();
-                      }),
-                      onRadiusSelected: (radius) => setState(() {
-                        _radiusKm = radius;
-                        _customInfoWindowController.hideInfoWindow!();
-                      }),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _MapLocationField(
+                          controller: _locationController,
+                          loading: _locationLoading,
+                          onOpenSearch: _openLocationSearch,
+                          onUseCurrent: () {
+                            _useCurrentLocation();
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        _MapFilters(
+                          moduleFilter: _moduleFilter,
+                          categoryFilter: _categoryFilter,
+                          radiusKm: _radiusKm,
+                          categories: availableCategories,
+                          onModuleSelected: (module) => setState(() {
+                            _moduleFilter = module;
+                            _categoryFilter = null;
+                            _customInfoWindowController.hideInfoWindow!();
+                          }),
+                          onCategorySelected: (category) => setState(() {
+                            _categoryFilter = category;
+                            _customInfoWindowController.hideInfoWindow!();
+                          }),
+                          onRadiusSelected: (radius) async {
+                            setState(() {
+                              _radiusKm = radius;
+                              _customInfoWindowController.hideInfoWindow!();
+                            });
+                            if (radius != null) {
+                              await _ensureUserLocation();
+                            }
+                          },
+                        ),
+                      ],
                     ),
                   ),
                   if (allPosts.isEmpty)
@@ -158,6 +248,12 @@ class _MapPostsViewState extends State<MapPostsView> {
                     const _MapStatusBanner(
                       icon: Icons.location_off_rounded,
                       message: 'No mappable locations found for selected tags.',
+                    )
+                  else if (_radiusKm != null &&
+                      (_userLatitude == null || _userLongitude == null))
+                    const _MapStatusBanner(
+                      icon: Icons.my_location_rounded,
+                      message: 'Getting your location for the radius filter…',
                     ),
                   if (coordSnap.connectionState == ConnectionState.waiting)
                     const _MapStatusBanner(
@@ -207,26 +303,7 @@ class _MapPostsViewState extends State<MapPostsView> {
   Future<void> _centerOnCurrentLocation() async {
     if (_didCenterOnUser) return;
     _didCenterOnUser = true;
-    try {
-      var permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return;
-      }
-      final pos = await Geolocator.getCurrentPosition();
-      if (mounted) {
-        setState(() {
-          _userLatitude = pos.latitude;
-          _userLongitude = pos.longitude;
-        });
-      }
-      await _moveTo(LatLng(pos.latitude, pos.longitude));
-    } catch (_) {
-      // Keep default camera target if current location can't be resolved.
-    }
+    await _useCurrentLocation(moveCamera: true);
   }
 
   Future<Map<String, LatLng>> _buildMarkerCoordinates(
@@ -320,7 +397,12 @@ class _MapPostsViewState extends State<MapPostsView> {
   List<PostModel> _applyCategoryFilter(List<PostModel> posts) {
     final selected = _categoryFilter;
     if (selected == null) return posts;
-    return posts.where((p) => p.categoryDisplayLabel == selected).toList();
+    final needle = selected.trim().toLowerCase();
+    return posts.where((p) {
+      final label = p.categoryDisplayLabel?.trim().toLowerCase();
+      final raw = p.category?.trim().toLowerCase();
+      return label == needle || raw == needle;
+    }).toList();
   }
 
   double _markerHue(PostModule module) {
@@ -424,6 +506,71 @@ class _MapPostsViewState extends State<MapPostsView> {
   }
 }
 
+class _MapLocationField extends StatelessWidget {
+  const _MapLocationField({
+    required this.controller,
+    required this.loading,
+    required this.onOpenSearch,
+    required this.onUseCurrent,
+  });
+
+  final TextEditingController controller;
+  final bool loading;
+  final VoidCallback onOpenSearch;
+  final VoidCallback onUseCurrent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      elevation: 2,
+      color: theme.colorScheme.surface.withValues(alpha: 0.95),
+      borderRadius: BorderRadius.circular(12),
+      child: TextField(
+        controller: controller,
+        readOnly: true,
+        onTap: loading ? null : onOpenSearch,
+        decoration: InputDecoration(
+          hintText: 'Search location…',
+          filled: true,
+          fillColor: Colors.transparent,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 4,
+            vertical: 14,
+          ),
+          prefixIcon: Icon(
+            Icons.location_on_rounded,
+            color: theme.colorScheme.secondary,
+          ),
+          suffixIcon: loading
+              ? const Padding(
+                  padding: EdgeInsets.all(14),
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : IconButton(
+                  tooltip: 'Use current location',
+                  onPressed: onUseCurrent,
+                  icon: Icon(
+                    Icons.my_location_rounded,
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
+        ),
+        style: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
 class _MapFilters extends StatelessWidget {
   const _MapFilters({
     required this.moduleFilter,
@@ -463,7 +610,7 @@ class _MapFilters extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
+                    child: ChoiceChip(
                       label: const Text('All modules'),
                       selected: moduleFilter == null,
                       onSelected: (_) => onModuleSelected(null),
@@ -472,7 +619,7 @@ class _MapFilters extends StatelessWidget {
                   ...PostModule.values.map(
                     (module) => Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
+                      child: ChoiceChip(
                         label: Text(module.label),
                         selected: moduleFilter == module,
                         onSelected: (_) => onModuleSelected(module),
@@ -491,7 +638,7 @@ class _MapFilters extends StatelessWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
+                      child: ChoiceChip(
                         label: const Text('All tags'),
                         selected: categoryFilter == null,
                         onSelected: (_) => onCategorySelected(null),
@@ -500,7 +647,7 @@ class _MapFilters extends StatelessWidget {
                     ...categories.map(
                       (tag) => Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
+                        child: ChoiceChip(
                           label: Text(tag),
                           selected: categoryFilter == tag,
                           onSelected: (_) => onCategorySelected(tag),
@@ -519,7 +666,7 @@ class _MapFilters extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
+                    child: ChoiceChip(
                       label: const Text('Any distance'),
                       selected: radiusKm == null,
                       onSelected: (_) => onRadiusSelected(null),
@@ -528,7 +675,7 @@ class _MapFilters extends StatelessWidget {
                   ...PostSearchFilter.radiusOptionsKm.map(
                     (km) => Padding(
                       padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
+                      child: ChoiceChip(
                         label: Text('${km.toStringAsFixed(km == km.roundToDouble() ? 0 : 1)} km'),
                         selected: radiusKm == km,
                         onSelected: (_) => onRadiusSelected(km),

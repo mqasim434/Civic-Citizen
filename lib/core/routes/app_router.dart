@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../features/ads/views/create_ad_view.dart';
 import '../../features/announcements/views/broadcast_detail_view.dart';
 import '../../features/announcements/views/broadcasts_view.dart';
 import '../../features/admin/views/admin_dashboard_view.dart';
 import '../../features/admin/views/admin_user_verification_view.dart';
 import '../../features/auth/views/login_view.dart';
 import '../../features/auth/views/signup_view.dart';
+import '../../features/events/models/civic_event.dart';
+import '../../features/events/views/events_view.dart';
+import '../../features/fun_activity/views/rewards_view.dart';
 import '../../features/home/views/main_shell.dart';
 import '../../features/kyc/views/kyc_view.dart';
 import '../../features/verification/views/verification_pending_view.dart';
@@ -26,6 +30,7 @@ import '../../features/posts/views/edit_post_view.dart';
 import '../../features/posts/views/post_detail_view.dart';
 import '../../features/profile/views/account_banned_view.dart';
 import '../../features/profile/views/edit_profile_view.dart';
+import '../../features/settings/views/help_support_view.dart';
 import '../../features/settings/views/settings_view.dart';
 import '../../features/splash/views/splash_view.dart';
 
@@ -86,6 +91,8 @@ class AppRouter {
       }
       case AppConstants.routeSettings:
         return _buildRoute(const SettingsView(), settings);
+      case AppConstants.routeHelpSupport:
+        return _buildRoute(const HelpSupportView(), settings);
       case AppConstants.routeEditProfile:
         return _buildRoute(const EditProfileView(), settings);
       case AppConstants.routeAccountBanned:
@@ -101,6 +108,22 @@ class AppRouter {
           BroadcastDetailView(announcement: announcement),
           settings,
         );
+      }
+      case AppConstants.routeRewards:
+        return _buildRoute(const RewardsView(), settings);
+      case AppConstants.routeCreateAd:
+        return _buildRoute(const CreateAdView(), settings);
+      case AppConstants.routeEvents:
+        return _buildRoute(const EventsView(), settings);
+      case AppConstants.routeEventDetail: {
+        final args = settings.arguments;
+        if (args is CivicEvent) {
+          return _buildRoute(EventDetailView(event: args), settings);
+        }
+        if (args is String && args.isNotEmpty) {
+          return _buildRoute(EventDetailView(eventId: args), settings);
+        }
+        return _buildRoute(const EventsView(), settings);
       }
       case AppConstants.routeNotifications:
         return _buildRoute(const NotificationsView(), settings);

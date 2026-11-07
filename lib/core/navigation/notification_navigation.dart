@@ -29,6 +29,7 @@ Future<void> navigateFromNotification(
     case AppNotificationType.accountBanned:
       return;
     case AppNotificationType.postFlagged:
+    case AppNotificationType.postCreated:
       final postId = notification.postId;
       if (postId != null && postService != null) {
         final post = await postService.getPost(postId);
@@ -87,6 +88,17 @@ Future<void> navigateFromNotification(
           AppConstants.routeContactRequest,
           arguments: requestId,
         );
+      }
+      return;
+    case AppNotificationType.eventPublished:
+      final eventId = notification.contractId;
+      if (eventId != null && eventId.isNotEmpty) {
+        navigatorKey.currentState?.pushNamed(
+          AppConstants.routeEventDetail,
+          arguments: eventId,
+        );
+      } else {
+        navigatorKey.currentState?.pushNamed(AppConstants.routeEvents);
       }
       return;
   }
