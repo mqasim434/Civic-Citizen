@@ -68,6 +68,10 @@ class _MainShellState extends State<MainShell> {
   }
 
   void _select(int i) {
+    if (i == _index) {
+      ShellTab.reselected.fire(i);
+      return;
+    }
     setState(() => _index = i);
     if (ShellTab.index.value != i) ShellTab.index.value = i;
   }
