@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/utils/device_location.dart';
 import '../../../shared/widgets/notification_bell_button.dart';
@@ -21,7 +22,8 @@ class DashboardView extends StatefulWidget {
   State<DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardViewState extends State<DashboardView> {
+class _DashboardViewState extends State<DashboardView>
+    with TabReselectListener {
   PostModule? _module;
   Stream<List<PostModel>>? _postsStream;
   PostModule? _cachedModule;
@@ -39,38 +41,22 @@ class _DashboardViewState extends State<DashboardView> {
   final _scrollController = ScrollController();
 
   @override
+  int get shellTabIndex => ShellTab.home;
+
+  @override
+  void onTabReselected() => scrollToTop(_scrollController);
+
+  @override
   void initState() {
     super.initState();
-    ShellTab.reselected.addListener(_onTabReselected);
     _resolveCurrentLocation();
   }
 
   @override
   void dispose() {
-    ShellTab.reselected.removeListener(_onTabReselected);
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
-  }
-
-  /// Home tab tapped while already on Home: scroll back to the top.
-  void _onTabReselected() {
-    if (ShellTab.reselected.tab != 0) return;
-    if (!_scrollController.hasClients) return;
-    final offset = _scrollController.offset;
-    if (offset <= 0) return;
-
-    // Far down the feed: jump close to the top first so the animation
-    // stays short instead of scrolling through every post.
-    final viewport = _scrollController.position.viewportDimension;
-    if (offset > viewport * 3) {
-      _scrollController.jumpTo(viewport);
-    }
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
-    );
   }
 
   Stream<List<PostModel>> _getPostsStream() {

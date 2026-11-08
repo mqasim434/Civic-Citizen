@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/routes/app_router.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -51,8 +52,22 @@ class ProfileView extends StatefulWidget {
   State<ProfileView> createState() => _ProfileViewState();
 }
 
-class _ProfileViewState extends State<ProfileView> {
+class _ProfileViewState extends State<ProfileView>
+    with TabReselectListener {
   final _postsKey = GlobalKey();
+  final _scrollController = ScrollController();
+
+  @override
+  int get shellTabIndex => ShellTab.profile;
+
+  @override
+  void onTabReselected() => scrollToTop(_scrollController);
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _scrollToPosts() {
     final target = _postsKey.currentContext;
@@ -80,6 +95,7 @@ class _ProfileViewState extends State<ProfileView> {
     return Scaffold(
       backgroundColor: AppTheme.warmCream,
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
