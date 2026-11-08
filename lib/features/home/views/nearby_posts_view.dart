@@ -3,6 +3,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/utils/device_location.dart';
 import '../../../shared/widgets/notification_bell_button.dart';
@@ -20,7 +22,7 @@ class NearbyPostsView extends StatefulWidget {
 }
 
 class _NearbyPostsViewState extends State<NearbyPostsView>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, TabReselectListener {
   PostModule? _module;
   double _radiusKm = PostSearchFilter.defaultNearbyRadiusKm;
   double? _userLatitude;
@@ -28,8 +30,22 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
   bool _loadingLocation = true;
   String? _locationError;
 
+  final _scrollController = ScrollController();
+
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  int get shellTabIndex => ShellTab.nearby;
+
+  @override
+  void onTabReselected() => scrollToTop(_scrollController);
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -91,6 +107,7 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
       body: RefreshIndicator(
         onRefresh: _loadLocation,
         child: CustomScrollView(
+          controller: _scrollController,
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverAppBar(

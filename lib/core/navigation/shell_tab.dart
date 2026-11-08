@@ -4,6 +4,12 @@ import 'package:flutter/foundation.dart';
 class ShellTab {
   ShellTab._();
 
+  static const home = 0;
+  static const nearby = 1;
+  static const map = 2;
+  static const rewards = 3;
+  static const profile = 4;
+
   static final index = ValueNotifier<int>(0);
 
   /// Fires when the user taps the tab that is already selected.

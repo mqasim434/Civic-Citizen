@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../points/services/points_service.dart';
@@ -18,11 +19,20 @@ class RewardsView extends StatefulWidget {
   State<RewardsView> createState() => _RewardsViewState();
 }
 
-class _RewardsViewState extends State<RewardsView> {
+class _RewardsViewState extends State<RewardsView>
+    with TabReselectListener {
   final _scroll = ScrollController();
   final _earnKey = GlobalKey();
   bool _claiming = false;
   int _weekOffset = 0;
+
+  @override
+  int get shellTabIndex => ShellTab.rewards;
+
+  @override
+  void onTabReselected() {
+    if (widget.embedded) scrollToTop(_scroll);
+  }
 
   @override
   void dispose() {

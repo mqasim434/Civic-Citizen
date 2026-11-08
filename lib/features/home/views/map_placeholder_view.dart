@@ -8,6 +8,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/utils/device_location.dart';
 import '../../posts/controllers/post_controller.dart';
@@ -22,7 +24,8 @@ class MapPostsView extends StatefulWidget {
   State<MapPostsView> createState() => _MapPostsViewState();
 }
 
-class _MapPostsViewState extends State<MapPostsView> {
+class _MapPostsViewState extends State<MapPostsView>
+    with TabReselectListener {
   static const LatLng _defaultCenter = LatLng(31.5204, 74.3587);
   static const CameraPosition _defaultCamera = CameraPosition(
     target: _defaultCenter,
@@ -45,6 +48,20 @@ class _MapPostsViewState extends State<MapPostsView> {
   bool _locationLoading = false;
   Stream<List<PostModel>>? _postsStream;
   PostModule? _cachedModule;
+
+  @override
+  int get shellTabIndex => ShellTab.map;
+
+  /// Map has no list to scroll, so close any open popup and re-centre
+  /// on the user's location (or the default city).
+  @override
+  void onTabReselected() {
+    _customInfoWindowController.hideInfoWindow?.call();
+    final target = _userLatitude != null && _userLongitude != null
+        ? LatLng(_userLatitude!, _userLongitude!)
+        : _defaultCenter;
+    _moveTo(target);
+  }
 
   @override
   void dispose() {
