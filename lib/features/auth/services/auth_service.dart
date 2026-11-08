@@ -106,6 +106,27 @@ class AuthService {
     return UserModel.fromFirebase(refreshed);
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (!_isFirebaseReady) {
+      throw Exception('Firebase is not configured.');
+    }
+    final user = _auth!.currentUser;
+    if (user == null) throw Exception('Not signed in.');
+    final email = user.email;
+    if (email == null || email.isEmpty) {
+      throw Exception('This account has no email password to change.');
+    }
+    final credential = EmailAuthProvider.credential(
+      email: email,
+      password: currentPassword,
+    );
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
   Future<void> sendPasswordResetEmail(String email) async {
     if (!_isFirebaseReady) {
       throw Exception('Firebase is not configured.');

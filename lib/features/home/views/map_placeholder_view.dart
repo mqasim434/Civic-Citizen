@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../core/utils/device_location.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
 import '../../posts/utils/post_search_filter.dart';
@@ -97,7 +98,12 @@ class _MapPostsViewState extends State<MapPostsView> {
         setState(() => _locationLoading = false);
         return;
       }
-      final pos = await Geolocator.getCurrentPosition();
+      final pos = await DeviceLocation.current();
+      if (pos == null) {
+        if (!mounted) return;
+        setState(() => _locationLoading = false);
+        return;
+      }
       final label = await labelForCoordinates(pos.latitude, pos.longitude);
       if (!mounted) return;
       setState(() {

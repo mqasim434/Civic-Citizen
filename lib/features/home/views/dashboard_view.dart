@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/navigation/shell_tab.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../core/utils/device_location.dart';
 import '../../../shared/widgets/notification_bell_button.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
@@ -103,22 +104,31 @@ class _DashboardViewState extends State<DashboardView> {
         });
         return;
       }
-      final pos = await Geolocator.getCurrentPosition();
-      final label = await labelForCoordinates(pos.latitude, pos.longitude);
+      final pos = await DeviceLocation.current();
       if (!mounted) return;
+      if (pos == null) {
+        setState(() {
+          _locationLoading = false;
+          _locationLabel = 'Set location';
+          _locationError = 'Location is unavailable. Showing all posts.';
+        });
+        return;
+      }
       setState(() {
         _userLatitude = pos.latitude;
         _userLongitude = pos.longitude;
-        _locationLabel = label;
         _locationLoading = false;
         _locationError = null;
       });
+      final label = await labelForCoordinates(pos.latitude, pos.longitude);
+      if (!mounted) return;
+      setState(() => _locationLabel = label);
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _locationLoading = false;
         _locationLabel = 'Set location';
-        _locationError = 'Could not get your location.';
+        _locationError = 'Location is unavailable. Showing all posts.';
       });
     }
   }
@@ -489,11 +499,6 @@ class _DashboardViewState extends State<DashboardView> {
                   );
                 }
                 final allPosts = snap.data ?? [];
-                if (_locationLoading) {
-                  return const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
                 final posts = PostSearchFilter.apply(
                   posts: allPosts,
                   keyword: _searchQuery,

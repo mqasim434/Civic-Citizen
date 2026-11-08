@@ -22,6 +22,7 @@ class _RewardsViewState extends State<RewardsView> {
   final _scroll = ScrollController();
   final _earnKey = GlobalKey();
   bool _claiming = false;
+  int _weekOffset = 0;
 
   @override
   void dispose() {
@@ -92,6 +93,9 @@ class _RewardsViewState extends State<RewardsView> {
                     scroll: _scroll,
                     earnKey: _earnKey,
                     claiming: _claiming,
+                    weekOffset: _weekOffset,
+                    onWeekSelected: (offset) =>
+                        setState(() => _weekOffset = offset),
                     onBack: _back,
                     onRewards: _scrollToEarn,
                     onClaim: _claim,
@@ -111,6 +115,8 @@ class _RewardsBody extends StatelessWidget {
     required this.scroll,
     required this.earnKey,
     required this.claiming,
+    required this.weekOffset,
+    required this.onWeekSelected,
     required this.onBack,
     required this.onRewards,
     required this.onClaim,
@@ -120,6 +126,8 @@ class _RewardsBody extends StatelessWidget {
   final ScrollController scroll;
   final Key earnKey;
   final bool claiming;
+  final int weekOffset;
+  final ValueChanged<int> onWeekSelected;
   final VoidCallback onBack;
   final VoidCallback onRewards;
   final ValueChanged<int> onClaim;
@@ -128,11 +136,15 @@ class _RewardsBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final currentMonday = today.subtract(Duration(days: today.weekday - 1));
+    final monday = currentMonday.subtract(Duration(days: 7 * weekOffset));
     final week = List.generate(6, (i) => monday.add(Duration(days: i)));
+    final sunday = monday.add(const Duration(days: 6));
     final streak = _streakCount(state.checkIns, today);
     final todayPoints = PointsService.pointsForWeekday(today.weekday);
     final claimedToday = state.checkIns.containsKey(PointsService.todayKey(today));
+    final sundayClaimed =
+        state.checkIns.containsKey(PointsService.todayKey(sunday));
 
     return ListView(
       controller: scroll,
@@ -148,20 +160,29 @@ class _RewardsBody extends StatelessWidget {
         _WeeklyCard(
           days: week,
           today: today,
+          weekOffset: weekOffset,
+          onWeekSelected: onWeekSelected,
           checkIns: state.checkIns,
           claiming: claiming,
           onClaim: onClaim,
-          sunday: today.weekday == DateTime.sunday
-              ? _SundayClaim(
-                  points: todayPoints,
-                  claimed: claimedToday,
-                  claiming: claiming,
-                  onClaim: () => onClaim(todayPoints),
-                )
-              : null,
+          sunday: _SundayClaim(
+            points: PointsService.pointsForWeekday(DateTime.sunday),
+            claimed: sundayClaimed,
+            canClaim: sunday == today,
+            missed: sunday.isBefore(today) && !sundayClaimed,
+            claiming: claiming,
+            onClaim: () => onClaim(
+              PointsService.pointsForWeekday(DateTime.sunday),
+            ),
+          ),
         ),
         const SizedBox(height: 14),
-        _StreakBanner(streak: streak, monday: monday, today: today, checkIns: state.checkIns),
+        _StreakBanner(
+          streak: streak,
+          monday: currentMonday,
+          today: today,
+          checkIns: state.checkIns,
+        ),
         const SizedBox(height: 14),
         _EarnCard(
           key: earnKey,
@@ -174,6 +195,28 @@ class _RewardsBody extends StatelessWidget {
       ],
     );
   }
+}
+
+String _weekMenuLabel(DateTime today, int offset) {
+  if (offset == 0) return 'This Week';
+  if (offset == 1) return 'Last Week';
+  final monday = today
+      .subtract(Duration(days: today.weekday - 1 + 7 * offset));
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return 'Week of ${monday.day} ${months[monday.month - 1]}';
 }
 
 int _streakCount(Map<String, int> checkIns, DateTime today) {
@@ -359,6 +402,8 @@ class _WeeklyCard extends StatelessWidget {
   const _WeeklyCard({
     required this.days,
     required this.today,
+    required this.weekOffset,
+    required this.onWeekSelected,
     required this.checkIns,
     required this.claiming,
     required this.onClaim,
@@ -367,6 +412,8 @@ class _WeeklyCard extends StatelessWidget {
 
   final List<DateTime> days;
   final DateTime today;
+  final int weekOffset;
+  final ValueChanged<int> onWeekSelected;
   final Map<String, int> checkIns;
   final bool claiming;
   final ValueChanged<int> onClaim;
@@ -418,26 +465,37 @@ class _WeeklyCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF6F1E8),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE4DDD2)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'This Week',
-                      style: GoogleFonts.figtree(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.ink,
-                      ),
+              PopupMenuButton<int>(
+                initialValue: weekOffset,
+                onSelected: onWeekSelected,
+                itemBuilder: (context) => [
+                  for (var i = 0; i < 8; i++)
+                    PopupMenuItem(
+                      value: i,
+                      child: Text(_weekMenuLabel(today, i)),
                     ),
-                    const Icon(Icons.keyboard_arrow_down_rounded, size: 16),
-                  ],
+                ],
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF6F1E8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE4DDD2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _weekMenuLabel(today, weekOffset),
+                        style: GoogleFonts.figtree(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.ink,
+                        ),
+                      ),
+                      const Icon(Icons.keyboard_arrow_down_rounded, size: 16),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -631,12 +689,16 @@ class _SundayClaim extends StatelessWidget {
   const _SundayClaim({
     required this.points,
     required this.claimed,
+    required this.canClaim,
+    required this.missed,
     required this.claiming,
     required this.onClaim,
   });
 
   final int points;
   final bool claimed;
+  final bool canClaim;
+  final bool missed;
   final bool claiming;
   final VoidCallback onClaim;
 
@@ -645,26 +707,44 @@ class _SundayClaim extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: claimed ? AppTheme.sage : _RewardsColors.burgundy,
+        color: claimed
+            ? AppTheme.sage
+            : canClaim
+                ? _RewardsColors.burgundy
+                : const Color(0xFFF7F2EA),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
           Icon(
-            claimed ? Icons.check_circle_rounded : Icons.card_giftcard_rounded,
-            color: claimed ? AppTheme.leaf : const Color(0xFFF2C14E),
+            claimed
+                ? Icons.check_circle_rounded
+                : canClaim
+                    ? Icons.card_giftcard_rounded
+                    : Icons.lock_outline_rounded,
+            color: claimed
+                ? AppTheme.leaf
+                : canClaim
+                    ? const Color(0xFFF2C14E)
+                    : AppTheme.inkMuted,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              claimed ? 'Sunday check-in claimed' : 'Sunday check-in  +$points Pts',
+              claimed
+                  ? 'Sunday check-in claimed'
+                  : missed
+                      ? 'Sunday check-in missed'
+                      : canClaim
+                          ? 'Sunday check-in  +$points Pts'
+                          : 'Sunday check-in',
               style: GoogleFonts.figtree(
-                color: claimed ? AppTheme.ink : Colors.white,
+                color: canClaim ? Colors.white : AppTheme.ink,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          if (!claimed)
+          if (canClaim && !claimed)
             TextButton(
               onPressed: claiming ? null : onClaim,
               style: TextButton.styleFrom(

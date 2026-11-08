@@ -10,6 +10,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/config/imagekit_config.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/utils/device_location.dart';
 import '../../../core/services/imagekit_service.dart';
 import '../../../core/services/notification_service.dart';
 import '../../mutual_confidence/services/trust_profile_service.dart';
@@ -452,11 +453,13 @@ Agreement date: $date
     if (!enabled) {
       throw Exception('Turn on location services to complete the handshake.');
     }
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 20),
-      ),
+    final pos = await DeviceLocation.current(
+      timeLimit: const Duration(seconds: 12),
+      accuracy: LocationAccuracy.high,
     );
+    if (pos == null) {
+      throw Exception('Could not get your location. Try again outdoors.');
+    }
+    return pos;
   }
 }

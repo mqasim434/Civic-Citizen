@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../../core/utils/device_location.dart';
 import '../../posts/models/location_pick_result.dart';
 
 /// Full-screen sheet to search and pick a home/feed location.
@@ -136,8 +137,19 @@ class _LocationSearchSheetState extends State<LocationSearchSheet> {
         });
         return;
       }
-      final pos = await Geolocator.getCurrentPosition();
-      final marks = await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      final pos = await DeviceLocation.current();
+      if (pos == null) {
+        if (!mounted) return;
+        setState(() {
+          _usingCurrent = false;
+          _error = 'Location is unavailable. Search for a place instead.';
+        });
+        return;
+      }
+      final marks = await placemarkFromCoordinates(
+        pos.latitude,
+        pos.longitude,
+      ).timeout(const Duration(seconds: 5));
       final label = marks.isNotEmpty
           ? (formatPlacemarkLabel(marks.first) ?? 'Current location')
           : 'Current location';
@@ -341,7 +353,9 @@ String? formatPlacemarkLabel(Placemark p) {
 /// Reverse-geocode coordinates into a short display label.
 Future<String> labelForCoordinates(double latitude, double longitude) async {
   try {
-    final marks = await placemarkFromCoordinates(latitude, longitude);
+    final marks = await placemarkFromCoordinates(latitude, longitude).timeout(
+      const Duration(seconds: 5),
+    );
     if (marks.isNotEmpty) {
       return formatPlacemarkLabel(marks.first) ?? 'Selected location';
     }

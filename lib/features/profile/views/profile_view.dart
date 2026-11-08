@@ -44,8 +44,26 @@ Future<void> _showDeleteConfirm(BuildContext context, PostModel post) async {
   }
 }
 
-class ProfileView extends StatelessWidget {
+class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
+
+  @override
+  State<ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends State<ProfileView> {
+  final _postsKey = GlobalKey();
+
+  void _scrollToPosts() {
+    final target = _postsKey.currentContext;
+    if (target == null) return;
+    Scrollable.ensureVisible(
+      target,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOut,
+      alignment: 0.05,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,7 +221,7 @@ class ProfileView extends StatelessWidget {
                   _MenuTile(
                     icon: Icons.bookmark_border_rounded,
                     label: 'My Posts',
-                    onTap: () {},
+                    onTap: _scrollToPosts,
                   ),
                   _MenuTile(
                     icon: Icons.card_giftcard_rounded,
@@ -275,6 +293,7 @@ class ProfileView extends StatelessWidget {
                 children: [
                   Text(
                     'My posts',
+                    key: _postsKey,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),

@@ -48,22 +48,49 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
     _scheduleCheck();
   }
 
-  void _scheduleCheck() {
+  void _scheduleCheck({Duration delay = _routePollDelay}) {
     if (_scheduled) return;
     _scheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       _scheduled = false;
-      await Future<void>.delayed(_routePollDelay);
+      await Future<void>.delayed(delay);
       if (!mounted) return;
       await _checkIfNeeded();
     });
   }
 
+  /// Routes where a broadcast popup must not appear.
   bool _isExcludedRoute(String? routeName) {
-    return routeName == AppConstants.routeSplash ||
+    return routeName == null ||
+        routeName == AppConstants.routeSplash ||
         routeName == AppConstants.routeLogin ||
         routeName == AppConstants.routeSignup ||
-        routeName == AppConstants.routeKyc;
+        routeName == AppConstants.routeKyc ||
+        routeName == AppConstants.routeVerificationPending ||
+        routeName == AppConstants.routeVerificationRejected ||
+        routeName == AppConstants.routeAccountBanned;
+  }
+
+  /// The navigator's own context is above the current page, so
+  /// [ModalRoute.of] cannot see login or signup. Read the top route instead.
+  String? _topRouteName() {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return null;
+    Route<dynamic>? top;
+    navigator.popUntil((route) {
+      top = route;
+      return true;
+    });
+    return top?.settings.name;
+  }
+
+  void _waitForAllowedRoute() {
+    _routeWaitAttempts++;
+    _scheduleCheck(
+      delay: _routeWaitAttempts < _maxRouteWaitAttempts
+          ? _routePollDelay
+          : const Duration(seconds: 2),
+    );
   }
 
   Future<void> _checkIfNeeded() async {
@@ -76,15 +103,8 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
     }
     if (_running || _handledUserId == user.uid) return;
 
-    final navContext = navigatorKey.currentContext;
-    if (navContext == null) {
-      if (_routeWaitAttempts++ < _maxRouteWaitAttempts) _scheduleCheck();
-      return;
-    }
-
-    final routeName = ModalRoute.of(navContext)?.settings.name;
-    if (_isExcludedRoute(routeName)) {
-      if (_routeWaitAttempts++ < _maxRouteWaitAttempts) _scheduleCheck();
+    if (_isExcludedRoute(_topRouteName())) {
+      _waitForAllowedRoute();
       return;
     }
 
@@ -108,10 +128,21 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
 
       await Future<void>.delayed(_showDelay);
       if (!mounted) return;
+      if (context.read<AuthController>().user?.uid != user.uid) return;
+      if (_isExcludedRoute(_topRouteName())) {
+        _waitForAllowedRoute();
+        return;
+      }
 
-      _handledUserId = user.uid;
-
+      var leftAllowedRoute = false;
       for (final announcement in toShow) {
+        if (!mounted) break;
+        if (context.read<AuthController>().user?.uid != user.uid ||
+            _isExcludedRoute(_topRouteName())) {
+          leftAllowedRoute = true;
+          break;
+        }
+
         // Mark seen before showing so force-close / crash never re-pops it.
         _sessionShownIds.add(announcement.id);
         try {
@@ -125,7 +156,12 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
         if (dialogContext == null || !dialogContext.mounted) break;
 
         await showAnnouncementDialog(dialogContext, announcement);
-        if (!mounted) break;
+      }
+      if (leftAllowedRoute) {
+        _waitForAllowedRoute();
+      } else if (mounted &&
+          context.read<AuthController>().user?.uid == user.uid) {
+        _handledUserId = user.uid;
       }
     } catch (e, st) {
       debugPrint('AnnouncementListener failed: $e\n$st');

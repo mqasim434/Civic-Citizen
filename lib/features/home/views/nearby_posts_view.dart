@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../core/utils/device_location.dart';
 import '../../../shared/widgets/notification_bell_button.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
@@ -58,8 +59,15 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
         });
         return;
       }
-      final pos = await Geolocator.getCurrentPosition();
+      final pos = await DeviceLocation.current();
       if (!mounted) return;
+      if (pos == null) {
+        setState(() {
+          _locationError = 'Location is unavailable. Pull to retry.';
+          _loadingLocation = false;
+        });
+        return;
+      }
       setState(() {
         _userLatitude = pos.latitude;
         _userLongitude = pos.longitude;

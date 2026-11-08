@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../core/utils/device_location.dart';
 import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../../posts/models/post_listing_status.dart';
 import '../../posts/models/post_model.dart';
@@ -397,11 +398,13 @@ This record is stored in Cloud Firestore for community trust and dispute resolut
     if (!enabled) {
       throw Exception('Turn on location services to complete confirmation.');
     }
-    return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        timeLimit: Duration(seconds: 20),
-      ),
+    final pos = await DeviceLocation.current(
+      timeLimit: const Duration(seconds: 12),
+      accuracy: LocationAccuracy.high,
     );
+    if (pos == null) {
+      throw Exception('Could not get your location. Try again outdoors.');
+    }
+    return pos;
   }
 }

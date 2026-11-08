@@ -1,5 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 
+import '../../../core/utils/device_location.dart';
 import '../../posts/models/post_model.dart';
 import '../../posts/utils/post_search_filter.dart';
 import '../models/meetup_suggestion.dart';
@@ -20,12 +21,7 @@ class MeetupSuggestionService {
       }
       if (permission == LocationPermission.whileInUse ||
           permission == LocationPermission.always) {
-        userPosition = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(
-            accuracy: LocationAccuracy.medium,
-            timeLimit: Duration(seconds: 8),
-          ),
-        );
+        userPosition = await DeviceLocation.current();
       }
     } catch (_) {}
 
