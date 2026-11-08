@@ -309,13 +309,13 @@ class _PhotoEditor extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 56,
-            backgroundColor: AppTheme.ivory,
+            backgroundColor: AppTheme.colors(context).subtle,
             backgroundImage: image,
             child: image == null
                 ? Text(
                     initial,
                     style: theme.textTheme.headlineMedium?.copyWith(
-                      color: AppTheme.burgundy,
+                      color: AppTheme.colors(context).burgundyInk,
                       fontWeight: FontWeight.w800,
                     ),
                   )
@@ -327,8 +327,11 @@ class _PhotoEditor extends StatelessWidget {
             child: Material(
               color: AppTheme.burgundy,
               elevation: 2,
-              shape: const CircleBorder(
-                side: BorderSide(color: Colors.white, width: 2),
+              shape: CircleBorder(
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.surface,
+                  width: 2,
+                ),
               ),
               child: InkWell(
                 customBorder: const CircleBorder(),

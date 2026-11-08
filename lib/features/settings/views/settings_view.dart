@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -280,7 +279,7 @@ class _PrivacySecurityPage extends StatelessWidget {
                 ? 'You are signed in.'
                 : 'Signed in as $email.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.inkMuted,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
@@ -299,7 +298,7 @@ class _PrivacySecurityPage extends StatelessWidget {
             'Your name, profile photo, and posts are visible to signed-in members. '
             'Your email and password are not shown on posts.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.inkMuted,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
@@ -309,7 +308,7 @@ class _PrivacySecurityPage extends StatelessWidget {
             'Home and Nearby use your location to show posts around you. '
             'You can change the place from the Home pin.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.inkMuted,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],

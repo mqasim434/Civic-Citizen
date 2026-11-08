@@ -37,6 +37,13 @@ class AppTheme {
 
   static const double _radius = 18;
 
+  /// Brand colours for the current theme. Use this in widgets instead of
+  /// the light-only constants above so screens follow dark mode.
+  static CivicColors colors(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? CivicColors.dark
+          : CivicColors.light;
+
   static ThemeData get light {
     final scheme = ColorScheme.light(
       primary: olive,
@@ -454,4 +461,115 @@ class AppTheme {
       ),
     );
   }
+}
+
+/// Brand palette that follows the active theme. Get it with
+/// `AppTheme.colors(context)`.
+class CivicColors {
+  const CivicColors({
+    required this.isDark,
+    required this.ink,
+    required this.inkMuted,
+    required this.inkFaint,
+    required this.olive,
+    required this.sage,
+    required this.page,
+    required this.raised,
+    required this.card,
+    required this.subtle,
+    required this.subtleBorder,
+    required this.beige,
+    required this.burgundy,
+    required this.burgundyInk,
+    required this.burgundySoft,
+    required this.onBurgundyMuted,
+    required this.shadow,
+  });
+
+  final bool isDark;
+
+  /// Main text and icons.
+  final Color ink;
+
+  /// Secondary text and icons.
+  final Color inkMuted;
+
+  /// Disabled or past items.
+  final Color inkFaint;
+
+  /// Forest green accent (text, icons, filled buttons).
+  final Color olive;
+
+  /// Soft green background behind green icons and chips.
+  final Color sage;
+
+  /// Screen background (ivory in light).
+  final Color page;
+
+  /// Raised surfaces like the nav bar (warm cream in light).
+  final Color raised;
+
+  /// Cards and tiles (white in light).
+  final Color card;
+
+  /// Inset boxes inside cards.
+  final Color subtle;
+  final Color subtleBorder;
+
+  /// Muted beige for borders and stones.
+  final Color beige;
+
+  /// Burgundy for filled banners and buttons (white text on top).
+  final Color burgundy;
+
+  /// Burgundy for text and icons on a normal surface.
+  final Color burgundyInk;
+
+  /// Light burgundy tint behind burgundy icons.
+  final Color burgundySoft;
+
+  /// Secondary text on a burgundy fill.
+  final Color onBurgundyMuted;
+
+  final Color shadow;
+
+  static const light = CivicColors(
+    isDark: false,
+    ink: AppTheme.ink,
+    inkMuted: AppTheme.inkMuted,
+    inkFaint: Color(0xFFB7AFA4),
+    olive: AppTheme.olive,
+    sage: AppTheme.sage,
+    page: AppTheme.ivory,
+    raised: AppTheme.warmCream,
+    card: Colors.white,
+    subtle: Color(0xFFF7F2EA),
+    subtleBorder: Color(0xFFE4DDD2),
+    beige: AppTheme.beige,
+    burgundy: AppTheme.burgundy,
+    burgundyInk: AppTheme.burgundy,
+    burgundySoft: Color(0xFFF3E6EA),
+    onBurgundyMuted: Color(0xFFF3D5DC),
+    shadow: Color(0x14000000),
+  );
+
+  static const dark = CivicColors(
+    isDark: true,
+    ink: AppTheme.textDark,
+    inkMuted: AppTheme.mutedDark,
+    inkFaint: Color(0xFF5C6676),
+    olive: AppTheme.leafDark,
+    sage: Color(0xFF244536),
+    page: AppTheme.paperDark,
+    raised: AppTheme.raisedDark,
+    card: AppTheme.raisedDark,
+    subtle: Color(0xFF222E40),
+    subtleBorder: Color(0xFF2E3A4D),
+    beige: Color(0xFF4A566A),
+    burgundy: Color(0xFF7A454A),
+    burgundyInk: Color(0xFFD9A3A8),
+    burgundySoft: Color(0xFF3A2A31),
+    onBurgundyMuted: Color(0xFFEBCAD0),
+    shadow: Color(0x40000000),
+  );
 }

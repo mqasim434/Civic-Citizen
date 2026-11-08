@@ -92,8 +92,9 @@ class _ProfileViewState extends State<ProfileView>
         ),
       );
     }
+    final c = AppTheme.colors(context);
     return Scaffold(
-      backgroundColor: AppTheme.warmCream,
+      backgroundColor: c.isDark ? c.page : AppTheme.warmCream,
       body: SingleChildScrollView(
         controller: _scrollController,
         child: Column(
@@ -293,9 +294,9 @@ class _ProfileViewState extends State<ProfileView>
                     icon: const Icon(Icons.logout_rounded),
                     label: const Text('Log Out'),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.burgundy,
-                      side: const BorderSide(color: AppTheme.beige),
-                      backgroundColor: AppTheme.ivory,
+                      foregroundColor: c.burgundyInk,
+                      side: BorderSide(color: c.beige),
+                      backgroundColor: c.isDark ? c.card : AppTheme.ivory,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                   ),
@@ -432,7 +433,7 @@ class _MenuTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: AppTheme.inkMuted),
+      leading: Icon(icon, color: AppTheme.colors(context).inkMuted),
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
