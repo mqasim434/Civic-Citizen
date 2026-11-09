@@ -55,6 +55,11 @@ class ProfileView extends StatefulWidget {
   State<ProfileView> createState() => _ProfileViewState();
 }
 
+/// Keeps white header text readable over the lighter photo tint.
+const _headerTextShadow = [
+  Shadow(color: Color(0x66000000), blurRadius: 6, offset: Offset(0, 1)),
+];
+
 class _ProfileViewState extends State<ProfileView>
     with TabReselectListener {
   final _postsKey = GlobalKey();
@@ -116,9 +121,20 @@ class _ProfileViewState extends State<ProfileView>
                       alignment: Alignment.centerRight,
                     ),
                   ),
+                  // Light tint so the photo shows; a bit stronger at the
+                  // bottom behind the name and email.
                   Positioned.fill(
-                    child: ColoredBox(
-                      color: AppTheme.burgundy.withValues(alpha: 0.82),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppTheme.burgundy.withValues(alpha: 0.30),
+                            AppTheme.burgundy.withValues(alpha: 0.62),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   Padding(
@@ -203,13 +219,15 @@ class _ProfileViewState extends State<ProfileView>
                           style: theme.textTheme.headlineSmall?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
+                            shadows: _headerTextShadow,
                           ),
                         ),
                         if (user.email != null)
                           Text(
                             user.email!,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.85),
+                              color: Colors.white.withValues(alpha: 0.92),
+                              shadows: _headerTextShadow,
                             ),
                           ),
                       ],

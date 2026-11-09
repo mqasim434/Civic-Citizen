@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/navigation/shell_tab.dart';
 import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
@@ -502,7 +503,9 @@ class _DashboardViewState extends State<DashboardView>
             ),
           ),
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.pagePadding,
+            ),
             sliver: StreamBuilder<List<PostModel>>(
               stream: _getPostsStream(),
               builder: (context, snap) {
@@ -597,7 +600,7 @@ class _DashboardViewState extends State<DashboardView>
                   delegate: SliverChildBuilderDelegate((_, i) {
                     final post = posts[i];
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: AppTheme.cardGap),
                       child: PostCard(
                         key: ValueKey(post.id),
                         post: post,

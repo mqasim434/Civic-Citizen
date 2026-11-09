@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/navigation/shell_tab.dart';
 import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
@@ -270,13 +271,20 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
                   }
 
                   return SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppTheme.pagePadding,
+                      0,
+                      AppTheme.pagePadding,
+                      24,
+                    ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (_, i) {
                           final item = nearby[i];
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.only(
+                              bottom: AppTheme.cardGap,
+                            ),
                             child: PostCard(
                               key: ValueKey(item.post.id),
                               post: item.post,

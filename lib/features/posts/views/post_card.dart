@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../ads/widgets/ad_style.dart';
 import '../../ads/widgets/boost_post_sheet.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/post_model.dart';
@@ -23,7 +24,10 @@ class PostCard extends StatelessWidget {
     final theme = Theme.of(context);
     final uid = context.watch<AuthController>().user?.uid;
     final mine = uid != null && uid == post.authorId;
+    final sponsored = post.isSponsored;
     return Card(
+      color: sponsored ? AdStyle.background(context) : null,
+      shape: sponsored ? AdStyle.cardShape(context) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -73,25 +77,9 @@ class PostCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                      if (post.isSponsored) ...[
+                      if (sponsored) ...[
                         if (!post.isStandaloneAd) const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.tertiaryContainer,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            'Sponsored',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onTertiaryContainer,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
+                        const SponsoredLabel(),
                       ],
                       if (distanceLabel != null) ...[
                         const SizedBox(width: 8),

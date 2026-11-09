@@ -152,7 +152,12 @@ class _RewardsBody extends StatelessWidget {
 
     return ListView(
       controller: scroll,
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+      padding: const EdgeInsets.fromLTRB(
+        AppTheme.pagePadding,
+        8,
+        AppTheme.pagePadding,
+        28,
+      ),
       children: [
         _Header(onBack: onBack),
         const SizedBox(height: 8),
@@ -160,7 +165,7 @@ class _RewardsBody extends StatelessWidget {
           balance: state.balance,
           onRewards: onRewards,
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppTheme.cardGap),
         _WeeklyCard(
           days: week,
           today: today,
@@ -180,21 +185,21 @@ class _RewardsBody extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppTheme.cardGap),
         _StreakBanner(
           streak: streak,
           monday: currentMonday,
           today: today,
           checkIns: state.checkIns,
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppTheme.cardGap),
         _EarnCard(
           key: earnKey,
           checkInPoints: claimedToday ? todayPoints : todayPoints,
           claimedToday: claimedToday,
           onCheckIn: claimedToday || claiming ? null : () => onClaim(todayPoints),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppTheme.cardGap),
         const _CommunityBanner(),
       ],
     );
@@ -320,7 +325,7 @@ class _PointsCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
       decoration: BoxDecoration(
         color: c.burgundy,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
         boxShadow: _RewardsColors.shadow(c),
       ),
       child: Row(
@@ -509,7 +514,7 @@ class _WeeklyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppTheme.cardGap),
           Row(
             children: [
               for (final day in days) ...[
@@ -795,7 +800,7 @@ class _StreakBanner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
         color: c.burgundy,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
         boxShadow: _RewardsColors.shadow(c),
       ),
       child: Row(
@@ -1073,7 +1078,7 @@ class _CommunityBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       child: SizedBox(
         height: 78,
         width: double.infinity,
@@ -1213,10 +1218,14 @@ class _RewardsColors {
         ),
       ];
 
+  /// Same look as the theme Card used by Home and Nearby posts:
+  /// radius, 1px border, no shadow.
   static BoxDecoration card(CivicColors c) => BoxDecoration(
         color: c.card,
-        borderRadius: BorderRadius.circular(22),
-        border: c.isDark ? Border.all(color: c.subtleBorder) : null,
-        boxShadow: shadow(c),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+        border: Border.all(
+          // Matches colorScheme.outlineVariant in each theme.
+          color: c.isDark ? c.subtleBorder : AppTheme.sage,
+        ),
       );
 }
