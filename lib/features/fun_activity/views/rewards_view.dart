@@ -87,7 +87,7 @@ class _RewardsViewState extends State<RewardsView>
   Widget build(BuildContext context) {
     final uid = context.watch<AuthController>().user?.uid;
     final page = ColoredBox(
-      color: _RewardsColors.page,
+      color: AppTheme.colors(context).page,
       child: SafeArea(
         bottom: false,
         child: uid == null
@@ -249,6 +249,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     return SizedBox(
       height: 96,
       child: Stack(
@@ -256,17 +257,17 @@ class _Header extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Material(
-              color: Colors.white,
+              color: c.card,
               shape: const CircleBorder(),
               elevation: 1,
               shadowColor: const Color(0x22000000),
               child: InkWell(
                 customBorder: const CircleBorder(),
                 onTap: onBack,
-                child: const SizedBox(
+                child: SizedBox(
                   width: 40,
                   height: 40,
-                  child: Icon(Icons.arrow_back_rounded, color: AppTheme.ink),
+                  child: Icon(Icons.arrow_back_rounded, color: c.ink),
                 ),
               ),
             ),
@@ -282,7 +283,7 @@ class _Header extends StatelessWidget {
                     style: GoogleFonts.fraunces(
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
-                      color: _RewardsColors.burgundy,
+                      color: c.burgundyInk,
                       height: 1.05,
                     ),
                   ),
@@ -292,7 +293,7 @@ class _Header extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.figtree(
                       fontSize: 13,
-                      color: AppTheme.inkMuted,
+                      color: c.inkMuted,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -318,12 +319,13 @@ class _PointsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
       decoration: BoxDecoration(
-        color: _RewardsColors.burgundy,
+        color: c.burgundy,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: _RewardsColors.shadow,
+        boxShadow: _RewardsColors.shadow(c),
       ),
       child: Row(
         children: [
@@ -358,7 +360,7 @@ class _PointsCard extends StatelessWidget {
                 Text(
                   'Keep helping your community!',
                   style: GoogleFonts.figtree(
-                    color: const Color(0xFFF3D5DC),
+                    color: c.onBurgundyMuted,
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
                   ),
@@ -381,13 +383,13 @@ class _PointsCard extends StatelessWidget {
                     const Icon(
                       Icons.emoji_events_outlined,
                       size: 16,
-                      color: _RewardsColors.burgundy,
+                      color: AppTheme.burgundy,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Rewards',
                       style: GoogleFonts.figtree(
-                        color: _RewardsColors.burgundy,
+                        color: AppTheme.burgundy,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
@@ -395,7 +397,7 @@ class _PointsCard extends StatelessWidget {
                     const Icon(
                       Icons.chevron_right_rounded,
                       size: 16,
-                      color: _RewardsColors.burgundy,
+                      color: AppTheme.burgundy,
                     ),
                   ],
                 ),
@@ -431,9 +433,10 @@ class _WeeklyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      decoration: _RewardsColors.card,
+      decoration: _RewardsColors.card(c),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -443,12 +446,12 @@ class _WeeklyCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3E6EA),
+                  color: c.burgundySoft,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.calendar_month_rounded,
-                  color: _RewardsColors.burgundy,
+                  color: c.burgundyInk,
                   size: 20,
                 ),
               ),
@@ -462,14 +465,14 @@ class _WeeklyCard extends StatelessWidget {
                       style: GoogleFonts.nunito(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: AppTheme.ink,
+                        color: c.ink,
                       ),
                     ),
                     Text(
                       'Check in daily and collect Civic Points.',
                       style: GoogleFonts.figtree(
                         fontSize: 12,
-                        color: AppTheme.inkMuted,
+                        color: c.inkMuted,
                       ),
                     ),
                   ],
@@ -488,9 +491,9 @@ class _WeeklyCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF6F1E8),
+                    color: c.subtle,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE4DDD2)),
+                    border: Border.all(color: c.subtleBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -500,10 +503,10 @@ class _WeeklyCard extends StatelessWidget {
                         style: GoogleFonts.figtree(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppTheme.ink,
+                          color: c.ink,
                         ),
                       ),
-                      const Icon(Icons.keyboard_arrow_down_rounded, size: 16),
+                      Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: c.ink),
                     ],
                   ),
                 ),
@@ -560,16 +563,17 @@ class _DayTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     final isToday = day == today;
     final isFuture = day.isAfter(today);
     final isNow = isToday && !claimed;
     final bg = isNow
-        ? _RewardsColors.burgundy
+        ? c.burgundy
         : claimed
-            ? AppTheme.sage
-            : const Color(0xFFF7F2EA);
-    final fg = isNow ? Colors.white : AppTheme.ink;
-    final muted = isNow ? const Color(0xFFF3D5DC) : AppTheme.inkMuted;
+            ? c.sage
+            : c.subtle;
+    final fg = isNow ? Colors.white : c.ink;
+    final muted = isNow ? c.onBurgundyMuted : c.inkMuted;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(2, 8, 2, 8),
@@ -624,7 +628,7 @@ class _DayTile extends StatelessWidget {
                           style: GoogleFonts.figtree(
                             fontSize: 8,
                             fontWeight: FontWeight.w800,
-                            color: _RewardsColors.burgundy,
+                            color: AppTheme.burgundy,
                           ),
                         ),
                       ),
@@ -634,9 +638,7 @@ class _DayTile extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
               decoration: BoxDecoration(
-                color: claimed
-                    ? AppTheme.ivory
-                    : AppTheme.warmCream,
+                color: claimed ? c.page : c.raised,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: FittedBox(
@@ -649,7 +651,7 @@ class _DayTile extends StatelessWidget {
                   style: GoogleFonts.figtree(
                     fontSize: 8,
                     fontWeight: FontWeight.w700,
-                    color: claimed ? AppTheme.leaf : AppTheme.inkMuted,
+                    color: claimed ? c.olive : c.inkMuted,
                   ),
                 ),
               ),
@@ -673,15 +675,16 @@ class _DayIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     if (claimed) {
       return Container(
         width: 26,
         height: 26,
-          decoration: const BoxDecoration(
-            color: AppTheme.ivory,
+          decoration: BoxDecoration(
+            color: c.page,
             shape: BoxShape.circle,
           ),
-        child: const Icon(Icons.check_rounded, size: 16, color: AppTheme.leaf),
+        child: Icon(Icons.check_rounded, size: 16, color: c.olive),
       );
     }
     if (isNow) {
@@ -690,7 +693,7 @@ class _DayIcon extends StatelessWidget {
     return Icon(
       Icons.lock_outline_rounded,
       size: 18,
-      color: isFuture ? AppTheme.inkMuted : const Color(0xFFB7AFA4),
+      color: isFuture ? c.inkMuted : c.inkFaint,
     );
   }
 }
@@ -714,14 +717,15 @@ class _SundayClaim extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: claimed
-            ? AppTheme.sage
+            ? c.sage
             : canClaim
-                ? _RewardsColors.burgundy
-                : const Color(0xFFF7F2EA),
+                ? c.burgundy
+                : c.subtle,
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -733,10 +737,10 @@ class _SundayClaim extends StatelessWidget {
                     ? Icons.card_giftcard_rounded
                     : Icons.lock_outline_rounded,
             color: claimed
-                ? AppTheme.leaf
+                ? c.olive
                 : canClaim
                     ? const Color(0xFFF2C14E)
-                    : AppTheme.inkMuted,
+                    : c.inkMuted,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -749,7 +753,7 @@ class _SundayClaim extends StatelessWidget {
                           ? 'Sunday check-in  +$points Pts'
                           : 'Sunday check-in',
               style: GoogleFonts.figtree(
-                color: canClaim ? Colors.white : AppTheme.ink,
+                color: canClaim ? Colors.white : c.ink,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -759,7 +763,7 @@ class _SundayClaim extends StatelessWidget {
               onPressed: claiming ? null : onClaim,
               style: TextButton.styleFrom(
                 backgroundColor: Colors.white,
-                foregroundColor: _RewardsColors.burgundy,
+                foregroundColor: AppTheme.burgundy,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
               child: const Text('Claim Now'),
@@ -785,6 +789,7 @@ class _StreakBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     final title = streak == 0
         ? 'Start your streak'
         : streak == 1
@@ -793,9 +798,9 @@ class _StreakBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       decoration: BoxDecoration(
-        color: _RewardsColors.burgundy,
+        color: c.burgundy,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: _RewardsColors.shadow,
+        boxShadow: _RewardsColors.shadow(c),
       ),
       child: Row(
         children: [
@@ -816,7 +821,7 @@ class _StreakBanner extends StatelessWidget {
                 Text(
                   'Your Helping Streak',
                   style: GoogleFonts.figtree(
-                    color: const Color(0xFFF3D5DC),
+                    color: c.onBurgundyMuted,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -833,7 +838,7 @@ class _StreakBanner extends StatelessWidget {
                 Text(
                   'Keep your daily activity going.',
                   style: GoogleFonts.figtree(
-                    color: const Color(0xFFF3D5DC),
+                    color: c.onBurgundyMuted,
                     fontSize: 11,
                     fontStyle: FontStyle.italic,
                   ),
@@ -898,7 +903,7 @@ class _StreakDots extends StatelessWidget {
           child: Icon(
             icon,
             size: 11,
-            color: claimed ? _RewardsColors.burgundy : const Color(0xFFE7C9D0),
+            color: claimed ? AppTheme.burgundy : const Color(0xFFE7C9D0),
           ),
         ),
         const SizedBox(height: 2),
@@ -929,9 +934,10 @@ class _EarnCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
-      decoration: _RewardsColors.card,
+      decoration: _RewardsColors.card(c),
       child: Column(
         children: [
           Row(
@@ -943,7 +949,7 @@ class _EarnCard extends StatelessWidget {
                 style: GoogleFonts.nunito(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.ink,
+                  color: c.ink,
                 ),
               ),
               const Spacer(),
@@ -951,19 +957,19 @@ class _EarnCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          const _EarnRow(
+          _EarnRow(
             icon: Icons.volunteer_activism_outlined,
-            iconBg: Color(0xFFF8E4E8),
-            iconColor: Color(0xFFB45B6C),
+            iconBg: c.isDark ? c.burgundySoft : const Color(0xFFF8E4E8),
+            iconColor: c.isDark ? c.burgundyInk : const Color(0xFFB45B6C),
             title: 'Help someone',
             subtitle: 'Complete a successful charity exchange',
             points: 20,
           ),
           const Divider(height: 1),
-          const _EarnRow(
+          _EarnRow(
             icon: Icons.inventory_2_outlined,
-            iconBg: Color(0xFFF3EBE0),
-            iconColor: Color(0xFF8A6A45),
+            iconBg: c.isDark ? const Color(0xFF3A3226) : const Color(0xFFF3EBE0),
+            iconColor: c.isDark ? const Color(0xFFD2B48C) : const Color(0xFF8A6A45),
             title: 'Recover an item',
             subtitle: 'Successfully return a lost item',
             points: 15,
@@ -971,8 +977,8 @@ class _EarnCard extends StatelessWidget {
           const Divider(height: 1),
           _EarnRow(
             icon: Icons.event_available_outlined,
-            iconBg: AppTheme.sage,
-            iconColor: AppTheme.leaf,
+            iconBg: c.sage,
+            iconColor: c.olive,
             title: 'Daily check-in',
             subtitle: claimedToday ? 'Claimed for today' : 'Visit the app daily',
             points: checkInPoints,
@@ -1005,6 +1011,7 @@ class _EarnRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -1029,14 +1036,14 @@ class _EarnRow extends StatelessWidget {
                     title,
                     style: GoogleFonts.figtree(
                       fontWeight: FontWeight.w700,
-                      color: AppTheme.ink,
+                      color: c.ink,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: GoogleFonts.figtree(
                       fontSize: 12,
-                      color: AppTheme.inkMuted,
+                      color: c.inkMuted,
                     ),
                   ),
                 ],
@@ -1202,18 +1209,18 @@ class _GiftPainter extends CustomPainter {
 }
 
 class _RewardsColors {
-  static const page = AppTheme.ivory;
-  static const burgundy = AppTheme.burgundy;
-  static const shadow = [
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 16,
-      offset: Offset(0, 6),
-    ),
-  ];
-  static final card = BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(22),
-    boxShadow: shadow,
-  );
+  static List<BoxShadow> shadow(CivicColors c) => [
+        BoxShadow(
+          color: c.shadow,
+          blurRadius: 16,
+          offset: const Offset(0, 6),
+        ),
+      ];
+
+  static BoxDecoration card(CivicColors c) => BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(22),
+        border: c.isDark ? Border.all(color: c.subtleBorder) : null,
+        boxShadow: shadow(c),
+      );
 }

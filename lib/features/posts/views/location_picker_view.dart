@@ -5,6 +5,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/theme/map_styles.dart';
 import '../../../core/utils/device_location.dart';
 import '../models/location_pick_result.dart';
 
@@ -41,6 +42,7 @@ class _LocationPickerViewState extends State<LocationPickerView> {
       body: Stack(
         children: [
           GoogleMap(
+            style: MapStyles.forContext(context),
             initialCameraPosition: CameraPosition(
               target: _selectedPosition,
               zoom: 14,

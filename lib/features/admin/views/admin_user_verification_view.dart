@@ -174,7 +174,7 @@ class _AdminUserVerificationViewState extends State<AdminUserVerificationView> {
     if (url == null || url.isEmpty) {
       return Container(
         height: 180,
-        color: Colors.black12,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         child: const Center(child: Icon(Icons.broken_image_outlined)),
       );
     }

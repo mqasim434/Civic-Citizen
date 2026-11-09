@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/navigation/shell_tab.dart';
+import '../../../core/theme/map_styles.dart';
 import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/utils/device_location.dart';
@@ -200,6 +201,7 @@ class _MapPostsViewState extends State<MapPostsView>
                 children: [
                   GoogleMap(
                     initialCameraPosition: _defaultCamera,
+                    style: MapStyles.forContext(context),
                     markers: markers,
                     circles: circles,
                     myLocationButtonEnabled: true,

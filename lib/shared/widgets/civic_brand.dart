@@ -1,4 +1,3 @@
-import 'package:civic_citizen/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// People-and-leaf mark used on splash and home.
@@ -10,7 +9,7 @@ class CivicLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? AppTheme.leaf;
+    final c = color ?? Theme.of(context).colorScheme.primary;
     return SizedBox(
       width: size,
       height: size,

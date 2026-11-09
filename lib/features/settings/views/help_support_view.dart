@@ -40,27 +40,28 @@ class HelpSupportView extends StatelessWidget {
           const SizedBox(height: 16),
           _HelpTile(
             icon: Icons.bug_report_outlined,
-            iconBg: const Color(0xFFE7F6EC),
             title: 'Report a Problem',
             subtitle: 'Report bugs or technical issues.',
             onTap: () => _mail('Report a Problem'),
           ),
           _HelpTile(
             icon: Icons.person_outline_rounded,
-            iconBg: const Color(0xFFE8F0EA),
             title: 'Account Issues',
             subtitle: 'Login, profile and account problems.',
             onTap: () => _mail('Account Issues'),
           ),
           _HelpTile(
             icon: Icons.chat_bubble_outline_rounded,
-            iconBg: const Color(0xFFE5F4EA),
             title: 'Feedback & Suggestions',
             subtitle: 'Share your ideas with us.',
             onTap: () => _mail('Feedback & Suggestions'),
           ),
           const SizedBox(height: 28),
-          Icon(Icons.support_agent_rounded, size: 72, color: AppTheme.leaf.withValues(alpha: 0.7)),
+          Icon(
+            Icons.support_agent_rounded,
+            size: 72,
+            color: theme.colorScheme.primary.withValues(alpha: 0.7),
+          ),
           const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: () => _mail('Civic Citizen support'),
@@ -76,14 +77,12 @@ class HelpSupportView extends StatelessWidget {
 class _HelpTile extends StatelessWidget {
   const _HelpTile({
     required this.icon,
-    required this.iconBg,
     required this.title,
     required this.subtitle,
     required this.onTap,
   });
 
   final IconData icon;
-  final Color iconBg;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -100,8 +99,8 @@ class _HelpTile extends StatelessWidget {
           onTap: onTap,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           leading: CircleAvatar(
-            backgroundColor: iconBg,
-            child: Icon(icon, color: AppTheme.leaf),
+            backgroundColor: AppTheme.colors(context).sage,
+            child: Icon(icon, color: AppTheme.colors(context).olive),
           ),
           title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
           subtitle: Text(subtitle),

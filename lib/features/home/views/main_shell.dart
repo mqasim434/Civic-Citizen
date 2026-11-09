@@ -119,21 +119,24 @@ class _CivicNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppTheme.colors(context);
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.ink.withValues(alpha: 0.16),
+            color: c.isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : AppTheme.ink.withValues(alpha: 0.16),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
         ],
       ),
       child: CustomPaint(
-        foregroundPainter: const _TopCornerBorderPainter(),
+        foregroundPainter: _TopCornerBorderPainter(c.olive),
         child: Material(
-        color: AppTheme.paperRaised,
+        color: c.raised,
         clipBehavior: Clip.antiAlias,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -154,9 +157,7 @@ class _CivicNavBar extends StatelessWidget {
                           Icon(
                             i == index ? tabs[i].selected : tabs[i].icon,
                             size: 22,
-                            color: i == index
-                                ? AppTheme.olive
-                                : AppTheme.inkMuted,
+                            color: i == index ? c.olive : c.inkMuted,
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -166,9 +167,7 @@ class _CivicNavBar extends StatelessWidget {
                               fontWeight: i == index
                                   ? FontWeight.w700
                                   : FontWeight.w500,
-                              color: i == index
-                                  ? AppTheme.olive
-                                  : AppTheme.inkMuted,
+                              color: i == index ? c.olive : c.inkMuted,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -177,7 +176,7 @@ class _CivicNavBar extends StatelessWidget {
                             width: i == index ? 18 : 0,
                             height: 2.5,
                             decoration: BoxDecoration(
-                              color: AppTheme.olive,
+                              color: c.olive,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -197,7 +196,9 @@ class _CivicNavBar extends StatelessWidget {
 
 /// Stroke along the top edge and the two top corners only.
 class _TopCornerBorderPainter extends CustomPainter {
-  const _TopCornerBorderPainter();
+  const _TopCornerBorderPainter(this.color);
+
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -221,7 +222,7 @@ class _TopCornerBorderPainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..color = AppTheme.olive
+        ..color = color
         ..style = PaintingStyle.stroke
         ..strokeWidth = stroke
         ..strokeCap = StrokeCap.round
@@ -230,7 +231,8 @@ class _TopCornerBorderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _TopCornerBorderPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 
