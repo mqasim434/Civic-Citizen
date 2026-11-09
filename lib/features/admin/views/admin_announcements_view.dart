@@ -8,15 +8,19 @@ import '../../../core/models/app_announcement.dart';
 import '../../../core/services/announcement_service.dart';
 import '../../announcements/widgets/announcement_analytics_panel.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../ui/admin_ui.dart';
 
-class AdminAnnouncementsView extends StatefulWidget {
-  const AdminAnnouncementsView({super.key});
+/// Form to publish a new announcement (opened from Broadcast).
+class AdminCreateAnnouncementView extends StatefulWidget {
+  const AdminCreateAnnouncementView({super.key});
 
   @override
-  State<AdminAnnouncementsView> createState() => _AdminAnnouncementsViewState();
+  State<AdminCreateAnnouncementView> createState() =>
+      _AdminCreateAnnouncementViewState();
 }
 
-class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
+class _AdminCreateAnnouncementViewState
+    extends State<AdminCreateAnnouncementView> {
   final _titleController = TextEditingController();
   final _bodyController = TextEditingController();
   final _pollQuestionController = TextEditingController();
@@ -94,6 +98,7 @@ class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Announcement published')),
       );
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -107,10 +112,12 @@ class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final service = context.read<AnnouncementService>();
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return AdminPage(
+      title: 'Create Announcement',
+      leading: const AdminBackButton(),
+      body: ListView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
       children: [
         Text(
           'Broadcast to all users',
@@ -241,158 +248,215 @@ class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
             ],
           ),
         const SizedBox(height: 16),
-        FilledButton.icon(
-          onPressed: _saving ? null : _publish,
-          icon: _saving
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Icon(Icons.send_rounded),
-          label: Text(_saving ? 'Publishing…' : 'Publish announcement'),
-        ),
-        const SizedBox(height: 32),
-        Text(
-          'Recent announcements',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 12),
-        StreamBuilder<List<AppAnnouncement>>(
-          stream: service.watchAllForAdmin(),
-          builder: (context, snap) {
-            if (snap.hasError) {
-              return Text('Error: ${snap.error}');
-            }
-            if (snap.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final items = snap.data ?? [];
-            if (items.isEmpty) {
-              return Text(
-                'No announcements yet.',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.outline,
-                ),
-              );
-            }
-            return Column(
-              children:
-                  items.map((a) => _AnnouncementTile(announcement: a)).toList(),
-            );
-          },
+        AdminButton(
+          label: _saving ? 'Publishing…' : 'Publish announcement',
+          icon: Icons.send_rounded,
+          busy: _saving,
+          onPressed: _publish,
         ),
       ],
+    ),
     );
   }
 }
 
-class _AnnouncementTile extends StatefulWidget {
+/// Broadcast list: create button and recent announcements.
+class AdminAnnouncementsView extends StatefulWidget {
+  const AdminAnnouncementsView({super.key});
+
+  @override
+  State<AdminAnnouncementsView> createState() => _AdminAnnouncementsViewState();
+}
+
+class _AdminAnnouncementsViewState extends State<AdminAnnouncementsView> {
+  static const _previewCount = 5;
+  bool _showAll = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AdminPalette.of(context);
+    return AdminPage(
+      title: 'Announcements',
+      leading: const AdminBackButton(),
+      body: StreamBuilder<List<AppAnnouncement>>(
+        stream: context.read<AnnouncementService>().watchAllForAdmin(),
+        builder: (context, snap) {
+          final items = snap.data ?? const <AppAnnouncement>[];
+          final shown =
+              _showAll ? items : items.take(_previewCount).toList();
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+            children: [
+              AdminButton(
+                label: 'Create Announcement',
+                icon: Icons.add_circle_rounded,
+                onPressed: () => Navigator.of(context, rootNavigator: true)
+                    .push(MaterialPageRoute<void>(
+                  builder: (_) => const AdminCreateAnnouncementView(),
+                )),
+              ),
+              const SizedBox(height: 22),
+              AdminSectionHeader(
+                title: 'Recent Announcements',
+                actionLabel: items.length > _previewCount
+                    ? (_showAll ? 'Show less' : 'View All')
+                    : null,
+                onAction: () => setState(() => _showAll = !_showAll),
+              ),
+              const SizedBox(height: 12),
+              if (snap.hasError)
+                Text('Error: ${snap.error}', style: AdminText.body(p))
+              else if (!snap.hasData)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (items.isEmpty)
+                const AdminEmpty(
+                  icon: Icons.campaign_outlined,
+                  message: 'No announcements yet',
+                )
+              else
+                for (final a in shown) _AnnouncementTile(announcement: a),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AnnouncementTile extends StatelessWidget {
   const _AnnouncementTile({required this.announcement});
 
   final AppAnnouncement announcement;
 
-  @override
-  State<_AnnouncementTile> createState() => _AnnouncementTileState();
-}
-
-class _AnnouncementTileState extends State<_AnnouncementTile> {
-  bool _showAnalytics = false;
+  void _showAnalytics(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.92,
+        builder: (ctx, controller) => ListView(
+          controller: controller,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            Text(
+              announcement.title,
+              style: AdminText.title(AdminPalette.of(ctx), size: 18),
+            ),
+            const SizedBox(height: 12),
+            AnnouncementAnalyticsPanel(announcement: announcement),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final p = AdminPalette.of(context);
     final service = context.read<AnnouncementService>();
-    final announcement = widget.announcement;
+    final a = announcement;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (announcement.hasImage)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-              child: Image.network(
-                announcement.imageUrl!,
-                height: 120,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
+    final Widget leading = a.hasImage
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              a.imageUrl!,
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  Icon(Icons.campaign_rounded, color: p.primary, size: 40),
             ),
-          ListTile(
-            title: Text(announcement.title),
-            subtitle: Column(
+          )
+        : SizedBox(
+            width: 56,
+            height: 56,
+            child: Icon(
+              a.hasPoll ? Icons.poll_rounded : Icons.campaign_rounded,
+              color: p.primary,
+              size: 40,
+            ),
+          );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+      decoration: p.cardDecoration(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          leading,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  a.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AdminText.title(p, size: 15),
+                ),
                 const SizedBox(height: 4),
                 Text(
-                  announcement.body,
-                  maxLines: 3,
+                  a.body,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
+                  style: AdminText.body(p, size: 12.5),
                 ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
+                const SizedBox(height: 8),
+                Row(
                   children: [
+                    Icon(Icons.calendar_month_outlined, size: 14, color: p.muted),
+                    const SizedBox(width: 4),
                     Text(
-                      announcement.active ? 'Active' : 'Inactive',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: announcement.active
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.outline,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      a.createdAt == null ? '' : adminDate(a.createdAt!),
+                      style: AdminText.body(p, size: 11.5),
                     ),
-                    if (announcement.hasPoll)
-                      Text(
-                        'Poll',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.secondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    if (a.hasPoll) ...[
+                      const SizedBox(width: 8),
+                      AdminPill.blue(context, 'Poll'),
+                    ],
+                    const Spacer(),
+                    a.active
+                        ? AdminPill.green(context, 'Active')
+                        : AdminPill.grey(context, 'Inactive'),
+                    const SizedBox(width: 6),
                   ],
                 ),
               ],
             ),
-            isThreeLine: true,
-            trailing: announcement.active
-                ? TextButton(
-                    onPressed: () => service.setActive(
-                      announcement.id,
-                      active: false,
-                    ),
-                    child: const Text('Deactivate'),
-                  )
-                : null,
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () =>
-                      setState(() => _showAnalytics = !_showAnalytics),
-                  icon: Icon(
-                    _showAnalytics
-                        ? Icons.expand_less_rounded
-                        : Icons.bar_chart_rounded,
-                  ),
-                  label: Text(
-                    _showAnalytics ? 'Hide analytics' : 'View analytics',
-                  ),
-                ),
-                if (_showAnalytics) ...[
-                  const SizedBox(height: 12),
-                  AnnouncementAnalyticsPanel(announcement: announcement),
-                ],
-              ],
-            ),
+          AdminMoreButton<String>(
+            onSelected: (v) {
+              if (v == 'analytics') _showAnalytics(context);
+              if (v == 'toggle') service.setActive(a.id, active: !a.active);
+            },
+            itemBuilder: (_) => [
+              adminMenuItem(
+                'analytics',
+                Icons.bar_chart_rounded,
+                'View analytics',
+              ),
+              a.active
+                  ? adminMenuItem(
+                      'toggle',
+                      Icons.visibility_off_outlined,
+                      'Deactivate',
+                    )
+                  : adminMenuItem(
+                      'toggle',
+                      Icons.visibility_outlined,
+                      'Activate',
+                    ),
+            ],
           ),
         ],
       ),

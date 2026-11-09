@@ -101,6 +101,12 @@ class AdminService {
     await _posts.doc(postId).delete();
   }
 
+  /// Every user document, unordered (ordering by a field would drop users
+  /// that do not have it). Used for dashboard counts.
+  Stream<QuerySnapshot<Map<String, dynamic>>> watchAllUsers() {
+    return _users.snapshots();
+  }
+
   /// Stream all users for admin user management.
   Stream<QuerySnapshot<Map<String, dynamic>>> watchUsers() {
     return _users.orderBy('updatedAt', descending: true).snapshots();

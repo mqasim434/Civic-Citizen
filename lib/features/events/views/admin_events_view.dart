@@ -5,18 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constants/app_constants.dart';
+import '../../../core/routes/app_router.dart';
+import '../../admin/ui/admin_ui.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/civic_event.dart';
 import '../services/event_service.dart';
 
-class AdminEventsView extends StatefulWidget {
-  const AdminEventsView({super.key});
+/// Form to publish a new event (opened from the Events page).
+class AdminCreateEventView extends StatefulWidget {
+  const AdminCreateEventView({super.key});
 
   @override
-  State<AdminEventsView> createState() => _AdminEventsViewState();
+  State<AdminCreateEventView> createState() => _AdminCreateEventViewState();
 }
 
-class _AdminEventsViewState extends State<AdminEventsView> {
+class _AdminCreateEventViewState extends State<AdminCreateEventView> {
   final _title = TextEditingController();
   final _city = TextEditingController();
   final _location = TextEditingController();
@@ -118,6 +122,7 @@ class _AdminEventsViewState extends State<AdminEventsView> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Event published')),
       );
+      Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,14 +135,12 @@ class _AdminEventsViewState extends State<AdminEventsView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final service = context.read<EventService>();
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return AdminPage(
+      title: 'Create Event',
+      leading: const AdminBackButton(),
+      body: ListView(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
       children: [
-        Text('Publish event', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 12),
         TextField(
           controller: _title,
           decoration: const InputDecoration(
@@ -226,69 +229,315 @@ class _AdminEventsViewState extends State<AdminEventsView> {
           ],
         ),
         const SizedBox(height: 8),
-        FilledButton(
-          onPressed: _saving ? null : _publish,
-          child: _saving
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Text('Publish event'),
+        AdminButton(
+          label: 'Publish event',
+          icon: Icons.send_rounded,
+          busy: _saving,
+          onPressed: _publish,
         ),
-        const SizedBox(height: 28),
-        Text('All events', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 8),
-        StreamBuilder<List<CivicEvent>>(
-          stream: service.watchAllEventsForAdmin(),
-          builder: (context, snap) {
-            final events = snap.data ?? [];
-            if (events.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Text('No events yet'),
-              );
-            }
-            return Column(
-              children: events
-                  .map(
-                    (e) => Card(
-                      child: ListTile(
-                        title: Text(e.title),
-                        subtitle: Text(
-                          '${e.city} · ${e.eventType.label} · '
-                          '${e.isOpen ? 'Open' : 'Closed'} · '
-                          '${e.active ? 'Visible' : 'Hidden'}',
-                        ),
-                        trailing: PopupMenuButton<String>(
-                          onSelected: (v) async {
-                            if (v == 'toggle_open') {
-                              await service.setOpen(e.id, !e.isOpen);
-                            } else if (v == 'toggle_active') {
-                              await service.setActive(e.id, !e.active);
-                            }
-                          },
-                          itemBuilder: (_) => [
-                            PopupMenuItem(
-                              value: 'toggle_open',
-                              child: Text(
-                                e.isOpen ? 'Mark closed' : 'Mark open',
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: 'toggle_active',
-                              child: Text(
-                                e.active ? 'Hide from users' : 'Show to users',
-                              ),
-                            ),
-                          ],
-                        ),
+      ],
+    ),
+    );
+  }
+}
+
+enum _EventFilter { all, upcoming, ongoing, past }
+
+enum _EventPhase { upcoming, ongoing, past }
+
+/// Upcoming until it starts, ongoing for the first 24 hours, then past.
+_EventPhase _phaseOf(CivicEvent e) {
+  final date = e.eventDate;
+  if (date == null) return e.isOpen ? _EventPhase.upcoming : _EventPhase.past;
+  final now = DateTime.now();
+  if (date.isAfter(now)) return _EventPhase.upcoming;
+  if (now.isBefore(date.add(const Duration(hours: 24)))) {
+    return _EventPhase.ongoing;
+  }
+  return _EventPhase.past;
+}
+
+/// Admin events list with status chips and a type filter.
+class AdminEventsView extends StatefulWidget {
+  const AdminEventsView({super.key});
+
+  @override
+  State<AdminEventsView> createState() => _AdminEventsViewState();
+}
+
+class _AdminEventsViewState extends State<AdminEventsView> {
+  _EventFilter _filter = _EventFilter.all;
+  EventType? _type;
+
+  Future<void> _pickType() async {
+    // -1 stands for "All types" so it differs from a dismissed sheet (null).
+    final picked = await adminPickOption<int>(
+      context,
+      title: 'Event type',
+      options: [-1, for (final t in EventType.values) t.index],
+      selected: _type?.index ?? -1,
+      labelOf: (i) => i < 0 ? 'All types' : EventType.values[i].label,
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _type = picked < 0 ? null : EventType.values[picked]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AdminPalette.of(context);
+    final service = context.read<EventService>();
+    return AdminPage(
+      title: 'Events',
+      leading: const AdminBackButton(),
+      actions: [
+        Badge(
+          isLabelVisible: _type != null,
+          smallSize: 8,
+          backgroundColor: p.amber,
+          offset: const Offset(-8, 8),
+          child: AdminHeaderIcon(
+            tooltip: 'Event type',
+            icon: Icons.filter_list_rounded,
+            onPressed: _pickType,
+          ),
+        ),
+        const SizedBox(width: 4),
+      ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+            child: SizedBox(
+              width: double.infinity,
+              child: AdminButton(
+                label: 'Create Event',
+                icon: Icons.add_circle_rounded,
+                onPressed: () => Navigator.of(context, rootNavigator: true)
+                    .push(MaterialPageRoute<void>(
+                  builder: (_) => const AdminCreateEventView(),
+                )),
+              ),
+            ),
+          ),
+          AdminChipBar<_EventFilter>(
+            options: _EventFilter.values,
+            selected: _filter,
+            expand: true,
+            onSelected: (f) => setState(() => _filter = f),
+            labelOf: (f) {
+              switch (f) {
+                case _EventFilter.all:
+                  return 'All';
+                case _EventFilter.upcoming:
+                  return 'Upcoming';
+                case _EventFilter.ongoing:
+                  return 'Ongoing';
+                case _EventFilter.past:
+                  return 'Past';
+              }
+            },
+          ),
+          Expanded(
+            child: StreamBuilder<List<CivicEvent>>(
+              stream: service.watchAllEventsForAdmin(),
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return AdminEmpty(
+                    icon: Icons.error_outline_rounded,
+                    message: 'Could not load events.\n${snap.error}',
+                  );
+                }
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final events = snap.data!.where((e) {
+                  if (_type != null && e.eventType != _type) return false;
+                  final phase = _phaseOf(e);
+                  switch (_filter) {
+                    case _EventFilter.all:
+                      return true;
+                    case _EventFilter.upcoming:
+                      return phase == _EventPhase.upcoming;
+                    case _EventFilter.ongoing:
+                      return phase == _EventPhase.ongoing;
+                    case _EventFilter.past:
+                      return phase == _EventPhase.past;
+                  }
+                }).toList();
+                if (events.isEmpty) {
+                  return const AdminEmpty(
+                    icon: Icons.event_busy_rounded,
+                    message: 'No events here',
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  itemCount: events.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, i) => _EventCard(event: events[i]),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EventCard extends StatelessWidget {
+  const _EventCard({required this.event});
+
+  final CivicEvent event;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AdminPalette.of(context);
+    final service = context.read<EventService>();
+    final e = event;
+    final date = e.eventDate;
+    final phase = _phaseOf(e);
+    final location = [e.location, e.city]
+        .where((s) => s.trim().isNotEmpty)
+        .join(', ');
+
+    final statusPill = switch (phase) {
+      _EventPhase.upcoming => AdminPill.green(context, 'Upcoming'),
+      _EventPhase.ongoing => AdminPill.blue(context, 'Ongoing'),
+      _EventPhase.past => AdminPill.grey(context, 'Past'),
+    };
+
+    final image = e.imageUrl;
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: p.cardDecoration(),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () => navigatorKey.currentState?.pushNamed(
+            AppConstants.routeEventDetail,
+            arguments: e,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 4, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: image != null && image.isNotEmpty
+                        ? Image.network(
+                            image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _EventPlaceholder(p: p),
+                          )
+                        : _EventPlaceholder(p: p),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        e.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AdminText.title(p, size: 15),
                       ),
+                      const SizedBox(height: 6),
+                      if (date != null)
+                        _InfoLine(
+                          icon: Icons.calendar_month_outlined,
+                          text: '${adminDate(date)} • ${adminTime(date)}',
+                        ),
+                      if (location.isNotEmpty) ...[
+                        const SizedBox(height: 3),
+                        _InfoLine(icon: Icons.location_on_outlined, text: location),
+                      ],
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          if (!e.active) ...[
+                            AdminPill.grey(context, 'Hidden'),
+                            const SizedBox(width: 6),
+                          ],
+                          if (!e.isOpen) ...[
+                            AdminPill.red(context, 'Closed'),
+                            const SizedBox(width: 6),
+                          ],
+                          const Spacer(),
+                          statusPill,
+                          const SizedBox(width: 6),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                AdminMoreButton<String>(
+                  onSelected: (v) async {
+                    if (v == 'open') await service.setOpen(e.id, !e.isOpen);
+                    if (v == 'active') await service.setActive(e.id, !e.active);
+                  },
+                  itemBuilder: (_) => [
+                    adminMenuItem(
+                      'open',
+                      e.isOpen ? Icons.lock_outline_rounded : Icons.lock_open_rounded,
+                      e.isOpen ? 'Mark closed' : 'Mark open',
                     ),
-                  )
-                  .toList(),
-            );
-          },
+                    adminMenuItem(
+                      'active',
+                      e.active
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      e.active ? 'Hide from users' : 'Show to users',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EventPlaceholder extends StatelessWidget {
+  const _EventPlaceholder({required this.p});
+
+  final AdminPalette p;
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+        color: p.softGreen,
+        child: Icon(Icons.event_rounded, color: p.softGreenText, size: 32),
+      );
+}
+
+class _InfoLine extends StatelessWidget {
+  const _InfoLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AdminPalette.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: p.muted),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AdminText.body(p, size: 12),
+          ),
         ),
       ],
     );
