@@ -2,261 +2,313 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../services/admin_service.dart';
-import '../widgets/legal_export_dialog.dart';
 import '../../../shared/widgets/user_avatar.dart';
+import '../services/admin_service.dart';
+import '../ui/admin_ui.dart';
+import '../widgets/legal_export_dialog.dart';
+
+enum _UserFilter { all, active, verified, pending, banned }
+
+extension on _UserFilter {
+  String get label {
+    switch (this) {
+      case _UserFilter.all:
+        return 'All users';
+      case _UserFilter.active:
+        return 'Active';
+      case _UserFilter.verified:
+        return 'Verified';
+      case _UserFilter.pending:
+        return 'Pending verification';
+      case _UserFilter.banned:
+        return 'Banned';
+    }
+  }
+
+  bool matches(Map<String, dynamic> d) {
+    final banned = d['isBanned'] == true;
+    switch (this) {
+      case _UserFilter.all:
+        return true;
+      case _UserFilter.active:
+        return !banned;
+      case _UserFilter.verified:
+        return d['verificationStatus'] == 'verified';
+      case _UserFilter.pending:
+        return d['verificationStatus'] == 'pending';
+      case _UserFilter.banned:
+        return banned;
+    }
+  }
+}
 
 class AdminUserManagementView extends StatefulWidget {
   const AdminUserManagementView({super.key});
 
   @override
-  State<AdminUserManagementView> createState() => _AdminUserManagementViewState();
+  State<AdminUserManagementView> createState() =>
+      _AdminUserManagementViewState();
 }
 
 class _AdminUserManagementViewState extends State<AdminUserManagementView> {
-  final Set<String> _busyUserIds = <String>{};
+  final Set<String> _busy = <String>{};
+  final _search = TextEditingController();
+  final _searchFocus = FocusNode();
+  _UserFilter _filter = _UserFilter.all;
+
+  @override
+  void dispose() {
+    _search.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickFilter() async {
+    final picked = await adminPickOption<_UserFilter>(
+      context,
+      title: 'Filter users',
+      options: _UserFilter.values,
+      selected: _filter,
+      labelOf: (f) => f.label,
+    );
+    if (picked != null) setState(() => _filter = picked);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: context.read<AdminService>().watchUsers(),
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snap.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Error loading users: ${snap.error}',
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-        }
-
-        final docs = snap.data?.docs ?? [];
-        if (docs.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+    return AdminPage(
+      title: 'Users',
+      leading: AdminHeaderIcon(
+        tooltip: 'Search users',
+        icon: Icons.search_rounded,
+        onPressed: () => _searchFocus.requestFocus(),
+      ),
+      actions: const [AdminBell(), SizedBox(width: 4)],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Row(
               children: [
-                Icon(Icons.people_outline_rounded, size: 56, color: theme.colorScheme.outline),
-                const SizedBox(height: 12),
-                Text('No users found', style: theme.textTheme.titleMedium),
+                Expanded(
+                  child: AdminSearchField(
+                    controller: _search,
+                    focusNode: _searchFocus,
+                    hint: 'Search users...',
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Badge(
+                  isLabelVisible: _filter != _UserFilter.all,
+                  smallSize: 9,
+                  child: AdminSquareIconButton(
+                    tooltip: 'Filter',
+                    icon: Icons.filter_list_rounded,
+                    onPressed: _pickFilter,
+                  ),
+                ),
               ],
             ),
-          );
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, i) {
-            final doc = docs[i];
-            final d = doc.data();
-            final uid = doc.id;
-            final name = (d['displayName'] as String?)?.trim();
-            final email = (d['email'] as String?)?.trim();
-            final banned = d['isBanned'] == true;
-            final busy = _busyUserIds.contains(uid);
-            return Card(
-              child: ListTile(
-                leading: UserAvatar(
-                  userId: uid,
-                  name: name ?? '',
-                  photoUrl: (d['photoUrl'] as String?) ?? '',
-                ),
-                title: Row(
-                  children: [
-                    Expanded(child: Text(name == null || name.isEmpty ? 'Unnamed user' : name)),
-                    if (banned)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'BANNED',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onErrorContainer,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                subtitle: Text(email == null || email.isEmpty ? 'No email' : email),
-                trailing: busy
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : PopupMenuButton<String>(
-                        tooltip: 'Manage user',
-                        onSelected: (value) async {
-                          if (value == 'ban') {
-                            await _setBanned(uid, true);
-                            return;
-                          }
-                          if (value == 'unban') {
-                            await _setBanned(uid, false);
-                            return;
-                          }
-                          if (value == 'delete') {
-                            await _deleteUser(uid, name ?? email ?? 'user');
-                            return;
-                          }
-                          if (value == 'export') {
-                            await showLegalExportDialog(
-                              context,
-                              userId: uid,
-                              userLabel: name ?? email ?? uid,
-                            );
-                          }
-                        },
-                        itemBuilder: (_) => [
-                          const PopupMenuItem(
-                            value: 'export',
-                            child: ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              leading: Icon(Icons.folder_zip_outlined),
-                              title: Text('Export evidence'),
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem(
-                            value: banned ? 'unban' : 'ban',
-                            child: ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              leading: Icon(
-                                banned
-                                    ? Icons.lock_open_rounded
-                                    : Icons.block_flipped,
-                              ),
-                              title: Text(banned ? 'Unban user' : 'Ban user'),
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: ListTile(
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                              leading: Icon(Icons.delete_forever_rounded),
-                              title: Text('Delete profile'),
-                            ),
-                          ),
-                        ],
-                      ),
-              ),
-            );
-          },
-        );
-      },
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: context.read<AdminService>().watchAllUsers(),
+              builder: (context, snap) {
+                if (snap.hasError) {
+                  return AdminEmpty(
+                    icon: Icons.error_outline_rounded,
+                    message: 'Could not load users.\n${snap.error}',
+                  );
+                }
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final q = _search.text.trim().toLowerCase();
+                final docs = snap.data!.docs.where((doc) {
+                  final d = doc.data();
+                  if (!_filter.matches(d)) return false;
+                  if (q.isEmpty) return true;
+                  final name = (d['displayName'] as String? ?? '').toLowerCase();
+                  final email = (d['email'] as String? ?? '').toLowerCase();
+                  return name.contains(q) || email.contains(q);
+                }).toList()
+                  // Most recently updated first; users without the field last.
+                  ..sort((a, b) {
+                    final at = a.data()['updatedAt'];
+                    final bt = b.data()['updatedAt'];
+                    if (at is! Timestamp) return bt is Timestamp ? 1 : 0;
+                    if (bt is! Timestamp) return -1;
+                    return bt.compareTo(at);
+                  });
+                if (docs.isEmpty) {
+                  return const AdminEmpty(
+                    icon: Icons.people_outline_rounded,
+                    message: 'No users found',
+                  );
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  itemCount: docs.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) => _userTile(docs[i]),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _userTile(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    final p = AdminPalette.of(context);
+    final d = doc.data();
+    final uid = doc.id;
+    final name = (d['displayName'] as String?)?.trim() ?? '';
+    final email = (d['email'] as String?)?.trim() ?? '';
+    final banned = d['isBanned'] == true;
+    final busy = _busy.contains(uid);
+    final label = name.isNotEmpty ? name : (email.isNotEmpty ? email : uid);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
+      decoration: p.cardDecoration(radius: 16),
+      child: Row(
+        children: [
+          UserAvatar(
+            userId: uid,
+            name: name.isNotEmpty ? name : email,
+            radius: 22,
+            photoUrl: (d['photoUrl'] as String?) ?? '',
+            backgroundColor: p.softGreen,
+            foregroundColor: p.softGreenText,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name.isEmpty ? 'Unnamed user' : name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AdminText.title(p, size: 15).copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  email.isEmpty ? 'No email' : email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AdminText.body(p, size: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          banned
+              ? AdminPill.red(context, 'Banned')
+              : AdminPill.green(context, 'Active'),
+          if (busy)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else
+            AdminMoreButton<String>(
+              tooltip: 'Manage user',
+              onSelected: (v) => _onMenu(v, uid, label, banned),
+              itemBuilder: (_) => [
+                adminMenuItem(
+                  'export',
+                  Icons.folder_zip_outlined,
+                  'Export evidence',
+                ),
+                const PopupMenuDivider(),
+                banned
+                    ? adminMenuItem(
+                        'unban',
+                        Icons.lock_open_rounded,
+                        'Unban user',
+                      )
+                    : adminMenuItem('ban', Icons.block_flipped, 'Ban user'),
+                const PopupMenuDivider(),
+                adminMenuItem(
+                  'delete',
+                  Icons.delete_forever_rounded,
+                  'Delete profile',
+                  danger: true,
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onMenu(String v, String uid, String label, bool banned) async {
+    switch (v) {
+      case 'export':
+        await showLegalExportDialog(context, userId: uid, userLabel: label);
+      case 'ban':
+        await _setBanned(uid, true);
+      case 'unban':
+        await _setBanned(uid, false);
+      case 'delete':
+        await _deleteUser(uid, label);
+    }
   }
 
   Future<void> _setBanned(String uid, bool banned) async {
     String? reason;
     if (banned) {
-      reason = await _askReason();
-      if (!mounted) return;
-      if (reason == null) return;
+      reason = await adminAskReason(
+        context,
+        title: 'Ban user',
+        hint: 'Reason for ban (optional)',
+        confirm: 'Ban',
+      );
+      if (reason == null || !mounted) return;
     }
-    setState(() => _busyUserIds.add(uid));
-    String message;
-    var success = true;
+    setState(() => _busy.add(uid));
     try {
       await context.read<AdminService>().setUserBanned(
             uid,
             banned: banned,
-            reason: reason?.trim().isEmpty ?? true ? null : reason?.trim(),
+            reason: reason == null || reason.isEmpty ? null : reason,
           );
-      message = banned ? 'User banned.' : 'User unbanned.';
+      if (mounted) adminSnack(context, banned ? 'User banned.' : 'User unbanned.');
     } catch (e) {
-      success = false;
-      message = 'Failed to update user: $e';
+      if (mounted) adminSnack(context, 'Failed to update user: $e', error: true);
+    } finally {
+      if (mounted) setState(() => _busy.remove(uid));
     }
-    if (!mounted) return;
-    setState(() => _busyUserIds.remove(uid));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: success ? null : Theme.of(context).colorScheme.errorContainer,
-      ),
-    );
   }
 
   Future<void> _deleteUser(String uid, String label) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete profile'),
-        content: Text(
+    final ok = await adminConfirm(
+      context,
+      title: 'Delete profile',
+      message:
           'Delete "$label" profile and all authored posts? This cannot be undone.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+      confirm: 'Delete',
+      danger: true,
     );
-    if (confirm != true || !mounted) return;
-    setState(() => _busyUserIds.add(uid));
-    String message;
-    var success = true;
+    if (!ok || !mounted) return;
+    setState(() => _busy.add(uid));
     try {
       await context.read<AdminService>().deleteUserProfile(uid);
-      message = 'User profile deleted.';
+      if (mounted) adminSnack(context, 'User profile deleted.');
     } catch (e) {
-      success = false;
-      message = 'Failed to delete profile: $e';
+      if (mounted) adminSnack(context, 'Failed to delete profile: $e', error: true);
+    } finally {
+      if (mounted) setState(() => _busy.remove(uid));
     }
-    if (!mounted) return;
-    setState(() => _busyUserIds.remove(uid));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: success ? null : Theme.of(context).colorScheme.errorContainer,
-      ),
-    );
-  }
-
-  Future<String?> _askReason() async {
-    final controller = TextEditingController();
-    final result = await showDialog<String?>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ban user'),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Reason (optional)',
-            hintText: 'Reason for ban',
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(null), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    return result;
   }
 }

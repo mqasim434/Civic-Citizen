@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../models/ad_model.dart';
 import '../services/ad_service.dart';
+import '../../admin/ui/admin_ui.dart';
 
 class AdminAdsModerationView extends StatefulWidget {
   const AdminAdsModerationView({super.key});
@@ -62,7 +63,7 @@ class _AdminAdsModerationViewState extends State<AdminAdsModerationView> {
             snap.data == null;
 
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           children: [
             StreamBuilder<int>(
               stream: ads.watchAdPointsCost(),
@@ -77,7 +78,8 @@ class _AdminAdsModerationViewState extends State<AdminAdsModerationView> {
                     _rateController.text = '$cost';
                   });
                 }
-                return Card(
+                return Container(
+                  decoration: AdminPalette.of(context).cardDecoration(),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -85,7 +87,7 @@ class _AdminAdsModerationViewState extends State<AdminAdsModerationView> {
                       children: [
                         Text(
                           'Minimum ad rate',
-                          style: theme.textTheme.titleMedium,
+                          style: AdminText.title(AdminPalette.of(context)),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -135,7 +137,7 @@ class _AdminAdsModerationViewState extends State<AdminAdsModerationView> {
               },
             ),
             const SizedBox(height: 16),
-            Text('All ads', style: theme.textTheme.titleMedium),
+            const AdminSectionHeader(title: 'All ads'),
             const SizedBox(height: 8),
             if (loading)
               const Padding(
@@ -151,44 +153,138 @@ class _AdminAdsModerationViewState extends State<AdminAdsModerationView> {
                 ),
               )
             else
-              ...list.map(
-                (ad) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Card(
-                    child: ListTile(
-                      title: Text(ad.title),
-                      subtitle: Text(
-                        '${ad.authorName} · ${ad.status.value}'
-                        '${ad.city != null && ad.city!.isNotEmpty ? ' · ${ad.city}' : ''}'
-                        ' · ${ad.pointsSpent} pts',
-                      ),
-                      trailing: ad.status == AdStatus.removed ||
-                              ad.status == AdStatus.stopped
-                          ? null
-                          : IconButton(
-                              tooltip: 'Remove ad',
-                              icon: Icon(
-                                Icons.block_rounded,
-                                color: theme.colorScheme.error,
-                              ),
-                              onPressed: () async {
-                                await ads.removeAd(ad.id);
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Ad removed'),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                    ),
-                  ),
-                ),
-              ),
+              ...list.map((ad) => _AdTile(ad: ad, ads: ads)),
           ],
         );
       },
     );
   }
+}
+
+
+/// Ads page inside the admin panel (opened from More).
+class AdminAdsView extends StatelessWidget {
+  const AdminAdsView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const AdminPage(
+      title: 'Ads',
+      leading: AdminBackButton(),
+      body: AdminAdsModerationView(),
+    );
+  }
+}
+
+class _AdTile extends StatelessWidget {
+  const _AdTile({required this.ad, required this.ads});
+
+  final AdModel ad;
+  final AdService ads;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AdminPalette.of(context);
+    final pill = switch (ad.status) {
+      AdStatus.active => ad.isLive
+          ? AdminPill.green(context, 'Active')
+          : AdminPill.grey(context, 'Expired'),
+      AdStatus.paused => AdminPill.amber(context, 'Paused'),
+      AdStatus.expired => AdminPill.grey(context, 'Expired'),
+      AdStatus.stopped => AdminPill.grey(context, 'Stopped'),
+      AdStatus.removed => AdminPill.red(context, 'Removed'),
+    };
+    final canRemove =
+        ad.status != AdStatus.removed && ad.status != AdStatus.stopped;
+    final meta = [
+      ad.authorName,
+      if (ad.city != null && ad.city!.isNotEmpty) ad.city!,
+      '${ad.pointsSpent} pts',
+    ].join(' · ');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
+      decoration: p.cardDecoration(radius: 16),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              width: 52,
+              height: 52,
+              child: ad.imageUrl != null && ad.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      ad.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _icon(p),
+                    )
+                  : _icon(p),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ad.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AdminText.title(p, size: 15),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AdminText.body(p, size: 12),
+                ),
+                if (ad.endsAt != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    'Ends ${adminDate(ad.endsAt!)}',
+                    style: AdminText.body(p, size: 11.5),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          pill,
+          if (canRemove)
+            AdminMoreButton<String>(
+              tooltip: 'Manage ad',
+              onSelected: (_) async {
+                final ok = await adminConfirm(
+                  context,
+                  title: 'Remove ad?',
+                  message: 'The ad stops showing immediately.',
+                  confirm: 'Remove',
+                  danger: true,
+                );
+                if (!ok) return;
+                await ads.removeAd(ad.id);
+                if (context.mounted) adminSnack(context, 'Ad removed');
+              },
+              itemBuilder: (_) => [
+                adminMenuItem(
+                  'remove',
+                  Icons.block_rounded,
+                  'Remove ad',
+                  danger: true,
+                ),
+              ],
+            )
+          else
+            const SizedBox(width: 12),
+        ],
+      ),
+    );
+  }
+
+  Widget _icon(AdminPalette p) => ColoredBox(
+        color: p.softAmber,
+        child: Icon(Icons.campaign_rounded, color: p.softAmberText),
+      );
 }

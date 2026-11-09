@@ -19,7 +19,10 @@ import '../../posts/utils/post_search_filter.dart';
 import '../widgets/location_search_sheet.dart';
 
 class MapPostsView extends StatefulWidget {
-  const MapPostsView({super.key});
+  const MapPostsView({super.key, this.showAppBar = true});
+
+  /// False when a parent screen already shows a header (admin panel).
+  final bool showAppBar;
 
   @override
   State<MapPostsView> createState() => _MapPostsViewState();
@@ -142,7 +145,10 @@ class _MapPostsViewState extends State<MapPostsView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nearby & Map')),
+      backgroundColor: widget.showAppBar ? null : Colors.transparent,
+      appBar: widget.showAppBar
+          ? AppBar(title: const Text('Nearby & Map'))
+          : null,
       body: StreamBuilder<List<PostModel>>(
         stream: _getPostsStream(),
         builder: (context, snap) {

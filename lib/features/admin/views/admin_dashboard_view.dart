@@ -1,19 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
-import '../../../core/constants/app_constants.dart';
-import '../../../core/routes/app_router.dart';
-import '../../../shared/widgets/notification_bell_button.dart';
-import '../../ads/views/admin_ads_moderation_view.dart';
-import '../../auth/controllers/auth_controller.dart';
-import '../../events/views/admin_events_view.dart';
-import '../../home/views/map_placeholder_view.dart';
-import 'admin_announcements_view.dart';
+import '../ui/admin_ui.dart';
+import 'admin_home_view.dart';
+import 'admin_more_view.dart';
 import 'admin_posts_timeline_view.dart';
 import 'admin_user_management_view.dart';
-import '../services/admin_service.dart';
 
+/// Admin shell: Dashboard, Posts, Users and More in the bottom bar.
+/// More has its own navigator so its pages keep the bottom bar.
 class AdminDashboardView extends StatefulWidget {
   const AdminDashboardView({super.key});
 
@@ -22,215 +17,188 @@ class AdminDashboardView extends StatefulWidget {
 }
 
 class _AdminDashboardViewState extends State<AdminDashboardView> {
-  int _index = 0;
+  static const _dashboard = 0;
+  static const _posts = 1;
+  static const _more = 3;
 
-  /// The first [_primaryCount] tabs sit in the bottom bar; the rest live
-  /// under "More".
-  static const _primaryCount = 4;
+  int _index = _dashboard;
+  final _moreNav = GlobalKey<NavigatorState>();
 
-  static const _tabs = [
-    _AdminTab(
-      icon: Icons.verified_user_outlined,
-      label: 'Verifications',
-      title: 'Admin - verifications',
-    ),
-    _AdminTab(
-      icon: Icons.dynamic_feed_outlined,
-      label: 'Posts',
-      title: 'Admin - posts timeline',
-    ),
-    _AdminTab(
-      icon: Icons.manage_accounts_outlined,
-      label: 'Users',
-      title: 'Admin - user management',
-    ),
-    _AdminTab(
-      icon: Icons.ads_click_rounded,
-      label: 'Ads',
-      title: 'Admin - ads',
-    ),
-    _AdminTab(
-      icon: Icons.map_rounded,
-      label: 'Map',
-      title: 'Admin - map',
-    ),
-    _AdminTab(
-      icon: Icons.campaign_outlined,
-      label: 'Broadcast',
-      title: 'Admin - announcements',
-    ),
-    _AdminTab(
-      icon: Icons.event_rounded,
-      label: 'Events',
-      title: 'Admin - events',
-    ),
-  ];
+  void _select(int i) {
+    // Tapping More again goes back to the More menu.
+    if (i == _more && _index == _more) {
+      _moreNav.currentState?.popUntil((r) => r.isFirst);
+    }
+    setState(() => _index = i);
+  }
 
-  Future<void> _openMore() async {
-    final picked = await showModalBottomSheet<int>(
-      context: context,
-      showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var i = _primaryCount; i < _tabs.length; i++)
-              ListTile(
-                leading: Icon(_tabs[i].icon),
-                title: Text(_tabs[i].label),
-                selected: i == _index,
-                trailing: i == _index
-                    ? const Icon(Icons.check_rounded)
-                    : const Icon(Icons.chevron_right_rounded),
-                onTap: () => Navigator.of(ctx).pop(i),
-              ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
-    );
-    if (picked != null && mounted) setState(() => _index = picked);
+  /// Opens one of the More pages (used by dashboard tiles).
+  void _openMorePage(AdminMorePage page) {
+    setState(() => _index = _more);
+    final nav = _moreNav.currentState;
+    if (nav == null) return;
+    nav.popUntil((r) => r.isFirst);
+    nav.push(adminMoreRoute(page));
+  }
+
+  void _handleBack() {
+    final nav = _moreNav.currentState;
+    if (_index == _more && nav != null && nav.canPop()) {
+      nav.pop();
+      return;
+    }
+    if (_index != _dashboard) {
+      setState(() => _index = _dashboard);
+      return;
+    }
+    SystemNavigator.pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final inMore = _index >= _primaryCount;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_tabs[_index].title),
-        actions: [
-          const NotificationBellButton(),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Sign out',
-            onPressed: () async {
-              await context.read<AuthController>().signOut();
-              if (context.mounted) {
-                navigatorKey.currentState?.pushNamedAndRemoveUntil(
-                  AppConstants.routeLogin,
-                  (_) => false,
-                );
-              }
-            },
-          ),
-        ],
-      ),
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          _AdminVerificationTimeline(),
-          AdminPostsTimelineView(),
-          AdminUserManagementView(),
-          AdminAdsModerationView(),
-          MapPostsView(),
-          AdminAnnouncementsView(),
-          AdminEventsView(),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: inMore ? _primaryCount : _index,
-        onDestinationSelected: (i) {
-          if (i == _primaryCount) {
-            _openMore();
-          } else {
-            setState(() => _index = i);
-          }
-        },
-        destinations: [
-          for (var i = 0; i < _primaryCount; i++)
-            NavigationDestination(
-              icon: Icon(_tabs[i].icon),
-              label: _tabs[i].label,
+    final p = AdminPalette.of(context);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBack();
+      },
+      child: Scaffold(
+        backgroundColor: p.page,
+        body: IndexedStack(
+          index: _index,
+          children: [
+            AdminHomeView(
+              onOpenPosts: () => setState(() => _index = _posts),
+              onOpenUsers: () => setState(() => _index = 2),
+              onOpenMorePage: _openMorePage,
             ),
-          NavigationDestination(
-            icon: Icon(inMore ? _tabs[_index].icon : Icons.more_horiz_rounded),
-            label: inMore ? _tabs[_index].label : 'More',
-          ),
-        ],
+            AdminPostsTimelineView(
+              onBack: () => setState(() => _index = _dashboard),
+            ),
+            const AdminUserManagementView(),
+            Navigator(
+              key: _moreNav,
+              onGenerateRoute: (_) => MaterialPageRoute(
+                builder: (_) => const AdminMoreView(),
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: AdminBottomNav(
+          index: _index,
+          onSelected: _select,
+        ),
       ),
     );
   }
 }
 
-class _AdminTab {
-  const _AdminTab({
+class AdminBottomNav extends StatelessWidget {
+  const AdminBottomNav({
+    super.key,
+    required this.index,
+    required this.onSelected,
+  });
+
+  final int index;
+  final ValueChanged<int> onSelected;
+
+  static const _items = [
+    (Icons.home_outlined, Icons.home_rounded, 'Dashboard'),
+    (Icons.description_outlined, Icons.description_rounded, 'Posts'),
+    (Icons.people_alt_outlined, Icons.people_alt_rounded, 'Users'),
+    (Icons.notes_rounded, Icons.grid_view_rounded, 'More'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final p = AdminPalette.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: p.navBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border(
+          top: BorderSide(
+            color: p.isDark ? p.navBorder : p.cardBorder,
+            width: p.isDark ? 1.2 : 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: p.isDark
+                ? p.primary.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 68,
+          child: Row(
+            children: [
+              for (var i = 0; i < _items.length; i++)
+                Expanded(
+                  child: _NavItem(
+                    icon: i == index ? _items[i].$2 : _items[i].$1,
+                    label: _items[i].$3,
+                    selected: i == index,
+                    onTap: () => onSelected(i),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
     required this.icon,
     required this.label,
-    required this.title,
+    required this.selected,
+    required this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final String title;
-}
-
-class _AdminVerificationTimeline extends StatelessWidget {
-  const _AdminVerificationTimeline();
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: context.read<AdminService>().watchPendingVerifications(),
-      builder: (context, snap) {
-        if (snap.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(
-                'Error loading requests: ${snap.error}',
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
-        }
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final docs = snap.data?.docs ?? [];
-        if (docs.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.inbox_outlined, size: 64, color: theme.colorScheme.outline),
-                const SizedBox(height: 16),
-                Text(
-                  'No pending verification requests',
-                  style: theme.textTheme.titleMedium,
+    final p = AdminPalette.of(context);
+    final color = selected ? p.primary : p.muted;
+    return InkResponse(
+      onTap: onTap,
+      radius: 40,
+      child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? p.navActive : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: AdminText.label(color, size: 11).copyWith(
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),
-              ],
-            ),
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, i) {
-            final doc = docs[i];
-            final d = doc.data();
-            final name = d['displayName'] as String? ?? 'User';
-            final email = d['email'] as String? ?? '';
-            return Card(
-              child: ListTile(
-                leading: CircleAvatar(
-                  child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?'),
-                ),
-                title: Text(name),
-                subtitle: Text(email),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () {
-                  navigatorKey.currentState?.pushNamed(
-                    AppConstants.routeAdminUserVerification,
-                    arguments: doc.id,
-                  );
-                },
               ),
-            );
-          },
-        );
-      },
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../services/admin_service.dart';
+import '../ui/admin_ui.dart';
 import '../widgets/legal_export_dialog.dart';
 
 class AdminUserVerificationView extends StatefulWidget {
@@ -39,7 +40,7 @@ class _AdminUserVerificationViewState extends State<AdminUserVerificationView> {
       builder: (ctx) {
         final c = TextEditingController();
         return AlertDialog(
-          title: const Text('Decline verification'),
+          title: const Text('Reject verification'),
           content: TextField(
             controller: c,
             decoration: const InputDecoration(
@@ -52,7 +53,7 @@ class _AdminUserVerificationViewState extends State<AdminUserVerificationView> {
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, c.text.trim()),
-              child: const Text('Decline'),
+              child: const Text('Reject'),
             ),
           ],
         );
@@ -78,22 +79,22 @@ class _AdminUserVerificationViewState extends State<AdminUserVerificationView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Review verification'),
-        actions: [
-          IconButton(
-            tooltip: 'Export evidence package',
-            icon: const Icon(Icons.folder_zip_outlined),
-            onPressed: () => showLegalExportDialog(
-              context,
-              userId: widget.userId,
-              userLabel: widget.userId,
-            ),
+    final p = AdminPalette.of(context);
+    return AdminPage(
+      title: 'Review verification',
+      leading: const AdminBackButton(),
+      actions: [
+        AdminHeaderIcon(
+          tooltip: 'Export evidence package',
+          icon: Icons.folder_zip_outlined,
+          onPressed: () => showLegalExportDialog(
+            context,
+            userId: widget.userId,
+            userLabel: widget.userId,
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 4),
+      ],
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
             .collection(AppConstants.usersCollection)
@@ -116,52 +117,60 @@ class _AdminUserVerificationViewState extends State<AdminUserVerificationView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Status: $status', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Text(name, style: theme.textTheme.headlineSmall),
-                Text(email, style: theme.textTheme.bodyLarge),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: AdminText.title(p, size: 20)),
+                          const SizedBox(height: 2),
+                          Text(email, style: AdminText.body(p, size: 14)),
+                        ],
+                      ),
+                    ),
+                    switch (status) {
+                      'verified' => AdminPill.green(context, 'Verified'),
+                      'rejected' => AdminPill.red(context, 'Rejected'),
+                      'pending' => AdminPill.amber(context, 'Pending'),
+                      _ => AdminPill.grey(context, status.isEmpty ? 'None' : status),
+                    },
+                  ],
+                ),
                 const SizedBox(height: 24),
-                Text('CNIC — front', style: theme.textTheme.titleSmall),
+                Text('CNIC front', style: AdminText.title(p, size: 14)),
                 const SizedBox(height: 8),
                 _img(front),
                 const SizedBox(height: 16),
-                Text('CNIC — back', style: theme.textTheme.titleSmall),
+                Text('CNIC back', style: AdminText.title(p, size: 14)),
                 const SizedBox(height: 8),
                 _img(back),
                 const SizedBox(height: 16),
-                Text('Selfie', style: theme.textTheme.titleSmall),
+                Text('Selfie', style: AdminText.title(p, size: 14)),
                 const SizedBox(height: 8),
                 _img(selfie),
                 const SizedBox(height: 32),
-                if (status == 'pending') ...[
+                if (status == 'pending')
                   Row(
                     children: [
                       Expanded(
-                        child: FilledButton(
-                          onPressed: _busy ? null : _verify,
-                          child: _busy
-                              ? const SizedBox(
-                                  height: 22,
-                                  width: 22,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                )
-                              : const Text('Mark verified'),
+                        child: AdminButton(
+                          label: 'Approve',
+                          icon: Icons.check_rounded,
+                          busy: _busy,
+                          onPressed: _verify,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: OutlinedButton(
+                        child: AdminButton(
+                          label: 'Reject',
+                          danger: true,
                           onPressed: _busy ? null : _decline,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: theme.colorScheme.error,
-                            side: BorderSide(color: theme.colorScheme.error),
-                          ),
-                          child: const Text('Decline'),
                         ),
                       ),
                     ],
                   ),
-                ],
               ],
             ),
           );
@@ -174,12 +183,12 @@ class _AdminUserVerificationViewState extends State<AdminUserVerificationView> {
     if (url == null || url.isEmpty) {
       return Container(
         height: 180,
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        decoration: AdminPalette.of(context).cardDecoration(radius: 14),
         child: const Center(child: Icon(Icons.broken_image_outlined)),
       );
     }
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(14),
       child: Image.network(
         url,
         height: 200,
