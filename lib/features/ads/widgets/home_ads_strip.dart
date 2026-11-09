@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../models/ad_model.dart';
 import '../services/ad_service.dart';
+import 'ad_style.dart';
 
 /// Horizontal sponsored strip for the home feed.
 class HomeAdsStrip extends StatelessWidget {
@@ -24,10 +25,7 @@ class HomeAdsStrip extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 children: [
-                  Text(
-                    'Sponsored',
-                    style: theme.textTheme.titleSmall,
-                  ),
+                  const SponsoredLabel(),
                   const Spacer(),
                   TextButton(
                     onPressed: () => navigatorKey.currentState?.pushNamed(
@@ -77,6 +75,8 @@ class _AdChip extends StatelessWidget {
     return SizedBox(
       width: 240,
       child: Card(
+        color: AdStyle.background(context),
+        shape: AdStyle.cardShape(context),
         child: InkWell(
           onTap: () {
             showModalBottomSheet<void>(

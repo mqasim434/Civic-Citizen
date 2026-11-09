@@ -24,7 +24,7 @@ class AppTheme {
   static const Color paper = ivory;
   static const Color paperRaised = warmCream;
   static const Color stone = beige;
-  static const Color inkMuted = Color(0xFF5E6758);
+  static const Color inkMuted = Color(0xFF4E5849);
   static const Color errorLight = Color(0xFFB42318);
 
   // Dark
@@ -33,9 +33,15 @@ class AppTheme {
   static const Color raisedDark = Color(0xFF1C2738);
   static const Color leafDark = Color(0xFF6FBF94);
   static const Color textDark = Color(0xFFE8E4DC);
-  static const Color mutedDark = Color(0xFF9AA3B2);
+  static const Color mutedDark = Color(0xFFB4BCC8);
 
   static const double _radius = 18;
+
+  /// Shared card system for Home, Nearby and Rewards: corner radius, gap
+  /// between cards and screen side padding.
+  static const double cardRadius = _radius;
+  static const double cardGap = 12;
+  static const double pagePadding = 16;
 
   /// Brand colours for the current theme. Use this in widgets instead of
   /// the light-only constants above so screens follow dark mode.
@@ -383,47 +389,47 @@ class AppTheme {
     return TextTheme(
       displayLarge: GoogleFonts.nunito(
         fontSize: 36,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: base,
         height: 1.1,
         letterSpacing: -0.5,
       ),
       displayMedium: GoogleFonts.nunito(
         fontSize: 30,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: base,
         height: 1.15,
         letterSpacing: -0.3,
       ),
       displaySmall: GoogleFonts.nunito(
         fontSize: 26,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: base,
         height: 1.2,
       ),
       headlineMedium: GoogleFonts.nunito(
         fontSize: 22,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: base,
       ),
       headlineSmall: GoogleFonts.nunito(
         fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         color: base,
       ),
       titleLarge: GoogleFonts.figtree(
         fontSize: 18,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: base,
       ),
       titleMedium: GoogleFonts.figtree(
         fontSize: 16,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: base,
       ),
       titleSmall: GoogleFonts.figtree(
         fontSize: 14,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w800,
         color: base,
       ),
       bodyLarge: GoogleFonts.figtree(
@@ -439,7 +445,7 @@ class AppTheme {
         height: 1.4,
       ),
       bodySmall: GoogleFonts.figtree(
-        fontSize: 12,
+        fontSize: 12.5,
         fontWeight: FontWeight.w500,
         color: muted,
       ),
@@ -557,7 +563,7 @@ class CivicColors {
     isDark: true,
     ink: AppTheme.textDark,
     inkMuted: AppTheme.mutedDark,
-    inkFaint: Color(0xFF5C6676),
+    inkFaint: Color(0xFF6E7888),
     olive: AppTheme.leafDark,
     sage: Color(0xFF244536),
     page: AppTheme.paperDark,

@@ -225,9 +225,9 @@ class _MapPostsViewState extends State<MapPostsView>
                     },
                   ),
                   Positioned(
-                    top: 12,
-                    left: 12,
-                    right: 12,
+                    top: 8,
+                    left: 10,
+                    right: 10,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
@@ -240,7 +240,7 @@ class _MapPostsViewState extends State<MapPostsView>
                             _useCurrentLocation();
                           },
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         _MapFilters(
                           moduleFilter: _moduleFilter,
                           categoryFilter: _categoryFilter,
@@ -568,9 +568,10 @@ class _MapLocationField extends StatelessWidget {
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
+          isDense: true,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 4,
-            vertical: 14,
+            vertical: 11,
           ),
           prefixIcon: Icon(
             Icons.location_on_rounded,
@@ -621,102 +622,165 @@ class _MapFilters extends StatelessWidget {
   final ValueChanged<String?> onCategorySelected;
   final ValueChanged<double?> onRadiusSelected;
 
+  static String _km(double km) =>
+      '${km.toStringAsFixed(km == km.roundToDouble() ? 0 : 1)} km';
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Material(
+    // Chips float straight on the map (no panel) to leave it more room.
+    // Distance is one dropdown chip instead of its own row.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 32,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _DistanceChip(
+                radiusKm: radiusKm,
+                label: radiusKm == null ? 'Any distance' : _km(radiusKm!),
+                onSelected: onRadiusSelected,
+              ),
+              _MapChip(
+                label: 'All',
+                selected: moduleFilter == null,
+                onTap: () => onModuleSelected(null),
+              ),
+              for (final module in PostModule.values)
+                _MapChip(
+                  label: module.label,
+                  selected: moduleFilter == module,
+                  onTap: () => onModuleSelected(module),
+                ),
+            ],
+          ),
+        ),
+        if (categories.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 32,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _MapChip(
+                  label: 'All tags',
+                  selected: categoryFilter == null,
+                  onTap: () => onCategorySelected(null),
+                ),
+                for (final tag in categories)
+                  _MapChip(
+                    label: tag,
+                    selected: categoryFilter == tag,
+                    onTap: () => onCategorySelected(tag),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Small pill chip that reads well on top of the map.
+class _MapChip extends StatelessWidget {
+  const _MapChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback? onTap;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = selected ? scheme.onPrimary : scheme.onSurface;
+    final chip = Material(
+      color: selected ? scheme.primary : scheme.surface,
       elevation: 2,
-      color: theme.colorScheme.surface.withValues(alpha: 0.95),
-      borderRadius: BorderRadius.circular(12),
+      shadowColor: Colors.black26,
+      shape: StadiumBorder(
+        side: BorderSide(
+          color: selected ? scheme.primary : scheme.outlineVariant,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              height: 36,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: const Text('All modules'),
-                      selected: moduleFilter == null,
-                      onSelected: (_) => onModuleSelected(null),
-                    ),
-                  ),
-                  ...PostModule.values.map(
-                    (module) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(module.label),
-                        selected: moduleFilter == module,
-                        onSelected: (_) => onModuleSelected(module),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (categories.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 34,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: const Text('All tags'),
-                        selected: categoryFilter == null,
-                        onSelected: (_) => onCategorySelected(null),
-                      ),
-                    ),
-                    ...categories.map(
-                      (tag) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(tag),
-                          selected: categoryFilter == tag,
-                          onSelected: (_) => onCategorySelected(tag),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            if (icon != null) ...[
+              Icon(icon, size: 15, color: fg),
+              const SizedBox(width: 4),
             ],
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 34,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: const Text('Any distance'),
-                      selected: radiusKm == null,
-                      onSelected: (_) => onRadiusSelected(null),
-                    ),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: fg,
+                    fontSize: 12,
                   ),
-                  ...PostSearchFilter.radiusOptionsKm.map(
-                    (km) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text('${km.toStringAsFixed(km == km.roundToDouble() ? 0 : 1)} km'),
-                        selected: radiusKm == km,
-                        onSelected: (_) => onRadiusSelected(km),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ],
+        ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(right: 6, top: 2, bottom: 2),
+      child: onTap == null
+          ? chip
+          : InkWell(
+              onTap: onTap,
+              customBorder: const StadiumBorder(),
+              child: chip,
+            ),
+    );
+  }
+}
+
+class _DistanceChip extends StatelessWidget {
+  const _DistanceChip({
+    required this.radiusKm,
+    required this.label,
+    required this.onSelected,
+  });
+
+  final double? radiusKm;
+  final String label;
+  final ValueChanged<double?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    // -1 stands for "Any distance" (a null menu value would count as cancel).
+    return PopupMenuButton<double>(
+      tooltip: 'Distance',
+      position: PopupMenuPosition.under,
+      onSelected: (v) => onSelected(v < 0 ? null : v),
+      itemBuilder: (_) => [
+        CheckedPopupMenuItem(
+          value: -1,
+          checked: radiusKm == null,
+          child: const Text('Any distance'),
+        ),
+        for (final km in PostSearchFilter.radiusOptionsKm)
+          CheckedPopupMenuItem(
+            value: km,
+            checked: radiusKm == km,
+            child: Text(_MapFilters._km(km)),
+          ),
+      ],
+      child: IgnorePointer(
+        child: _MapChip(
+          label: label,
+          icon: Icons.near_me_rounded,
+          selected: radiusKm != null,
+          onTap: () {},
         ),
       ),
     );
