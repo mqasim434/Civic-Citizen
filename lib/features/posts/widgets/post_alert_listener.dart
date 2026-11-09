@@ -52,6 +52,7 @@ class _PostAlertListenerState extends State<PostAlertListener> {
       context.read<ProfileService>().ensureUserIndex(
             uid: uid,
             displayName: user?.displayName ?? user?.email,
+            photoUrl: user?.photoUrl,
           ),
     );
 

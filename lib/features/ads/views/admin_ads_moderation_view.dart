@@ -162,7 +162,8 @@ class _AdminAdsModerationViewState extends State<AdminAdsModerationView> {
                         '${ad.city != null && ad.city!.isNotEmpty ? ' · ${ad.city}' : ''}'
                         ' · ${ad.pointsSpent} pts',
                       ),
-                      trailing: ad.status == AdStatus.removed
+                      trailing: ad.status == AdStatus.removed ||
+                              ad.status == AdStatus.stopped
                           ? null
                           : IconButton(
                               tooltip: 'Remove ad',

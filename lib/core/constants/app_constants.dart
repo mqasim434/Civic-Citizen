@@ -40,6 +40,7 @@ class AppConstants {
   static const String routeRewards = '/rewards';
   static const String routeCreateAd = '/create-ad';
   static const String routeEvents = '/events';
+  static const String routeFavourites = '/favourites';
   static const String routeEventDetail = '/event-detail';
 
   // Firestore
@@ -58,6 +59,7 @@ class AppConstants {
   static const String eventsCollection = 'events';
   static const String commentsSubcollection = 'comments';
   static const String notificationsSubcollection = 'notifications';
+  static const String favouritesSubcollection = 'favourites';
   static const String announcementsCollection = 'announcements';
   static const String announcementReadsSubcollection = 'announcement_reads';
   static const String cnicStoragePath = 'kyc/cnic';

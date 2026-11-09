@@ -30,8 +30,11 @@ class ProfileService {
   Future<void> ensureUserIndex({
     required String uid,
     String? displayName,
+    String? photoUrl,
   }) async {
     if (uid.isEmpty) return;
+    // Keeps the public photo in sync for users who set it before this existed.
+    await _syncPublicPhoto(uid, photoUrl);
     try {
       await _firestore.collection(AppConstants.userIndexCollection).doc(uid).set({
         'displayName': (displayName ?? '').trim(),
@@ -80,5 +83,25 @@ class ProfileService {
         'photoUrl': trimmed,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    await _syncPublicPhoto(uid, trimmed);
+  }
+
+  /// Copies the profile photo to the user's public trust profile so other
+  /// members can see it (users/{uid} is private). Best-effort: skipped if
+  /// the user has no public profile yet.
+  Future<void> _syncPublicPhoto(String uid, String? photoUrl) async {
+    final trimmed = photoUrl?.trim();
+    try {
+      await _firestore
+          .collection(AppConstants.publicTrustCollection)
+          .doc(uid)
+          .update({
+        'photoUrl': trimmed == null || trimmed.isEmpty
+            ? FieldValue.delete()
+            : trimmed,
+      });
+    } catch (_) {
+      // No public profile yet, or offline.
+    }
   }
 }

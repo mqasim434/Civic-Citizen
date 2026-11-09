@@ -85,12 +85,18 @@ service cloud.firestore {
       match /notifications/{notificationId} {
         allow read, update: if request.auth != null && request.auth.uid == userId;
         allow create: if request.auth != null;
-        allow delete: if false;
+        allow delete: if request.auth != null && request.auth.uid == userId;
       }
 
       match /announcement_reads/{announcementId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
         allow read: if isAdmin();
+      }
+
+      // Liked posts, mirrored from posts/{postId}/likes/{userId}.
+      match /favourites/{postId} {
+        allow read, create, delete: if request.auth != null && request.auth.uid == userId;
+        allow update: if false;
       }
     }
 

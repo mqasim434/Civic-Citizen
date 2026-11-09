@@ -24,6 +24,10 @@ class AdminDashboardView extends StatefulWidget {
 class _AdminDashboardViewState extends State<AdminDashboardView> {
   int _index = 0;
 
+  /// The first [_primaryCount] tabs sit in the bottom bar; the rest live
+  /// under "More".
+  static const _primaryCount = 4;
+
   static const _tabs = [
     _AdminTab(
       icon: Icons.verified_user_outlined,
@@ -36,14 +40,19 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
       title: 'Admin - posts timeline',
     ),
     _AdminTab(
-      icon: Icons.map_rounded,
-      label: 'Map',
-      title: 'Admin - map',
-    ),
-    _AdminTab(
       icon: Icons.manage_accounts_outlined,
       label: 'Users',
       title: 'Admin - user management',
+    ),
+    _AdminTab(
+      icon: Icons.ads_click_rounded,
+      label: 'Ads',
+      title: 'Admin - ads',
+    ),
+    _AdminTab(
+      icon: Icons.map_rounded,
+      label: 'Map',
+      title: 'Admin - map',
     ),
     _AdminTab(
       icon: Icons.campaign_outlined,
@@ -55,15 +64,37 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
       label: 'Events',
       title: 'Admin - events',
     ),
-    _AdminTab(
-      icon: Icons.ads_click_rounded,
-      label: 'Ads',
-      title: 'Admin - ads',
-    ),
   ];
+
+  Future<void> _openMore() async {
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = _primaryCount; i < _tabs.length; i++)
+              ListTile(
+                leading: Icon(_tabs[i].icon),
+                title: Text(_tabs[i].label),
+                selected: i == _index,
+                trailing: i == _index
+                    ? const Icon(Icons.check_rounded)
+                    : const Icon(Icons.chevron_right_rounded),
+                onTap: () => Navigator.of(ctx).pop(i),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _index = picked);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final inMore = _index >= _primaryCount;
     return Scaffold(
       appBar: AppBar(
         title: Text(_tabs[_index].title),
@@ -89,24 +120,33 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
         children: const [
           _AdminVerificationTimeline(),
           AdminPostsTimelineView(),
-          MapPostsView(),
           AdminUserManagementView(),
+          AdminAdsModerationView(),
+          MapPostsView(),
           AdminAnnouncementsView(),
           AdminEventsView(),
-          AdminAdsModerationView(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: _tabs
-            .map(
-              (t) => NavigationDestination(
-                icon: Icon(t.icon),
-                label: t.label,
-              ),
-            )
-            .toList(),
+        selectedIndex: inMore ? _primaryCount : _index,
+        onDestinationSelected: (i) {
+          if (i == _primaryCount) {
+            _openMore();
+          } else {
+            setState(() => _index = i);
+          }
+        },
+        destinations: [
+          for (var i = 0; i < _primaryCount; i++)
+            NavigationDestination(
+              icon: Icon(_tabs[i].icon),
+              label: _tabs[i].label,
+            ),
+          NavigationDestination(
+            icon: Icon(inMore ? _tabs[_index].icon : Icons.more_horiz_rounded),
+            label: inMore ? _tabs[_index].label : 'More',
+          ),
+        ],
       ),
     );
   }

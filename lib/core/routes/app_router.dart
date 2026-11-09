@@ -24,6 +24,7 @@ import '../../features/lost_found/views/claim_scan_view.dart';
 import '../../features/mutual_confidence/views/contact_request_detail_view.dart';
 import '../../features/notifications/views/notifications_view.dart';
 import '../models/app_announcement.dart';
+import '../../features/favourites/views/favourites_view.dart';
 import '../../features/posts/models/post_model.dart';
 import '../../features/posts/views/create_post_view.dart';
 import '../../features/posts/views/edit_post_view.dart';
@@ -91,6 +92,8 @@ class AppRouter {
       }
       case AppConstants.routeSettings:
         return _buildRoute(const SettingsView(), settings);
+      case AppConstants.routeFavourites:
+        return _buildRoute(const FavouritesView(), settings);
       case AppConstants.routeHelpSupport:
         return _buildRoute(const HelpSupportView(), settings);
       case AppConstants.routeEditProfile:

@@ -16,6 +16,124 @@ class NotificationsView extends StatefulWidget {
 class _NotificationsViewState extends State<NotificationsView> {
   String _filter = 'All';
 
+  /// Ids of notifications picked with a long press.
+  final Set<String> _selected = {};
+
+  /// Notifications currently shown (after the filter), for "select all".
+  List<AppNotification> _visible = const [];
+
+  bool get _selecting => _selected.isNotEmpty;
+
+  void _toggle(String id) {
+    setState(() {
+      if (!_selected.remove(id)) _selected.add(id);
+    });
+  }
+
+  void _clearSelection() => setState(_selected.clear);
+
+  Future<void> _setRead(String uid, bool read) async {
+    final ids = _selected.toList();
+    _clearSelection();
+    await context
+        .read<NotificationService>()
+        .setReadMany(uid, ids, read: read);
+  }
+
+  Future<void> _deleteSelected(String uid) async {
+    final count = _selected.length;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          count == 1 ? 'Delete notification?' : 'Delete $count notifications?',
+        ),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final ids = _selected.toList();
+    _clearSelection();
+    try {
+      await context.read<NotificationService>().deleteMany(uid, ids);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not delete notifications.')),
+      );
+    }
+  }
+
+  PreferredSizeWidget _appBar(String uid, NotificationService service) {
+    if (!_selecting) {
+      return AppBar(
+        title: const Text('Notifications'),
+        actions: [
+          IconButton(
+            tooltip: 'Mark all as read',
+            onPressed: () => service.markAllRead(uid),
+            icon: const Icon(Icons.done_all_rounded),
+          ),
+        ],
+      );
+    }
+    final selectedItems =
+        _visible.where((n) => _selected.contains(n.id)).toList();
+    final anyUnread = selectedItems.any((n) => !n.read);
+    final allSelected =
+        _visible.isNotEmpty && _visible.every((n) => _selected.contains(n.id));
+    return AppBar(
+      leading: IconButton(
+        tooltip: 'Cancel',
+        icon: const Icon(Icons.close_rounded),
+        onPressed: _clearSelection,
+      ),
+      title: Text('${_selected.length} selected'),
+      actions: [
+        IconButton(
+          tooltip: allSelected ? 'Deselect all' : 'Select all',
+          icon: Icon(
+            allSelected ? Icons.deselect_rounded : Icons.select_all_rounded,
+          ),
+          onPressed: () => setState(() {
+            if (allSelected) {
+              _selected.clear();
+            } else {
+              _selected.addAll(_visible.map((n) => n.id));
+            }
+          }),
+        ),
+        IconButton(
+          tooltip: anyUnread ? 'Mark as read' : 'Mark as unread',
+          icon: Icon(
+            anyUnread
+                ? Icons.mark_email_read_outlined
+                : Icons.mark_email_unread_outlined,
+          ),
+          onPressed: () => _setRead(uid, anyUnread),
+        ),
+        IconButton(
+          tooltip: 'Delete',
+          icon: const Icon(Icons.delete_outline_rounded),
+          onPressed: () => _deleteSelected(uid),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -26,17 +144,13 @@ class _NotificationsViewState extends State<NotificationsView> {
 
     final service = context.read<NotificationService>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Notifications'),
-        actions: [
-          IconButton(
-            tooltip: 'Clear read state',
-            onPressed: () => service.markAllRead(user.uid),
-            icon: const Icon(Icons.delete_outline_rounded),
-          ),
-        ],
-      ),
+    return PopScope(
+      canPop: !_selecting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _clearSelection();
+      },
+      child: Scaffold(
+      appBar: _appBar(user.uid, service),
       body: Column(
         children: [
           Padding(
@@ -49,7 +163,10 @@ class _NotificationsViewState extends State<NotificationsView> {
                     child: ChoiceChip(
                       label: Text(label),
                       selected: _filter == label,
-                      onSelected: (_) => setState(() => _filter = label),
+                      onSelected: (_) => setState(() {
+                        _filter = label;
+                        _selected.clear();
+                      }),
                     ),
                   ),
               ],
@@ -89,6 +206,14 @@ class _NotificationsViewState extends State<NotificationsView> {
             }
             return true;
           }).toList();
+          _visible = items;
+          // Drop selections for notifications that no longer exist.
+          final ids = items.map((n) => n.id).toSet();
+          if (_selected.any((id) => !ids.contains(id))) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _selected.retainAll(ids));
+            });
+          }
           if (items.isEmpty) {
             return Center(
               child: Column(
@@ -111,8 +236,23 @@ class _NotificationsViewState extends State<NotificationsView> {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
               final n = items[i];
+              final isSelected = _selected.contains(n.id);
               return ListTile(
-                leading: CircleAvatar(
+                selected: isSelected,
+                selectedTileColor:
+                    theme.colorScheme.primaryContainer.withValues(alpha: 0.45),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                leading: isSelected
+                    ? CircleAvatar(
+                        backgroundColor: theme.colorScheme.primary,
+                        child: Icon(
+                          Icons.check_rounded,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      )
+                    : CircleAvatar(
                   backgroundColor: n.read
                       ? theme.colorScheme.surfaceContainerHighest
                       : theme.colorScheme.primaryContainer,
@@ -128,6 +268,7 @@ class _NotificationsViewState extends State<NotificationsView> {
                   n.title,
                   style: TextStyle(
                     fontWeight: n.read ? FontWeight.w500 : FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 subtitle: Column(
@@ -147,7 +288,12 @@ class _NotificationsViewState extends State<NotificationsView> {
                   ],
                 ),
                 isThreeLine: true,
+                onLongPress: () => _toggle(n.id),
                 onTap: () async {
+                  if (_selecting) {
+                    _toggle(n.id);
+                    return;
+                  }
                   if (!n.read) {
                     await service.markRead(user.uid, n.id);
                   }
@@ -164,6 +310,7 @@ class _NotificationsViewState extends State<NotificationsView> {
       ),
           ),
         ],
+      ),
       ),
     );
   }

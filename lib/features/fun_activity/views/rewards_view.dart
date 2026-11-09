@@ -75,13 +75,7 @@ class _RewardsViewState extends State<RewardsView>
     );
   }
 
-  void _back() {
-    if (widget.embedded) {
-      ShellTab.go(0);
-      return;
-    }
-    Navigator.of(context).maybePop();
-  }
+  void _back() => Navigator.of(context).maybePop();
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +100,7 @@ class _RewardsViewState extends State<RewardsView>
                     weekOffset: _weekOffset,
                     onWeekSelected: (offset) =>
                         setState(() => _weekOffset = offset),
-                    onBack: _back,
+                    onBack: widget.embedded ? null : _back,
                     onRewards: _scrollToEarn,
                     onClaim: _claim,
                   );
@@ -138,7 +132,7 @@ class _RewardsBody extends StatelessWidget {
   final bool claiming;
   final int weekOffset;
   final ValueChanged<int> onWeekSelected;
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
   final VoidCallback onRewards;
   final ValueChanged<int> onClaim;
 
@@ -243,9 +237,10 @@ int _streakCount(Map<String, int> checkIns, DateTime today) {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.onBack});
+  const _Header({this.onBack});
 
-  final VoidCallback onBack;
+  /// Shown only when Rewards is opened as its own page, not as a tab.
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -254,6 +249,7 @@ class _Header extends StatelessWidget {
       height: 96,
       child: Stack(
         children: [
+          if (onBack != null)
           Align(
             alignment: Alignment.centerLeft,
             child: Material(

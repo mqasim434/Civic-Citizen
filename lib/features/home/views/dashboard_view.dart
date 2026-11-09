@@ -32,6 +32,9 @@ class _DashboardViewState extends State<DashboardView>
   String _searchQuery = '';
   String? _categoryFilter;
   double? _radiusKm;
+
+  /// When true, Home ignores the selected place and shows posts everywhere.
+  bool _allLocations = false;
   double? _userLatitude;
   double? _userLongitude;
   String _locationLabel = 'Set location';
@@ -136,6 +139,7 @@ class _DashboardViewState extends State<DashboardView>
       _locationLabel = result.address;
       _locationError = null;
       _locationLoading = false;
+      _allLocations = false;
     });
   }
 
@@ -474,6 +478,29 @@ class _DashboardViewState extends State<DashboardView>
               ),
             ),
           ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              child: SegmentedButton<bool>(
+                showSelectedIcon: false,
+                segments: const [
+                  ButtonSegment(
+                    value: false,
+                    icon: Icon(Icons.near_me_outlined, size: 18),
+                    label: Text('My area'),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    icon: Icon(Icons.public_rounded, size: 18),
+                    label: Text('All locations'),
+                  ),
+                ],
+                selected: {_allLocations},
+                onSelectionChanged: (v) =>
+                    setState(() => _allLocations = v.first),
+              ),
+            ),
+          ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             sliver: StreamBuilder<List<PostModel>>(
@@ -492,7 +519,9 @@ class _DashboardViewState extends State<DashboardView>
                   radiusKm: _radiusKm,
                   userLatitude: _userLatitude,
                   userLongitude: _userLongitude,
-                  placeLabel: _userLatitude == null ? null : _locationLabel,
+                  placeLabel: _allLocations || _userLatitude == null
+                      ? null
+                      : _locationLabel,
                 );
                 posts.sort((a, b) {
                   final sponsor = (b.isSponsored ? 1 : 0).compareTo(
@@ -525,7 +554,7 @@ class _DashboardViewState extends State<DashboardView>
                           Text(
                             _hasActiveFilters
                                 ? 'No posts match your search'
-                                : _userLatitude != null
+                                : !_allLocations && _userLatitude != null
                                 ? 'No posts in $_locationLabel'
                                 : 'No posts yet',
                             style: theme.textTheme.titleMedium,
@@ -535,8 +564,9 @@ class _DashboardViewState extends State<DashboardView>
                           Text(
                             _hasActiveFilters
                                 ? 'Try different keywords or filters'
-                                : _userLatitude != null
-                                ? 'Posts from this place will show up here.'
+                                : !_allLocations && _userLatitude != null
+                                ? 'Posts from this place will show up here. '
+                                    'Switch to All locations to see more.'
                                 : 'Be the first to share!',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
