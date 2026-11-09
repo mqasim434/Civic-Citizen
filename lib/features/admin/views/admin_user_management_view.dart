@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../services/admin_service.dart';
 import '../widgets/legal_export_dialog.dart';
+import '../../../shared/widgets/user_avatar.dart';
 
 class AdminUserManagementView extends StatefulWidget {
   const AdminUserManagementView({super.key});
@@ -64,10 +65,10 @@ class _AdminUserManagementViewState extends State<AdminUserManagementView> {
             final busy = _busyUserIds.contains(uid);
             return Card(
               child: ListTile(
-                leading: CircleAvatar(
-                  child: Text(
-                    (name != null && name.isNotEmpty) ? name[0].toUpperCase() : '?',
-                  ),
+                leading: UserAvatar(
+                  userId: uid,
+                  name: name ?? '',
+                  photoUrl: (d['photoUrl'] as String?) ?? '',
                 ),
                 title: Row(
                   children: [

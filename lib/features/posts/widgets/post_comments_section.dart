@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/utils/network_status.dart';
+import '../../../shared/widgets/user_avatar.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/post_comment.dart';
 import '../services/comment_service.dart';
@@ -135,13 +136,10 @@ class _PostCommentsSectionState extends State<PostCommentsSection> {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
+                    UserAvatar(
+                      userId: c.authorId,
+                      name: c.authorName,
                       radius: 16,
-                      child: Text(
-                        c.authorName.isNotEmpty
-                            ? c.authorName[0].toUpperCase()
-                            : '?',
-                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(

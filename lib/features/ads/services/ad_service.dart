@@ -170,6 +170,9 @@ class AdService {
       throw Exception('Only the author can boost this post.');
     }
     final until = (data['sponsoredUntil'] as Timestamp?)?.toDate();
+    if (data['sponsorPausedRemainingMs'] != null) {
+      throw Exception('This ad is paused. Resume it from Insights.');
+    }
     if (until != null && until.isAfter(DateTime.now())) {
       throw Exception('This post is already sponsored.');
     }
@@ -207,6 +210,101 @@ class AdService {
     });
   }
 
+  /// Latest ad record for a post (boosted or standalone), if any.
+  Future<DocumentReference<Map<String, dynamic>>?> _adForPost(
+    String postId,
+  ) async {
+    final snap = await _ads.where('postId', isEqualTo: postId).get();
+    if (snap.docs.isEmpty) return null;
+    final docs = snap.docs.toList()
+      ..sort((a, b) {
+        final at = (a.data()['createdAt'] as Timestamp?)?.toDate();
+        final bt = (b.data()['createdAt'] as Timestamp?)?.toDate();
+        if (at == null || bt == null) return 0;
+        return bt.compareTo(at);
+      });
+    return docs.first.reference;
+  }
+
+  Future<Map<String, dynamic>> _ownedPost(String postId, String authorId) async {
+    final snap = await _posts.doc(postId).get();
+    if (!snap.exists) throw Exception('Post not found.');
+    final data = snap.data() ?? {};
+    if (data['authorId'] != authorId) {
+      throw Exception('Only the advertiser can change this ad.');
+    }
+    return data;
+  }
+
+  /// Pauses a running sponsorship. The paid time left is saved and given
+  /// back on [resumeSponsorship].
+  Future<void> pauseSponsorship({
+    required String postId,
+    required String authorId,
+  }) async {
+    final data = await _ownedPost(postId, authorId);
+    final until = (data['sponsoredUntil'] as Timestamp?)?.toDate();
+    final now = DateTime.now();
+    if (data['sponsorPausedRemainingMs'] != null) {
+      throw Exception('This ad is already paused.');
+    }
+    if (until == null || !until.isAfter(now)) {
+      throw Exception('This ad is not running.');
+    }
+    await _posts.doc(postId).update({
+      'sponsorPausedRemainingMs': until.difference(now).inMilliseconds,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    final ad = await _adForPost(postId);
+    await ad?.update({
+      'status': AdStatus.paused.value,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> resumeSponsorship({
+    required String postId,
+    required String authorId,
+  }) async {
+    final data = await _ownedPost(postId, authorId);
+    final remainingMs = (data['sponsorPausedRemainingMs'] as num?)?.toInt();
+    if (remainingMs == null) throw Exception('This ad is not paused.');
+    final ends = DateTime.now().add(Duration(milliseconds: remainingMs));
+    await _posts.doc(postId).update({
+      'sponsoredUntil': Timestamp.fromDate(ends),
+      'sponsorPausedRemainingMs': FieldValue.delete(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    final ad = await _adForPost(postId);
+    await ad?.update({
+      'status': AdStatus.active.value,
+      'endsAt': Timestamp.fromDate(ends),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Ends a running or paused sponsorship early. Points are not refunded.
+  Future<void> stopSponsorship({
+    required String postId,
+    required String authorId,
+  }) async {
+    final data = await _ownedPost(postId, authorId);
+    final standalone = data['isStandaloneAd'] == true;
+    await _posts.doc(postId).update({
+      'sponsoredUntil': Timestamp.fromDate(DateTime.now()),
+      'sponsorPausedRemainingMs': FieldValue.delete(),
+      'updatedAt': FieldValue.serverTimestamp(),
+      // A standalone ad has no use as a normal post once stopped.
+      if (standalone) 'listingStatus': 'fulfilled',
+    });
+    final ad = await _adForPost(postId);
+    await ad?.update({
+      'status': AdStatus.stopped.value,
+      'endsAt': Timestamp.fromDate(DateTime.now()),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   Future<void> removeAd(String adId, {String? reason}) async {
     final adSnap = await _ads.doc(adId).get();
     final postId = adSnap.data()?['postId'] as String?;
@@ -221,6 +319,7 @@ class AdService {
     final standalone = postSnap.data()?['isStandaloneAd'] == true;
     await _posts.doc(postId).update({
       'sponsoredUntil': Timestamp.fromDate(DateTime.now()),
+      'sponsorPausedRemainingMs': FieldValue.delete(),
       'updatedAt': FieldValue.serverTimestamp(),
       if (standalone) 'listingStatus': 'fulfilled',
     });

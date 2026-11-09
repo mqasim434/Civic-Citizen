@@ -32,6 +32,8 @@ class PostService {
       var posts = snap.docs
           .map(PostModel.fromFirestore)
           .where((p) => p.isPubliclyListed && !p.isInappropriate)
+          // A paused standalone ad is hidden until the advertiser resumes it.
+          .where((p) => !(p.isStandaloneAd && p.isSponsorPaused))
           .toList();
       if (module != null) {
         posts = posts
@@ -93,6 +95,28 @@ class PostService {
     await _posts.doc(id).update(data);
   }
 
+  CollectionReference<Map<String, dynamic>> _favourites(String uid) => _firestore
+      .collection(AppConstants.usersCollection)
+      .doc(uid)
+      .collection(AppConstants.favouritesSubcollection);
+
+  /// Posts the user has liked, newest like first. Deleted, flagged and
+  /// completed posts are skipped.
+  Stream<List<PostModel>> watchFavouritePosts(String uid) {
+    return _favourites(uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .asyncMap((snap) async {
+      final posts = await Future.wait(snap.docs.map(
+          (d) => getPost(d.id).catchError((Object _) => null),
+        ));
+      return posts
+          .whereType<PostModel>()
+          .where((p) => p.isPubliclyListed && !p.isInappropriate)
+          .toList();
+    });
+  }
+
   Stream<bool> watchLiked({required String postId, required String uid}) {
     return _posts
         .doc(postId)
@@ -105,6 +129,7 @@ class PostService {
   Future<void> toggleLike({required String postId, required String uid}) async {
     final postRef = _posts.doc(postId);
     final likeRef = postRef.collection('likes').doc(uid);
+    final favRef = _favourites(uid).doc(postId);
     await _firestore.runTransaction((tx) async {
       final postSnap = await tx.get(postRef);
       if (!postSnap.exists) throw Exception('Post not found.');
@@ -112,12 +137,14 @@ class PostService {
       final current = (postSnap.data()?['likeCount'] as num?)?.toInt() ?? 0;
       if (likeSnap.exists) {
         tx.delete(likeRef);
+        tx.delete(favRef);
         tx.update(postRef, {
           'likeCount': current > 0 ? current - 1 : 0,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {
         tx.set(likeRef, {'createdAt': FieldValue.serverTimestamp()});
+        tx.set(favRef, {'createdAt': FieldValue.serverTimestamp()});
         tx.update(postRef, {
           'likeCount': current + 1,
           'updatedAt': FieldValue.serverTimestamp(),

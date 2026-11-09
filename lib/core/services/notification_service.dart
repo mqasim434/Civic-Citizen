@@ -44,6 +44,34 @@ class NotificationService {
     await batch.commit();
   }
 
+  /// Marks the given notifications as read or unread.
+  Future<void> setReadMany(
+    String userId,
+    Iterable<String> notificationIds, {
+    required bool read,
+  }) async {
+    final ids = notificationIds.toList();
+    for (var i = 0; i < ids.length; i += 400) {
+      final batch = _firestore.batch();
+      for (final id in ids.skip(i).take(400)) {
+        batch.update(_userNotifications(userId).doc(id), {'read': read});
+      }
+      await batch.commit();
+    }
+  }
+
+  /// Deletes the given notifications for this user.
+  Future<void> deleteMany(String userId, Iterable<String> notificationIds) async {
+    final ids = notificationIds.toList();
+    for (var i = 0; i < ids.length; i += 400) {
+      final batch = _firestore.batch();
+      for (final id in ids.skip(i).take(400)) {
+        batch.delete(_userNotifications(userId).doc(id));
+      }
+      await batch.commit();
+    }
+  }
+
   Future<void> notifyUser({
     required String recipientUserId,
     required AppNotificationType type,

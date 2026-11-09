@@ -97,6 +97,7 @@ class PostModel {
     this.isStandaloneAd = false,
     this.sponsorPointsSpent = 0,
     this.sponsoredUntil,
+    this.sponsorPausedRemainingMs,
     this.createdAt,
     this.updatedAt,
   });
@@ -129,6 +130,8 @@ class PostModel {
       isStandaloneAd: d['isStandaloneAd'] as bool? ?? false,
       sponsorPointsSpent: (d['sponsorPointsSpent'] as num?)?.toInt() ?? 0,
       sponsoredUntil: (d['sponsoredUntil'] as Timestamp?)?.toDate(),
+      sponsorPausedRemainingMs:
+          (d['sponsorPausedRemainingMs'] as num?)?.toInt(),
       createdAt: (d['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (d['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -161,14 +164,22 @@ class PostModel {
   final bool isStandaloneAd;
   final int sponsorPointsSpent;
   final DateTime? sponsoredUntil;
+
+  /// Set while the advertiser has paused the sponsorship: the paid time
+  /// left, restored on resume.
+  final int? sponsorPausedRemainingMs;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   /// Hidden from home feed and map after lend/borrow handshake.
   bool get isFulfilled => listingStatus == PostListingStatus.fulfilled;
 
+  bool get isSponsorPaused => sponsorPausedRemainingMs != null;
+
   bool get isSponsored =>
-      sponsoredUntil != null && sponsoredUntil!.isAfter(DateTime.now());
+      !isSponsorPaused &&
+      sponsoredUntil != null &&
+      sponsoredUntil!.isAfter(DateTime.now());
 
   bool get hasAdHistory =>
       isStandaloneAd || sponsorPointsSpent > 0 || sponsoredUntil != null;

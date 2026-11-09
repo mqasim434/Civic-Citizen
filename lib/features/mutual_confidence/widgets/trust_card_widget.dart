@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../shared/widgets/user_avatar.dart';
 import '../models/public_trust_profile.dart';
 import '../services/trust_profile_service.dart';
 
@@ -48,16 +49,14 @@ class TrustCardWidget extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  UserAvatar(
+                    userId: userId,
+                    name: name,
                     radius: compact ? 18 : 22,
+                    // Already loaded above, so no second lookup.
+                    photoUrl: profile?.photoUrl ?? '',
                     backgroundColor: theme.colorScheme.primary,
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    foregroundColor: theme.colorScheme.onPrimary,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

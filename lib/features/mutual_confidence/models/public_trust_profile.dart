@@ -6,6 +6,7 @@ class PublicTrustProfile {
     required this.userId,
     required this.displayName,
     this.verificationStatus = 'pending',
+    this.photoUrl,
     this.completedExchanges = 0,
     this.completedRecoveries = 0,
     this.memberSince,
@@ -20,6 +21,7 @@ class PublicTrustProfile {
       userId: doc.id,
       displayName: d['displayName'] as String? ?? 'Community member',
       verificationStatus: d['verificationStatus'] as String? ?? 'pending',
+      photoUrl: (d['photoUrl'] as String?)?.trim(),
       completedExchanges: d['completedExchanges'] as int? ?? 0,
       completedRecoveries: d['completedRecoveries'] as int? ?? 0,
       memberSince: (d['memberSince'] as Timestamp?)?.toDate(),
@@ -30,6 +32,7 @@ class PublicTrustProfile {
   final String userId;
   final String displayName;
   final String verificationStatus;
+  final String? photoUrl;
   final int completedExchanges;
   final int completedRecoveries;
   final DateTime? memberSince;

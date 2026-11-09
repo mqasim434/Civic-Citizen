@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/navigation/shell_tab.dart';
@@ -10,6 +11,8 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../lend_borrow/widgets/completed_exchanges_section.dart';
 import '../../lost_found/widgets/completed_recoveries_section.dart';
 import '../../ads/widgets/boost_post_sheet.dart';
+import '../../mutual_confidence/models/public_trust_profile.dart';
+import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../../points/services/points_service.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
@@ -228,8 +231,18 @@ class _ProfileViewState extends State<ProfileView>
                       return Row(
                         children: [
                           _Stat(label: 'Points', value: '${snap.data ?? 0}'),
-                          _Stat(label: 'Helps', value: '—'),
-                          const _Stat(label: 'Badges', value: '0'),
+                          // Helps = completed lend/borrow exchanges +
+                          // returned lost items.
+                          StreamBuilder<PublicTrustProfile?>(
+                            stream: context
+                                .read<TrustProfileService>()
+                                .watchProfile(user.uid),
+                            builder: (context, trust) => _Stat(
+                              label: 'Helps',
+                              value:
+                                  '${trust.data?.totalCompletedHandshakes ?? 0}',
+                            ),
+                          ),
                         ],
                       );
                     },
@@ -239,6 +252,13 @@ class _ProfileViewState extends State<ProfileView>
                     icon: Icons.bookmark_border_rounded,
                     label: 'My Posts',
                     onTap: _scrollToPosts,
+                  ),
+                  _MenuTile(
+                    icon: Icons.favorite_border_rounded,
+                    label: 'Favourites',
+                    onTap: () => navigatorKey.currentState?.pushNamed(
+                      AppConstants.routeFavourites,
+                    ),
                   ),
                   _MenuTile(
                     icon: Icons.card_giftcard_rounded,
@@ -442,6 +462,18 @@ class _MenuTile extends StatelessWidget {
 }
 
 class _MyPostCard extends StatelessWidget {
+  static final _compact = ButtonStyle(
+    padding: const WidgetStatePropertyAll(
+      EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+    ),
+    minimumSize: const WidgetStatePropertyAll(Size(0, 40)),
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    visualDensity: VisualDensity.compact,
+    textStyle: WidgetStatePropertyAll(
+      GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w700),
+    ),
+  );
+
   const _MyPostCard({
     required this.post,
     required this.onView,
@@ -513,7 +545,17 @@ class _MyPostCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (post.isSponsored && !post.isStandaloneAd) ...[
+                          if (post.isSponsorPaused) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              'Ad paused',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ] else if (post.isSponsored &&
+                              !post.isStandaloneAd) ...[
                             const SizedBox(width: 8),
                             Text(
                               'Sponsored',
@@ -550,39 +592,55 @@ class _MyPostCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.end,
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Row(
               children: [
-                FilledButton.tonal(
-                  onPressed: onView,
-                  child: const Text('View'),
+                Expanded(
+                  child: FilledButton.tonal(
+                    onPressed: onView,
+                    style: _compact,
+                    child: const Text('View'),
+                  ),
                 ),
-                if (!post.isFulfilled && !post.isSponsored)
-                  OutlinedButton.icon(
-                    onPressed: () => showBoostPostDialog(context, post),
-                    icon: const Icon(Icons.campaign_outlined, size: 18),
-                    label: const Text('Boost'),
+                if (!post.isFulfilled &&
+                    !post.isSponsored &&
+                    !post.isSponsorPaused) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => showBoostPostDialog(context, post),
+                      style: _compact,
+                      icon: const Icon(Icons.campaign_outlined, size: 16),
+                      label: const Text('Boost'),
+                    ),
                   ),
-                if (post.hasAdHistory)
-                  OutlinedButton.icon(
-                    onPressed: () => showPostInsights(context, post),
-                    icon: const Icon(Icons.insights_rounded, size: 18),
-                    label: const Text('Insights'),
+                ],
+                if (post.hasAdHistory) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => showPostInsights(context, post),
+                      style: _compact,
+                      icon: const Icon(Icons.insights_rounded, size: 16),
+                      label: const Text('Insights'),
+                    ),
                   ),
-                OutlinedButton(
+                ],
+                const SizedBox(width: 8),
+                IconButton.outlined(
+                  tooltip: 'Edit',
                   onPressed: post.isFulfilled ? null : onEdit,
-                  child: const Text('Edit'),
+                  icon: const Icon(Icons.edit_outlined, size: 20),
                 ),
-                OutlinedButton(
+                const SizedBox(width: 4),
+                IconButton.outlined(
+                  tooltip: 'Delete',
                   onPressed: onDelete,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
+                  color: theme.colorScheme.error,
+                  style: IconButton.styleFrom(
                     side: BorderSide(color: theme.colorScheme.error),
                   ),
-                  child: const Text('Delete'),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
                 ),
               ],
             ),

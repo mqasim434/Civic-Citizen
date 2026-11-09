@@ -1,12 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum AdStatus { active, expired, removed }
+/// [paused] and [stopped] are set by the advertiser; [removed] by an admin.
+enum AdStatus { active, paused, expired, stopped, removed }
 
 extension AdStatusX on AdStatus {
   String get value {
     switch (this) {
       case AdStatus.active:
         return 'active';
+      case AdStatus.paused:
+        return 'paused';
+      case AdStatus.stopped:
+        return 'stopped';
       case AdStatus.expired:
         return 'expired';
       case AdStatus.removed:
@@ -16,6 +21,10 @@ extension AdStatusX on AdStatus {
 
   static AdStatus fromValue(String? v) {
     switch (v) {
+      case 'paused':
+        return AdStatus.paused;
+      case 'stopped':
+        return AdStatus.stopped;
       case 'expired':
         return AdStatus.expired;
       case 'removed':

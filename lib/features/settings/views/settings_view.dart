@@ -282,15 +282,6 @@ class _PrivacySecurityPage extends StatelessWidget {
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 16),
-          Card(
-            child: ListTile(
-              leading: const Icon(Icons.lock_outline_rounded),
-              title: const Text('Change password'),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () => _showChangePasswordDialog(context),
-            ),
-          ),
           const SizedBox(height: 24),
           Text('What other members can see', style: theme.textTheme.titleMedium),
           const SizedBox(height: 8),

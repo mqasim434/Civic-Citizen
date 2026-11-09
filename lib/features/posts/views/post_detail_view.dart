@@ -139,7 +139,10 @@ class _PostDetailBody extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (mine && !post.isFulfilled && !post.isSponsored) ...[
+                  if (mine &&
+                      !post.isFulfilled &&
+                      !post.isSponsored &&
+                      !post.isSponsorPaused) ...[
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
                       onPressed: () => showBoostPostDialog(context, post),
