@@ -33,6 +33,7 @@ class _LocationPickerViewState extends State<LocationPickerView> {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
         title: const Text('Pick location'),
         actions: [
           TextButton(

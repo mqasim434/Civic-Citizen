@@ -36,7 +36,7 @@ class _ContactRequestDetailViewState extends State<ContactRequestDetailView> {
     final service = context.read<ContactRequestService>();
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Contact request')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Contact request')),
       body: StreamBuilder<ContactRequest?>(
         stream: service.watchRequest(widget.requestId),
         builder: (context, snap) {

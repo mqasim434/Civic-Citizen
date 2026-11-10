@@ -32,7 +32,7 @@ class _ClaimDetailViewState extends State<ClaimDetailView> {
     final service = context.read<LostFoundClaimService>();
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Recovery claim')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Recovery claim')),
       body: StreamBuilder<LostFoundClaim?>(
         stream: service.watchClaim(widget.claimId),
         builder: (context, snap) {

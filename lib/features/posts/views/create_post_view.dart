@@ -107,6 +107,7 @@ class _CreatePostViewState extends State<CreatePostView> {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
         title: const Text('Create Post'),
       ),
       body: SingleChildScrollView(

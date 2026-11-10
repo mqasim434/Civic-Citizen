@@ -15,7 +15,7 @@ class EventsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Community events')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Community events')),
       body: StreamBuilder<List<CivicEvent>>(
         stream: context.read<EventService>().watchActiveEvents(),
         builder: (context, snap) {
@@ -142,7 +142,7 @@ class EventDetailView extends StatelessWidget {
         final e = snap.data;
         if (e == null) {
           return Scaffold(
-            appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Event')),
+            appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Event')),
             body: const Center(child: Text('Event not found')),
           );
         }
@@ -154,7 +154,7 @@ class EventDetailView extends StatelessWidget {
   Widget _body(BuildContext context, CivicEvent event) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Event')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Event')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

@@ -82,7 +82,7 @@ class _ContractScanViewState extends State<ContractScanView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Scan handoff QR')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Scan handoff QR')),
       body: Stack(
         fit: StackFit.expand,
         children: [

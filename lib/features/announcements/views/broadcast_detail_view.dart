@@ -91,7 +91,7 @@ class _BroadcastDetailViewState extends State<BroadcastDetailView> {
     final announcement = widget.announcement;
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: Text(announcement.title)),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: Text(announcement.title)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

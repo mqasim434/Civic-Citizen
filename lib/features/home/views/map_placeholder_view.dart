@@ -148,7 +148,7 @@ class _MapPostsViewState extends State<MapPostsView>
     return Scaffold(
       backgroundColor: widget.showAppBar ? null : Colors.transparent,
       appBar: widget.showAppBar
-          ? AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Nearby & Map'))
+          ? AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Nearby & Map'))
           : null,
       body: StreamBuilder<List<PostModel>>(
         stream: _getPostsStream(),

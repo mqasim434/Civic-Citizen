@@ -18,7 +18,7 @@ class ClaimQrView extends StatelessWidget {
     final service = context.read<LostFoundClaimService>();
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Recovery QR code')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Recovery QR code')),
       body: StreamBuilder<LostFoundClaim?>(
         stream: service.watchClaim(claimId),
         builder: (context, snap) {

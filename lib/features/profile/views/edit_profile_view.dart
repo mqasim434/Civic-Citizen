@@ -178,7 +178,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     final user = context.watch<AuthController>().user;
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Edit profile')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Edit profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(

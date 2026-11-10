@@ -99,7 +99,7 @@ class _EditPostViewState extends State<EditPostView> {
   Widget build(BuildContext context) {
     if (widget.post.isFulfilled) {
       return Scaffold(
-        appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Edit post')),
+        appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Edit post')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -130,6 +130,7 @@ class _EditPostViewState extends State<EditPostView> {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
         title: const Text('Edit post'),
       ),
       body: SingleChildScrollView(

@@ -19,7 +19,7 @@ class FavouritesView extends StatelessWidget {
     final uid = context.watch<AuthController>().user?.uid;
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Favourites')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Favourites')),
       body: uid == null
           ? const Center(child: Text('Please sign in'))
           : StreamBuilder<List<PostModel>>(

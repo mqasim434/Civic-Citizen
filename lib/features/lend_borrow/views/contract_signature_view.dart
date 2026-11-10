@@ -90,6 +90,7 @@ class _ContractSignatureViewState extends State<ContractSignatureView> {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
         title: Text('Sign as $role'),
       ),
       body: Padding(

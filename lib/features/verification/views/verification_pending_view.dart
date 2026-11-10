@@ -46,6 +46,7 @@ class VerificationPendingView extends StatelessWidget {
           child: Scaffold(
             appBar: AppBar(
               flexibleSpace: const WaveHeaderBackground(),
+              bottom: const WaveHeaderSpacer(),
               automaticallyImplyLeading: false,
               title: const Text('Verification'),
               actions: [

@@ -111,7 +111,7 @@ class _CreateAdViewState extends State<CreateAdView> {
     final uid = context.watch<AuthController>().user?.uid;
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Create ad')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Create ad')),
       body: Form(
         key: _formKey,
         child: ListView(
