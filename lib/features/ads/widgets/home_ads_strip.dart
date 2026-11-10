@@ -6,6 +6,7 @@ import '../../../core/routes/app_router.dart';
 import '../models/ad_model.dart';
 import '../services/ad_service.dart';
 import 'ad_style.dart';
+import 'package:civic_citizen/features/auth/controllers/auth_controller.dart';
 
 /// Horizontal sponsored strip for the home feed.
 class HomeAdsStrip extends StatelessWidget {
@@ -17,7 +18,11 @@ class HomeAdsStrip extends StatelessWidget {
     return StreamBuilder<List<AdModel>>(
       stream: context.read<AdService>().watchActiveAds(),
       builder: (context, snap) {
-        final ads = snap.data ?? const <AdModel>[];
+        // Don't show users their own ads in the feed.
+        final uid = context.read<AuthController>().user?.uid;
+        final ads = (snap.data ?? const <AdModel>[])
+            .where((a) => a.authorId != uid)
+            .toList();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -16,7 +16,7 @@ class AdminMapView extends StatelessWidget {
       body: MediaQuery.removePadding(
         context: context,
         removeTop: true,
-        child: const MapPostsView(showAppBar: false),
+        child: const MapPostsView(showAppBar: false, hideOwnPosts: false),
       ),
     );
   }

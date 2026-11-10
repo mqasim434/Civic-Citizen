@@ -18,9 +18,17 @@ import '../../posts/models/post_model.dart';
 import '../../posts/utils/post_search_filter.dart';
 import '../widgets/location_search_sheet.dart';
 import 'package:civic_citizen/shared/widgets/wave_header.dart';
+import 'package:civic_citizen/features/auth/controllers/auth_controller.dart';
 
 class MapPostsView extends StatefulWidget {
-  const MapPostsView({super.key, this.showAppBar = true});
+  const MapPostsView({
+    super.key,
+    this.showAppBar = true,
+    this.hideOwnPosts = true,
+  });
+
+  /// Users don't see their own posts on the map; the admin map shows all.
+  final bool hideOwnPosts;
 
   /// False when a parent screen already shows a header (admin panel).
   final bool showAppBar;
@@ -157,7 +165,10 @@ class _MapPostsViewState extends State<MapPostsView>
               snap.data == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          final allPosts = snap.data ?? const <PostModel>[];
+          final uid = context.read<AuthController>().user?.uid;
+          final allPosts = (snap.data ?? const <PostModel>[])
+              .where((p) => !widget.hideOwnPosts || p.authorId != uid)
+              .toList();
           final availableCategories = _extractCategories(allPosts);
           _normalizeCategoryFilter(availableCategories);
           final visiblePosts = _applyCategoryFilter(

@@ -14,6 +14,7 @@ import '../../posts/models/post_model.dart';
 import '../../posts/utils/post_search_filter.dart';
 import '../../posts/views/post_card.dart';
 import 'package:civic_citizen/shared/widgets/wave_header.dart';
+import 'package:civic_citizen/features/auth/controllers/auth_controller.dart';
 
 /// Posts near the user's current location, sorted by distance.
 class NearbyPostsView extends StatefulWidget {
@@ -229,8 +230,12 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
                     );
                   }
 
+                  // Hide the user's own posts from the feed.
+                  final uid = context.read<AuthController>().user?.uid;
                   final nearby = PostSearchFilter.nearbyPosts(
-                    posts: snap.data ?? [],
+                    posts: (snap.data ?? const <PostModel>[])
+                        .where((p) => p.authorId != uid)
+                        .toList(),
                     userLatitude: _userLatitude!,
                     userLongitude: _userLongitude!,
                     radiusKm: _radiusKm,
