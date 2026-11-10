@@ -16,6 +16,7 @@ import '../../mutual_confidence/services/trust_profile_service.dart';
 import '../../points/services/points_service.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 Future<void> _showDeleteConfirm(BuildContext context, PostModel post) async {
   final confirmed = await showDialog<bool>(
@@ -62,7 +63,6 @@ const _headerTextShadow = [
 
 class _ProfileViewState extends State<ProfileView>
     with TabReselectListener {
-  final _postsKey = GlobalKey();
   final _scrollController = ScrollController();
 
   @override
@@ -75,17 +75,6 @@ class _ProfileViewState extends State<ProfileView>
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _scrollToPosts() {
-    final target = _postsKey.currentContext;
-    if (target == null) return;
-    Scrollable.ensureVisible(
-      target,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOut,
-      alignment: 0.05,
-    );
   }
 
   @override
@@ -269,7 +258,11 @@ class _ProfileViewState extends State<ProfileView>
                   _MenuTile(
                     icon: Icons.bookmark_border_rounded,
                     label: 'My Posts',
-                    onTap: _scrollToPosts,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const _MyPostsPage(),
+                      ),
+                    ),
                   ),
                   _MenuTile(
                     icon: Icons.favorite_border_rounded,
@@ -341,19 +334,41 @@ class _ProfileViewState extends State<ProfileView>
                 ],
               ),
             ),
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The user's own posts (active, then completed exchanges / recoveries).
+/// Opened from Profile → My Posts.
+class _MyPostsPage extends StatelessWidget {
+  const _MyPostsPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final user = context.watch<AuthController>().user;
+    return Scaffold(
+      appBar: AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
+        title: const Text('My Posts'),
+      ),
+      body: user == null
+          ? const Center(child: Text('Please sign in'))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.only(top: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    'My posts',
-                    key: _postsKey,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
                   Text(
                     'Active listings only — completed lend/borrow items move to Completed exchanges.',
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -422,13 +437,13 @@ class _ProfileViewState extends State<ProfileView>
                   ),
                   CompletedExchangesSection(userId: user.uid),
                   CompletedRecoveriesSection(userId: user.uid),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+                ],
+              ),
+            ),
     );
   }
 }
