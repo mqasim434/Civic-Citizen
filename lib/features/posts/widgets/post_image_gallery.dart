@@ -192,3 +192,20 @@ class _FullscreenImageViewerState extends State<_FullscreenImageViewer> {
     );
   }
 }
+
+/// Opens the fullscreen photo viewer (used by the post details thumbnail).
+void openPostImageViewer(
+  BuildContext context,
+  List<String> imageUrls, {
+  int initialIndex = 0,
+}) {
+  if (imageUrls.isEmpty) return;
+  Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => _FullscreenImageViewer(
+        imageUrls: imageUrls,
+        initialIndex: initialIndex,
+      ),
+    ),
+  );
+}
