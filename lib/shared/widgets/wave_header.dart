@@ -23,11 +23,17 @@ class WaveHeaderBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return CustomPaint(
-      painter: WaveHeaderPainter(
-        top: dark ? _darkTop : _lightTop,
-        bottom: dark ? _darkBottom : _lightBottom,
-        wave: dark ? _darkWave : _lightWave,
+    // SizedBox.expand: a CustomPaint without a child takes the smallest size
+    // it is allowed, which is 0 high inside an app bar's flexibleSpace, so
+    // nothing showed. Fill the whole app bar instead (as the admin header
+    // does with its fixed-height SizedBox).
+    return SizedBox.expand(
+      child: CustomPaint(
+        painter: WaveHeaderPainter(
+          top: dark ? _darkTop : _lightTop,
+          bottom: dark ? _darkBottom : _lightBottom,
+          wave: dark ? _darkWave : _lightWave,
+        ),
       ),
     );
   }
