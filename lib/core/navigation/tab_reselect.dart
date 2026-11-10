@@ -8,22 +8,28 @@ mixin TabReselectListener<T extends StatefulWidget> on State<T> {
   /// Index of this screen in [MainShell]'s bottom nav.
   int get shellTabIndex;
 
+  /// Which bottom nav to listen to. User app by default; the admin panel
+  /// overrides this with [AdminShellTab.reselected].
+  TabReselectNotifier get reselectNotifier => ShellTab.reselected;
+
   void onTabReselected();
+
+  late final TabReselectNotifier _notifier = reselectNotifier;
 
   @override
   void initState() {
     super.initState();
-    ShellTab.reselected.addListener(_handleTabReselected);
+    _notifier.addListener(_handleTabReselected);
   }
 
   @override
   void dispose() {
-    ShellTab.reselected.removeListener(_handleTabReselected);
+    _notifier.removeListener(_handleTabReselected);
     super.dispose();
   }
 
   void _handleTabReselected() {
-    if (!mounted || ShellTab.reselected.tab != shellTabIndex) return;
+    if (!mounted || _notifier.tab != shellTabIndex) return;
     onTabReselected();
   }
 }

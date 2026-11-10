@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../../ads/models/ad_model.dart';
 import '../../ads/services/ad_service.dart';
@@ -14,7 +16,7 @@ import '../ui/admin_ui.dart';
 import 'admin_more_view.dart';
 
 /// Admin dashboard: totals, quick links and recent activity.
-class AdminHomeView extends StatelessWidget {
+class AdminHomeView extends StatefulWidget {
   const AdminHomeView({
     super.key,
     required this.onOpenPosts,
@@ -25,6 +27,29 @@ class AdminHomeView extends StatelessWidget {
   final VoidCallback onOpenPosts;
   final VoidCallback onOpenUsers;
   final ValueChanged<AdminMorePage> onOpenMorePage;
+
+  @override
+  State<AdminHomeView> createState() => _AdminHomeViewState();
+}
+
+class _AdminHomeViewState extends State<AdminHomeView>
+    with TabReselectListener {
+  final _scroll = ScrollController();
+
+  @override
+  int get shellTabIndex => AdminShellTab.dashboard;
+
+  @override
+  TabReselectNotifier get reselectNotifier => AdminShellTab.reselected;
+
+  @override
+  void onTabReselected() => scrollToTop(_scroll);
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +69,10 @@ class AdminHomeView extends StatelessWidget {
                 ads: adsSnap.data,
                 events: eventsSnap.data,
               ),
-              onOpenPosts: onOpenPosts,
-              onOpenUsers: onOpenUsers,
-              onOpenMorePage: onOpenMorePage,
+              scrollController: _scroll,
+              onOpenPosts: widget.onOpenPosts,
+              onOpenUsers: widget.onOpenUsers,
+              onOpenMorePage: widget.onOpenMorePage,
             ),
           ),
         ),
@@ -235,12 +261,14 @@ class _Stats {
 class _Dashboard extends StatelessWidget {
   const _Dashboard({
     required this.stats,
+    required this.scrollController,
     required this.onOpenPosts,
     required this.onOpenUsers,
     required this.onOpenMorePage,
   });
 
   final _Stats stats;
+  final ScrollController scrollController;
   final VoidCallback onOpenPosts;
   final VoidCallback onOpenUsers;
   final ValueChanged<AdminMorePage> onOpenMorePage;
@@ -254,6 +282,7 @@ class _Dashboard extends StatelessWidget {
     return ColoredBox(
       color: p.page,
       child: ListView(
+        controller: scrollController,
         padding: EdgeInsets.zero,
         children: [
           Stack(

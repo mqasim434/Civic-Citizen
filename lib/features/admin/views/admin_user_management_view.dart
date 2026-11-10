@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../shared/widgets/user_avatar.dart';
 import '../services/admin_service.dart';
 import '../ui/admin_ui.dart';
@@ -50,7 +52,19 @@ class AdminUserManagementView extends StatefulWidget {
       _AdminUserManagementViewState();
 }
 
-class _AdminUserManagementViewState extends State<AdminUserManagementView> {
+class _AdminUserManagementViewState extends State<AdminUserManagementView>
+    with TabReselectListener {
+  final _scroll = ScrollController();
+
+  @override
+  int get shellTabIndex => AdminShellTab.users;
+
+  @override
+  TabReselectNotifier get reselectNotifier => AdminShellTab.reselected;
+
+  @override
+  void onTabReselected() => scrollToTop(_scroll);
+
   final Set<String> _busy = <String>{};
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
@@ -58,6 +72,7 @@ class _AdminUserManagementViewState extends State<AdminUserManagementView> {
 
   @override
   void dispose() {
+    _scroll.dispose();
     _search.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -148,6 +163,7 @@ class _AdminUserManagementViewState extends State<AdminUserManagementView> {
                   );
                 }
                 return ListView.separated(
+                  controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   itemCount: docs.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),

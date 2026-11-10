@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -49,8 +51,31 @@ extension on AdminMorePage {
 Route<void> adminMoreRoute(AdminMorePage page) =>
     MaterialPageRoute<void>(builder: (_) => page.build());
 
-class AdminMoreView extends StatelessWidget {
+class AdminMoreView extends StatefulWidget {
   const AdminMoreView({super.key});
+
+  @override
+  State<AdminMoreView> createState() => _AdminMoreViewState();
+}
+
+class _AdminMoreViewState extends State<AdminMoreView>
+    with TabReselectListener {
+  final _scroll = ScrollController();
+
+  @override
+  int get shellTabIndex => AdminShellTab.more;
+
+  @override
+  TabReselectNotifier get reselectNotifier => AdminShellTab.reselected;
+
+  @override
+  void onTabReselected() => scrollToTop(_scroll);
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +93,7 @@ class AdminMoreView extends StatelessWidget {
         const SizedBox(width: 4),
       ],
       body: ListView(
+        controller: _scroll,
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         children: [
           _AdminToolsBanner(onTap: () => _showAdminTools(context)),
@@ -89,12 +115,6 @@ class AdminMoreView extends StatelessWidget {
                   onTap: () => Navigator.of(context).push(adminMoreRoute(page)),
                 ),
             ],
-          ),
-          const SizedBox(height: 18),
-          _HelpCard(
-            onTap: () => navigatorKey.currentState?.pushNamed(
-              AppConstants.routeHelpSupport,
-            ),
           ),
         ],
       ),
@@ -253,60 +273,6 @@ class _ModuleTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HelpCard extends StatelessWidget {
-  const _HelpCard({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AdminPalette.of(context);
-    return Material(
-      color: Colors.transparent,
-      child: Ink(
-        decoration: BoxDecoration(
-          color: p.isDark ? p.card : p.softGreen,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: p.isDark ? p.cardBorder : p.softGreen),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-            child: Row(
-              children: [
-                Icon(
-                  p.isDark
-                      ? Icons.support_agent_rounded
-                      : Icons.info_outline_rounded,
-                  color: p.primary,
-                  size: 28,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Need help?', style: AdminText.title(p, size: 14)),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Contact support for assistance',
-                        style: AdminText.body(p, size: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right_rounded, color: p.text),
               ],
             ),
           ),

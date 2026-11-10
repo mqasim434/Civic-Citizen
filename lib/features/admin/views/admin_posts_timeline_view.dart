@@ -3,10 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/navigation/shell_tab.dart';
+import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
 import '../../posts/models/post_model.dart';
 import '../services/admin_service.dart';
 import '../ui/admin_ui.dart';
+import 'admin_post_detail_view.dart';
 
 enum _StatusFilter { all, active, flagged, fulfilled }
 
@@ -49,7 +52,19 @@ class AdminPostsTimelineView extends StatefulWidget {
   State<AdminPostsTimelineView> createState() => _AdminPostsTimelineViewState();
 }
 
-class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView> {
+class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView>
+    with TabReselectListener {
+  final _scroll = ScrollController();
+
+  @override
+  int get shellTabIndex => AdminShellTab.posts;
+
+  @override
+  TabReselectNotifier get reselectNotifier => AdminShellTab.reselected;
+
+  @override
+  void onTabReselected() => scrollToTop(_scroll);
+
   PostModule? _module;
   _StatusFilter _status = _StatusFilter.all;
   bool _searching = false;
@@ -69,6 +84,7 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView> {
 
   @override
   void dispose() {
+    _scroll.dispose();
     _search.dispose();
     super.dispose();
   }
@@ -159,6 +175,7 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView> {
                   );
                 }
                 return ListView.separated(
+                  controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                   itemCount: posts.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 14),
@@ -241,10 +258,10 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView> {
   }
 }
 
+/// Opens the admin details page (author, contracts / claims, both parties).
 void _view(PostModel post) {
-  navigatorKey.currentState?.pushNamed(
-    AppConstants.routePostDetail,
-    arguments: post,
+  navigatorKey.currentState?.push(
+    MaterialPageRoute<void>(builder: (_) => AdminPostDetailView(post: post)),
   );
 }
 
@@ -368,8 +385,8 @@ class _AdminPostCard extends StatelessWidget {
                               itemBuilder: (_) => [
                                 adminMenuItem(
                                   'view',
-                                  Icons.visibility_outlined,
-                                  'View',
+                                  Icons.info_outline_rounded,
+                                  'View details',
                                 ),
                                 post.isInappropriate
                                     ? adminMenuItem(

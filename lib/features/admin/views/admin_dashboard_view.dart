@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/navigation/shell_tab.dart';
 import '../ui/admin_ui.dart';
 import 'admin_home_view.dart';
 import 'admin_more_view.dart';
@@ -25,9 +26,16 @@ class _AdminDashboardViewState extends State<AdminDashboardView> {
   final _moreNav = GlobalKey<NavigatorState>();
 
   void _select(int i) {
-    // Tapping More again goes back to the More menu.
-    if (i == _more && _index == _more) {
-      _moreNav.currentState?.popUntil((r) => r.isFirst);
+    if (i == _index) {
+      // Same tab again: on a More page go back to the menu, otherwise
+      // scroll the current screen to the top.
+      final nav = _moreNav.currentState;
+      if (i == _more && nav != null && nav.canPop()) {
+        nav.popUntil((r) => r.isFirst);
+      } else {
+        AdminShellTab.reselected.fire(i);
+      }
+      return;
     }
     setState(() => _index = i);
   }
@@ -117,12 +125,8 @@ class AdminBottomNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: p.navBg,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(
-          top: BorderSide(
-            color: p.isDark ? p.navBorder : p.cardBorder,
-            width: p.isDark ? 1.2 : 1,
-          ),
-        ),
+        // Green top border in both themes.
+        border: Border(top: BorderSide(color: p.navBorder, width: 1.2)),
         boxShadow: [
           BoxShadow(
             color: p.isDark

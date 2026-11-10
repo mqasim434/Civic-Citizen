@@ -122,7 +122,7 @@ class AdminPalette {
     tileAmber: Color(0xFFFFF2DA),
     navBg: Color(0xFFFFFFFF),
     navActive: Color(0xFFE2F2E6),
-    navBorder: Color(0xFFEDE9E0),
+    navBorder: Color(0xFFB9DCC4),
     chipBg: Color(0xFFFFFFFF),
     chipBorder: Color(0xFFE5E0D5),
     shadow: Color(0x12000000),
