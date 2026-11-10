@@ -258,10 +258,21 @@ class _Dashboard extends StatelessWidget {
         children: [
           Stack(
             children: [
+              // Waves stay solid at the top and fade into the page towards
+              // the bottom, so the Total Users card stands out.
               SizedBox(
                 height: top + 150,
                 width: double.infinity,
-                child: CustomPaint(painter: AdminHeaderPainter(p)),
+                child: ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: (rect) => const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.white, Colors.white, Colors.transparent],
+                    stops: [0, 0.45, 1],
+                  ).createShader(rect),
+                  child: CustomPaint(painter: AdminHeaderPainter(p)),
+                ),
               ),
               Padding(
                 padding: EdgeInsets.fromLTRB(16, top + 10, 16, 0),
@@ -464,7 +475,14 @@ class _TotalUsersCard extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(20),
-          child: Padding(
+          child: Stack(
+            children: [
+              const Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(painter: _CardWavesPainter()),
+                ),
+              ),
+              Padding(
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
             child: Row(
               children: [
@@ -520,10 +538,63 @@ class _TotalUsersCard extends StatelessWidget {
               ],
             ),
           ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Soft translucent wave layers behind the Total Users card content.
+class _CardWavesPainter extends CustomPainter {
+  const _CardWavesPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    canvas.save();
+    canvas.clipRRect(
+      RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(20)),
+    );
+
+    // Back layer: wide wave across the lower half.
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, h * 0.72)
+        ..cubicTo(w * 0.3, h * 0.45, w * 0.6, h * 1.05, w, h * 0.55)
+        ..lineTo(w, h)
+        ..lineTo(0, h)
+        ..close(),
+      Paint()..color = Colors.white.withValues(alpha: 0.07),
+    );
+
+    // Front layer: lower, offset wave.
+    canvas.drawPath(
+      Path()
+        ..moveTo(0, h * 0.9)
+        ..cubicTo(w * 0.35, h * 0.68, w * 0.7, h * 1.1, w, h * 0.78)
+        ..lineTo(w, h)
+        ..lineTo(0, h)
+        ..close(),
+      Paint()..color = Colors.white.withValues(alpha: 0.08),
+    );
+
+    // Small arc in the top-right corner.
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.62, 0)
+        ..cubicTo(w * 0.75, h * 0.35, w * 0.9, h * 0.1, w, h * 0.32)
+        ..lineTo(w, 0)
+        ..close(),
+      Paint()..color = Colors.white.withValues(alpha: 0.06),
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _StatTile extends StatelessWidget {
