@@ -16,6 +16,7 @@ import '../../posts/views/post_card.dart';
 import '../../posts/widgets/post_filter_sheet.dart';
 import '../widgets/location_search_sheet.dart';
 import 'package:civic_citizen/shared/widgets/wave_header.dart';
+import 'package:civic_citizen/features/auth/controllers/auth_controller.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -519,7 +520,12 @@ class _DashboardViewState extends State<DashboardView>
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
-                final allPosts = snap.data ?? [];
+                // Users don't see their own posts in the feed (they are in
+                // Profile → My posts).
+                final uid = context.read<AuthController>().user?.uid;
+                final allPosts = (snap.data ?? const <PostModel>[])
+                    .where((p) => p.authorId != uid)
+                    .toList();
                 final posts = PostSearchFilter.apply(
                   posts: allPosts,
                   keyword: _searchQuery,
