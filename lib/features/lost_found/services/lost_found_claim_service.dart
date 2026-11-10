@@ -89,6 +89,17 @@ This record is stored in Cloud Firestore for community trust and dispute resolut
     });
   }
 
+  /// Every claim on a post, newest first. Admin only.
+  Stream<List<LostFoundClaim>> watchClaimsForPostAdmin(String postId) {
+    return _claims.where('postId', isEqualTo: postId).snapshots().map(
+          (snap) => snap.docs.map(LostFoundClaim.fromFirestore).toList()
+            ..sort(
+              (a, b) => (b.createdAt ?? DateTime(0))
+                  .compareTo(a.createdAt ?? DateTime(0)),
+            ),
+        );
+  }
+
   Stream<LostFoundClaim?> watchActiveClaimForPost({
     required String postId,
     required String userId,

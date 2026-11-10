@@ -19,6 +19,18 @@ class ShellTab {
   static void go(int i) => index.value = i;
 }
 
+/// Admin panel bottom nav: Dashboard 0, Posts 1, Users 2, More 3.
+class AdminShellTab {
+  AdminShellTab._();
+
+  static const dashboard = 0;
+  static const posts = 1;
+  static const users = 2;
+  static const more = 3;
+
+  static final reselected = TabReselectNotifier();
+}
+
 class TabReselectNotifier extends ChangeNotifier {
   int? _tab;
 

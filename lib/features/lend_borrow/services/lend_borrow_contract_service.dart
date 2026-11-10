@@ -93,6 +93,18 @@ Agreement date: $date
     });
   }
 
+  /// Every contract on a post, newest first. Admin only (rules allow
+  /// admins to read all contracts).
+  Stream<List<LendBorrowContract>> watchContractsForPostAdmin(String postId) {
+    return _contracts.where('postId', isEqualTo: postId).snapshots().map(
+          (snap) => snap.docs.map(LendBorrowContract.fromFirestore).toList()
+            ..sort(
+              (a, b) => (b.createdAt ?? DateTime(0))
+                  .compareTo(a.createdAt ?? DateTime(0)),
+            ),
+        );
+  }
+
   /// Active contract for [postId] involving [userId], if any.
   Stream<LendBorrowContract?> watchActiveContractForPost({
     required String postId,
