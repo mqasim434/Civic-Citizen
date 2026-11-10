@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../models/claim_status.dart';
 import '../models/lost_found_claim.dart';
 import '../services/lost_found_claim_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class ClaimQrView extends StatelessWidget {
   const ClaimQrView({super.key, required this.claimId});
@@ -17,7 +18,7 @@ class ClaimQrView extends StatelessWidget {
     final service = context.read<LostFoundClaimService>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Recovery QR code')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Recovery QR code')),
       body: StreamBuilder<LostFoundClaim?>(
         stream: service.watchClaim(claimId),
         builder: (context, snap) {

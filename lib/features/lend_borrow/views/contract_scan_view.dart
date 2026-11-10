@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../auth/controllers/auth_controller.dart';
 import '../services/lend_borrow_contract_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Borrower scans lender QR and logs GPS + timestamp.
 class ContractScanView extends StatefulWidget {
@@ -81,7 +82,7 @@ class _ContractScanViewState extends State<ContractScanView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan handoff QR')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Scan handoff QR')),
       body: Stack(
         fit: StackFit.expand,
         children: [

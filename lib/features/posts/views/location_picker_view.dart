@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/theme/map_styles.dart';
 import '../../../core/utils/device_location.dart';
 import '../models/location_pick_result.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Full-screen map to pick a location.
 class LocationPickerView extends StatefulWidget {
@@ -31,9 +32,11 @@ class _LocationPickerViewState extends State<LocationPickerView> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
         title: const Text('Pick location'),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
             onPressed: _isLoadingLocation ? null : _confirm,
             child: const Text('Confirm'),
           ),

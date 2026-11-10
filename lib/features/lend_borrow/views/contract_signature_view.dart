@@ -5,6 +5,7 @@ import 'package:signature/signature.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../services/lend_borrow_contract_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Full-screen signature capture for lender or borrower.
 class ContractSignatureView extends StatefulWidget {
@@ -88,6 +89,7 @@ class _ContractSignatureViewState extends State<ContractSignatureView> {
 
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
         title: Text('Sign as $role'),
       ),
       body: Padding(

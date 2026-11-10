@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../auth/controllers/auth_controller.dart';
 import '../services/lost_found_claim_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class ClaimScanView extends StatefulWidget {
   const ClaimScanView({super.key, required this.claimId});
@@ -80,7 +81,7 @@ class _ClaimScanViewState extends State<ClaimScanView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Scan recovery QR')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Scan recovery QR')),
       body: Stack(
         fit: StackFit.expand,
         children: [

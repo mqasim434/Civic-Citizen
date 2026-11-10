@@ -13,6 +13,7 @@ import '../services/post_service.dart';
 import '../widgets/post_comments_section.dart';
 import '../widgets/post_engagement_bar.dart';
 import '../widgets/post_image_gallery.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class PostDetailView extends StatelessWidget {
   const PostDetailView({super.key, required this.post});
@@ -50,6 +51,7 @@ class _PostDetailBody extends StatelessWidget {
     final mine = uid != null && uid == post.authorId;
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
         title: Text(post.title),
         actions: [
           IconButton(

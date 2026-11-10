@@ -35,10 +35,6 @@ class AppTheme {
   static const Color textDark = Color(0xFFE8E4DC);
   static const Color mutedDark = Color(0xFFB4BCC8);
 
-  /// Header (app bar) colours, a step apart from the page background.
-  static const Color headerLight = Color(0xFFE9E3D4);
-  static const Color headerDark = raisedDark;
-
   static const double _radius = 18;
 
   /// Shared card system for Home, Nearby and Rewards: corner radius, gap
@@ -154,20 +150,18 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        // A shade apart from the page so headers stand out.
-        backgroundColor: isDark ? headerDark : headerLight,
+        // Transparent so the green WaveHeaderBackground (flexibleSpace) and
+        // its curved bottom edge show; white title and icons on top.
+        backgroundColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
-        shape: Border(
-          bottom: BorderSide(color: scheme.outlineVariant),
-        ),
-        foregroundColor: scheme.onSurface,
-        systemOverlayStyle: isDark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        systemOverlayStyle: SystemUiOverlayStyle.light,
         titleTextStyle: GoogleFonts.nunito(
           fontSize: 22,
           fontWeight: FontWeight.w600,
-          color: scheme.onSurface,
+          color: Colors.white,
           height: 1.15,
         ),
       ),

@@ -12,6 +12,7 @@ import '../../../shared/widgets/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../auth/models/user_model.dart';
 import '../../auth/services/auth_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class EditProfileView extends StatefulWidget {
   const EditProfileView({super.key});
@@ -177,7 +178,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     final user = context.watch<AuthController>().user;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit profile')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Edit profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(

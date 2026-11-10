@@ -6,6 +6,7 @@ import '../../../core/models/app_announcement.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/services/announcement_service.dart';
 import '../../auth/controllers/auth_controller.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class BroadcastsView extends StatelessWidget {
   const BroadcastsView({super.key});
@@ -21,7 +22,7 @@ class BroadcastsView extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Community broadcasts')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Community broadcasts')),
       body: StreamBuilder<Set<String>>(
         stream: service.watchSeenAnnouncementIds(user.uid),
         builder: (context, seenSnap) {

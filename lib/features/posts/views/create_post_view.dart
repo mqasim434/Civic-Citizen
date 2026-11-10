@@ -12,6 +12,7 @@ import '../controllers/post_controller.dart';
 import '../models/location_pick_result.dart';
 import '../models/post_model.dart';
 import 'location_picker_view.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class CreatePostView extends StatefulWidget {
   const CreatePostView({super.key});
@@ -105,6 +106,7 @@ class _CreatePostViewState extends State<CreatePostView> {
     final categories = _categoriesForModule(_module);
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
         title: const Text('Create Post'),
       ),
       body: SingleChildScrollView(

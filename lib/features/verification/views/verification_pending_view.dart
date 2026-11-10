@@ -6,6 +6,7 @@ import '../../../core/routes/app_router.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../kyc/models/kyc_status.dart';
 import '../../kyc/services/kyc_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Shown after KYC submit until an admin verifies the account.
 class VerificationPendingView extends StatelessWidget {
@@ -44,10 +45,12 @@ class VerificationPendingView extends StatelessWidget {
           canPop: false,
           child: Scaffold(
             appBar: AppBar(
+              flexibleSpace: const WaveHeaderBackground(),
               automaticallyImplyLeading: false,
               title: const Text('Verification'),
               actions: [
                 TextButton(
+                  style: TextButton.styleFrom(foregroundColor: Colors.white),
                   onPressed: () async {
                     await auth.signOut();
                     if (context.mounted) {

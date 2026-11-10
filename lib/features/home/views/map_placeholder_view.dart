@@ -17,6 +17,7 @@ import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
 import '../../posts/utils/post_search_filter.dart';
 import '../widgets/location_search_sheet.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class MapPostsView extends StatefulWidget {
   const MapPostsView({super.key, this.showAppBar = true});
@@ -147,7 +148,7 @@ class _MapPostsViewState extends State<MapPostsView>
     return Scaffold(
       backgroundColor: widget.showAppBar ? null : Colors.transparent,
       appBar: widget.showAppBar
-          ? AppBar(title: const Text('Nearby & Map'))
+          ? AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Nearby & Map'))
           : null,
       body: StreamBuilder<List<PostModel>>(
         stream: _getPostsStream(),

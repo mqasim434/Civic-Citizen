@@ -8,6 +8,7 @@ import '../controllers/post_controller.dart';
 import '../models/location_pick_result.dart';
 import '../models/post_model.dart';
 import 'location_picker_view.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class EditPostView extends StatefulWidget {
   const EditPostView({super.key, required this.post});
@@ -98,7 +99,7 @@ class _EditPostViewState extends State<EditPostView> {
   Widget build(BuildContext context) {
     if (widget.post.isFulfilled) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Edit post')),
+        appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Edit post')),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -128,6 +129,7 @@ class _EditPostViewState extends State<EditPostView> {
     final categories = _categoriesForModule(_module);
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
         title: const Text('Edit post'),
       ),
       body: SingleChildScrollView(

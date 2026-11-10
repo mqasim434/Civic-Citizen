@@ -5,6 +5,7 @@ import '../../../features/auth/controllers/auth_controller.dart';
 import '../../../features/posts/services/post_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class NotificationsView extends StatefulWidget {
   const NotificationsView({super.key});
@@ -80,6 +81,7 @@ class _NotificationsViewState extends State<NotificationsView> {
   PreferredSizeWidget _appBar(String uid, NotificationService service) {
     if (!_selecting) {
       return AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
         title: const Text('Notifications'),
         actions: [
           IconButton(
@@ -96,6 +98,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     final allSelected =
         _visible.isNotEmpty && _visible.every((n) => _selected.contains(n.id));
     return AppBar(
+      flexibleSpace: const WaveHeaderBackground(),
       leading: IconButton(
         tooltip: 'Cancel',
         icon: const Icon(Icons.close_rounded),

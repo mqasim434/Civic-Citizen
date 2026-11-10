@@ -5,6 +5,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../../../core/services/profile_service.dart';
 import '../../auth/controllers/auth_controller.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Shown when an admin has banned the signed-in user.
 class AccountBannedView extends StatelessWidget {
@@ -39,6 +40,7 @@ class AccountBannedView extends StatelessWidget {
           canPop: false,
           child: Scaffold(
             appBar: AppBar(
+              flexibleSpace: const WaveHeaderBackground(),
               automaticallyImplyLeading: false,
               title: const Text('Account suspended'),
             ),

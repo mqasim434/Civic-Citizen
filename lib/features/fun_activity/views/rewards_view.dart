@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -80,7 +81,12 @@ class _RewardsViewState extends State<RewardsView>
   @override
   Widget build(BuildContext context) {
     final uid = context.watch<AuthController>().user?.uid;
-    final page = ColoredBox(
+    // No app bar here, so set status bar icons for the cream / dark page.
+    final page = AnnotatedRegion<SystemUiOverlayStyle>(
+      value: AppTheme.colors(context).isDark
+          ? SystemUiOverlayStyle.light
+          : SystemUiOverlayStyle.dark,
+      child: ColoredBox(
       color: AppTheme.colors(context).page,
       child: SafeArea(
         bottom: false,
@@ -107,6 +113,7 @@ class _RewardsViewState extends State<RewardsView>
                 },
               ),
       ),
+    ),
     );
     if (widget.embedded) return page;
     return Scaffold(body: page);

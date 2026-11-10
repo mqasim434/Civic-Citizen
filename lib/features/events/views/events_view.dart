@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/routes/app_router.dart';
 import '../models/civic_event.dart';
 import '../services/event_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class EventsView extends StatelessWidget {
   const EventsView({super.key});
@@ -14,7 +15,7 @@ class EventsView extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Community events')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Community events')),
       body: StreamBuilder<List<CivicEvent>>(
         stream: context.read<EventService>().watchActiveEvents(),
         builder: (context, snap) {
@@ -141,7 +142,7 @@ class EventDetailView extends StatelessWidget {
         final e = snap.data;
         if (e == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Event')),
+            appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Event')),
             body: const Center(child: Text('Event not found')),
           );
         }
@@ -153,7 +154,7 @@ class EventDetailView extends StatelessWidget {
   Widget _body(BuildContext context, CivicEvent event) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Event')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Event')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
