@@ -243,19 +243,19 @@ class _Tints {
 
   static _Tints blue(bool dark) => dark
       ? const _Tints(Color(0xFF14294A), Color(0xFF8AB4FF))
-      : const _Tints(Color(0xFFD6E6FF), Color(0xFF1E4FA8));
+      : const _Tints(Color(0xFFCDE5FF), Color(0xFF12358F));
 
   static _Tints green(bool dark) => dark
       ? const _Tints(Color(0xFF173B25), Color(0xFF5FD38A))
-      : const _Tints(Color(0xFFDDF0E1), Color(0xFF1E7A45));
+      : const _Tints(Color(0xFFD6F3E1), Color(0xFF0E5C2F));
 
   static _Tints amber(bool dark) => dark
       ? const _Tints(Color(0xFF2E2716), Color(0xFFF2C96B), Color(0xFF4A3D1C))
-      : const _Tints(Color(0xFFFFF1D2), Color(0xFF8A5D0B), Color(0xFFF5DFA6));
+      : const _Tints(Color(0xFFFEEFCE), Color(0xFF8A5D0B), Color(0xFFF8E2A8));
 
   static _Tints waiting(bool dark) => dark
       ? const _Tints(Color(0xFF1F2A3A), Color(0xFFC7CFDC))
-      : const _Tints(Color(0xFFE3E7F0), Color(0xFF2B3445));
+      : const _Tints(Color(0xFFDFE1ED), Color(0xFF111827));
 }
 
 class _CardBox extends StatelessWidget {
@@ -358,7 +358,15 @@ class _RoleBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: tint.fg, size: 26),
+          Icon(
+            icon,
+            color: dark
+                ? tint.fg
+                : (tint.bg == _Tints.blue(false).bg
+                    ? const Color(0xFF1D4FB8)
+                    : const Color(0xFF17883F)),
+            size: 26,
+          ),
           const SizedBox(width: 12),
           Flexible(
             child: Text(
@@ -410,7 +418,9 @@ class _SummaryCard extends StatelessWidget {
       statusPill = _StatusPill(
         label: 'Active',
         icon: Icons.check_circle_rounded,
-        tint: _Tints.green(dark),
+        tint: dark
+            ? _Tints.green(true)
+            : const _Tints(Color(0xFFE6F6EB), Color(0xFF06693B)),
       );
     }
 
@@ -746,7 +756,13 @@ class _ContactCardState extends State<_ContactCard> {
     final user = context.watch<AuthController>().user;
     if (user == null) return const SizedBox.shrink();
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final tint = _Tints.green(dark);
+    // Card, icon bubble, icon and button colours from the mockup.
+    final cardBg = dark ? const Color(0xFF15301F) : const Color(0xFFEBF8EE);
+    final bubbleBg = dark ? const Color(0xFF1C4A2E) : const Color(0xFFDAF5E2);
+    final iconColor = dark ? const Color(0xFF5FD38A) : const Color(0xFF0B8A40);
+    final tint = dark
+        ? _Tints.green(true)
+        : const _Tints(Color(0xFFDAF5E2), Color(0xFF1B6446));
     final isAuthor = widget.post.authorId == user.uid;
 
     Widget card({
@@ -756,8 +772,8 @@ class _ContactCardState extends State<_ContactCard> {
     }) {
       final theme = Theme.of(context);
       return _CardBox(
-        color: tint.bg.withValues(alpha: dark ? 0.6 : 0.55),
-        borderColor: tint.bg,
+        color: cardBg,
+        borderColor: cardBg,
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -766,8 +782,8 @@ class _ContactCardState extends State<_ContactCard> {
               children: [
                 _IconBubble(
                   icon: Icons.phone_rounded,
-                  bg: tint.bg,
-                  fg: tint.fg,
+                  bg: bubbleBg,
+                  fg: iconColor,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1192,7 +1208,7 @@ class _StepBox extends StatelessWidget {
                 icon: icon,
                 bg: dark
                     ? const Color(0xFF4A3D1C)
-                    : const Color(0xFFFFE4A8),
+                    : const Color(0xFFFFE7AB),
                 fg: c.ink,
                 size: 56,
               ),
@@ -1281,7 +1297,7 @@ class _StepButton extends StatelessWidget {
       child: FilledButton.icon(
         onPressed: busy ? null : onTap,
         style: FilledButton.styleFrom(
-          backgroundColor: dark ? const Color(0xFF1F9D55) : const Color(0xFF168A43),
+          backgroundColor: dark ? const Color(0xFF1F9D55) : const Color(0xFF018D44),
           foregroundColor: Colors.white,
           shape: const StadiumBorder(),
           textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -1405,7 +1421,8 @@ class _CommentsCard extends StatelessWidget {
     final theme = Theme.of(context);
     final c = AppTheme.colors(context);
     final dark = theme.brightness == Brightness.dark;
-    final accent = dark ? const Color(0xFF8AB4FF) : const Color(0xFF1E3FA8);
+    final accent = dark ? const Color(0xFF8AB4FF) : const Color(0xFF1A2A8C);
+    final viewAll = dark ? c.olive : const Color(0xFF0B6B35);
 
     return StreamBuilder<List<PostComment>>(
       stream: context.read<CommentService>().watchComments(postId),
@@ -1433,11 +1450,11 @@ class _CommentsCard extends StatelessWidget {
                   Text(
                     comments.isEmpty ? 'Add' : 'View All',
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: c.olive,
+                      color: viewAll,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Icon(Icons.chevron_right_rounded, color: c.olive),
+                  Icon(Icons.chevron_right_rounded, color: viewAll),
                 ],
               ),
               const SizedBox(height: 12),
