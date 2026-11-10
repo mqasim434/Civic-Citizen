@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +7,7 @@ import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../points/services/points_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Daily Rewards screen from the client mock: points, weekly check-in, streak.
 class RewardsView extends StatefulWidget {
@@ -76,47 +76,40 @@ class _RewardsViewState extends State<RewardsView>
     );
   }
 
-  void _back() => Navigator.of(context).maybePop();
-
   @override
   Widget build(BuildContext context) {
     final uid = context.watch<AuthController>().user?.uid;
-    // No app bar here, so set status bar icons for the cream / dark page.
-    final page = AnnotatedRegion<SystemUiOverlayStyle>(
-      value: AppTheme.colors(context).isDark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
-      child: ColoredBox(
-      color: AppTheme.colors(context).page,
-      child: SafeArea(
-        bottom: false,
-        child: uid == null
-            ? const Center(child: Text('Please sign in'))
-            : StreamBuilder<CivicRewardsState>(
-                stream: context.read<PointsService>().watchRewards(uid),
-                builder: (context, snap) {
-                  if (!snap.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  return _RewardsBody(
-                    state: snap.data!,
-                    scroll: _scroll,
-                    earnKey: _earnKey,
-                    claiming: _claiming,
-                    weekOffset: _weekOffset,
-                    onWeekSelected: (offset) =>
-                        setState(() => _weekOffset = offset),
-                    onBack: widget.embedded ? null : _back,
-                    onRewards: _scrollToEarn,
-                    onClaim: _claim,
-                  );
-                },
-              ),
+    // Same wave header as every other screen. As a tab there is no back
+    // arrow; opened as its own page the app bar adds one.
+    return Scaffold(
+      backgroundColor: AppTheme.colors(context).page,
+      appBar: AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
+        title: const Text('Daily Rewards'),
       ),
-    ),
+      body: uid == null
+          ? const Center(child: Text('Please sign in'))
+          : StreamBuilder<CivicRewardsState>(
+              stream: context.read<PointsService>().watchRewards(uid),
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return _RewardsBody(
+                  state: snap.data!,
+                  scroll: _scroll,
+                  earnKey: _earnKey,
+                  claiming: _claiming,
+                  weekOffset: _weekOffset,
+                  onWeekSelected: (offset) =>
+                      setState(() => _weekOffset = offset),
+                  onRewards: _scrollToEarn,
+                  onClaim: _claim,
+                );
+              },
+            ),
     );
-    if (widget.embedded) return page;
-    return Scaffold(body: page);
   }
 }
 
@@ -128,7 +121,6 @@ class _RewardsBody extends StatelessWidget {
     required this.claiming,
     required this.weekOffset,
     required this.onWeekSelected,
-    required this.onBack,
     required this.onRewards,
     required this.onClaim,
   });
@@ -139,7 +131,6 @@ class _RewardsBody extends StatelessWidget {
   final bool claiming;
   final int weekOffset;
   final ValueChanged<int> onWeekSelected;
-  final VoidCallback? onBack;
   final VoidCallback onRewards;
   final ValueChanged<int> onClaim;
 
@@ -161,13 +152,11 @@ class _RewardsBody extends StatelessWidget {
       controller: scroll,
       padding: const EdgeInsets.fromLTRB(
         AppTheme.pagePadding,
-        8,
+        4,
         AppTheme.pagePadding,
         28,
       ),
       children: [
-        _Header(onBack: onBack),
-        const SizedBox(height: 8),
         _PointsCard(
           balance: state.balance,
           onRewards: onRewards,
@@ -246,77 +235,6 @@ int _streakCount(Map<String, int> checkIns, DateTime today) {
     cursor = cursor.subtract(const Duration(days: 1));
   }
   return count;
-}
-
-class _Header extends StatelessWidget {
-  const _Header({this.onBack});
-
-  /// Shown only when Rewards is opened as its own page, not as a tab.
-  final VoidCallback? onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = AppTheme.colors(context);
-    return SizedBox(
-      height: 96,
-      child: Stack(
-        children: [
-          if (onBack != null)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Material(
-              color: c.card,
-              shape: const CircleBorder(),
-              elevation: 1,
-              shadowColor: const Color(0x22000000),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: onBack,
-                child: SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: Icon(Icons.arrow_back_rounded, color: c.ink),
-                ),
-              ),
-            ),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 56),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Daily Rewards',
-                    style: GoogleFonts.fraunces(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      color: c.burgundyInk,
-                      height: 1.05,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Small actions, meaningful rewards!',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.figtree(
-                      fontSize: 13,
-                      color: c.inkMuted,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Align(
-            alignment: Alignment.centerRight,
-            child: _GiftMark(),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _PointsCard extends StatelessWidget {
@@ -1125,19 +1043,6 @@ class _CommunityBanner extends StatelessWidget {
   }
 }
 
-class _GiftMark extends StatelessWidget {
-  const _GiftMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 72,
-      height: 72,
-      child: CustomPaint(painter: _GiftPainter()),
-    );
-  }
-}
-
 class _GoldCoin extends StatelessWidget {
   const _GoldCoin();
 
@@ -1157,63 +1062,6 @@ class _GoldCoin extends StatelessWidget {
       child: const Icon(Icons.star_rounded, color: Color(0xFF8A5A12)),
     );
   }
-}
-
-class _GiftPainter extends CustomPainter {
-  const _GiftPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final box = Paint()..color = const Color(0xFF8A5558);
-    final lid = Paint()..color = AppTheme.burgundy;
-    final ribbon = Paint()..color = const Color(0xFFE2B15A);
-    final leaf = Paint()..color = const Color(0xFF8EAF78);
-    final spark = Paint()
-      ..color = const Color(0xFFE2B15A)
-      ..strokeWidth = 1.4
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.18, h * 0.46, w * 0.58, h * 0.40),
-        const Radius.circular(5),
-      ),
-      box,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.14, h * 0.36, w * 0.66, h * 0.14),
-        const Radius.circular(3),
-      ),
-      lid,
-    );
-    canvas.drawRect(Rect.fromLTWH(w * 0.42, h * 0.36, w * 0.1, h * 0.50), ribbon);
-    canvas.drawCircle(Offset(w * 0.38, h * 0.28), w * 0.09, ribbon);
-    canvas.drawCircle(Offset(w * 0.56, h * 0.28), w * 0.09, ribbon);
-    canvas.drawCircle(Offset(w * 0.47, h * 0.34), w * 0.045, ribbon);
-
-    final leafPath = Path()
-      ..moveTo(w * 0.78, h * 0.72)
-      ..quadraticBezierTo(w * 0.98, h * 0.4, w * 0.7, h * 0.22)
-      ..quadraticBezierTo(w * 0.86, h * 0.5, w * 0.78, h * 0.72)
-      ..close();
-    canvas.drawPath(leafPath, leaf);
-
-    void sparkle(Offset c, double r) {
-      canvas.drawLine(c.translate(0, -r), c.translate(0, r), spark);
-      canvas.drawLine(c.translate(-r, 0), c.translate(r, 0), spark);
-    }
-
-    sparkle(Offset(w * 0.2, h * 0.16), 4);
-    sparkle(Offset(w * 0.78, h * 0.12), 3);
-    sparkle(Offset(w * 0.12, h * 0.4), 3);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _RewardsColors {
