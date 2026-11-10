@@ -18,7 +18,7 @@ class SettingsView extends StatelessWidget {
     final theme = Theme.of(context);
     final themeCtrl = context.watch<ThemeController>();
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Settings')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -266,7 +266,7 @@ class _PrivacySecurityPage extends StatelessWidget {
     final theme = Theme.of(context);
     final email = context.watch<AuthController>().user?.email;
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Privacy & Security')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Privacy & Security')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

@@ -52,6 +52,7 @@ class _PostDetailBody extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
         title: Text(post.title),
         actions: [
           IconButton(

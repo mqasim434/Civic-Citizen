@@ -22,6 +22,7 @@ class HelpSupportView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
         title: const Text('Help & Support'),
         actions: const [
           Padding(

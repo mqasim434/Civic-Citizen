@@ -24,7 +24,7 @@ class ContractDetailView extends StatelessWidget {
     final service = context.read<LendBorrowContractService>();
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Lend / borrow agreement')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Lend / borrow agreement')),
       body: StreamBuilder<LendBorrowContract?>(
         stream: service.watchContract(contractId),
         builder: (context, snap) {

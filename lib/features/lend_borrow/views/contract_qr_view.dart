@@ -19,7 +19,7 @@ class ContractQrView extends StatelessWidget {
     final service = context.read<LendBorrowContractService>();
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Handoff QR code')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Handoff QR code')),
       body: StreamBuilder<LendBorrowContract?>(
         stream: service.watchContract(contractId),
         builder: (context, snap) {

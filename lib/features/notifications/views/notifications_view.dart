@@ -82,6 +82,7 @@ class _NotificationsViewState extends State<NotificationsView> {
     if (!_selecting) {
       return AppBar(
         flexibleSpace: const WaveHeaderBackground(),
+        bottom: const WaveHeaderSpacer(),
         title: const Text('Notifications'),
         actions: [
           IconButton(
@@ -99,6 +100,7 @@ class _NotificationsViewState extends State<NotificationsView> {
         _visible.isNotEmpty && _visible.every((n) => _selected.contains(n.id));
     return AppBar(
       flexibleSpace: const WaveHeaderBackground(),
+      bottom: const WaveHeaderSpacer(),
       leading: IconButton(
         tooltip: 'Cancel',
         icon: const Icon(Icons.close_rounded),

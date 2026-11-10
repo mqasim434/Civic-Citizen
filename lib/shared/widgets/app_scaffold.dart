@@ -31,6 +31,7 @@ class AppScaffold extends StatelessWidget {
       appBar: title != null
           ? AppBar(
               flexibleSpace: const WaveHeaderBackground(),
+              bottom: const WaveHeaderSpacer(),
               title: Text(title!),
               actions: actions,
             )

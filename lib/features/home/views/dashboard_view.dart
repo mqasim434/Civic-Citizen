@@ -184,6 +184,7 @@ class _DashboardViewState extends State<DashboardView>
         slivers: [
           SliverAppBar(
             flexibleSpace: const WaveHeaderBackground(),
+            bottom: const WaveHeaderSpacer(),
             floating: true,
             toolbarHeight: 72,
             title: Row(

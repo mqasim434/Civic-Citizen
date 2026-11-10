@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 /// Green gradient header with soft waves and a curved bottom edge.
 /// Same look as the admin panel header, sized for a normal app bar.
 ///
-/// Use as `AppBar(flexibleSpace: const WaveHeaderBackground())`. The app bar
-/// theme makes the bar itself transparent so the curve shows the page.
+/// Use as
+/// `AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer())`.
+/// The spacer adds room under the title for the curve (like the admin
+/// header); the app bar theme is transparent so the curve shows the page.
 class WaveHeaderBackground extends StatelessWidget {
   const WaveHeaderBackground({super.key});
 
@@ -36,7 +38,7 @@ class WaveHeaderPainter extends CustomPainter {
     required this.top,
     required this.bottom,
     required this.wave,
-    this.curveDepth = 12,
+    this.curveDepth = WaveHeaderSpacer.height,
   });
 
   final Color top;
@@ -97,4 +99,18 @@ class WaveHeaderPainter extends CustomPainter {
       old.bottom != bottom ||
       old.wave != wave ||
       old.curveDepth != curveDepth;
+}
+
+/// Empty strip under the app bar title that the curved edge is drawn in.
+/// Same 26px the admin header uses.
+class WaveHeaderSpacer extends StatelessWidget implements PreferredSizeWidget {
+  const WaveHeaderSpacer({super.key});
+
+  static const double height = 26;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(height);
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(height: height);
 }

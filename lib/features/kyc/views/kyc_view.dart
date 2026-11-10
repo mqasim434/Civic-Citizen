@@ -46,6 +46,7 @@ class _KycViewState extends State<KycView> {
       child: Scaffold(
         appBar: AppBar(
           flexibleSpace: const WaveHeaderBackground(),
+          bottom: const WaveHeaderSpacer(),
           automaticallyImplyLeading: false,
           title: const Text('Verify identity'),
           actions: [

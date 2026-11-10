@@ -114,6 +114,7 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
           slivers: [
             SliverAppBar(
               flexibleSpace: const WaveHeaderBackground(),
+              bottom: const WaveHeaderSpacer(),
               floating: true,
               title: const Text('Nearby'),
               actions: [

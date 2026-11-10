@@ -22,7 +22,7 @@ class BroadcastsView extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Community broadcasts')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer(), title: const Text('Community broadcasts')),
       body: StreamBuilder<Set<String>>(
         stream: service.watchSeenAnnouncementIds(user.uid),
         builder: (context, seenSnap) {
