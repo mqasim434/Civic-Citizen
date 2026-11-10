@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../points/services/points_service.dart';
 import '../services/ad_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class CreateAdView extends StatefulWidget {
   const CreateAdView({super.key});
@@ -110,7 +111,7 @@ class _CreateAdViewState extends State<CreateAdView> {
     final uid = context.watch<AuthController>().user?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create ad')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Create ad')),
       body: Form(
         key: _formKey,
         child: ListView(

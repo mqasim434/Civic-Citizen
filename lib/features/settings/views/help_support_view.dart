@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class HelpSupportView extends StatelessWidget {
   const HelpSupportView({super.key});
@@ -20,6 +21,7 @@ class HelpSupportView extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: const WaveHeaderBackground(),
         title: const Text('Help & Support'),
         actions: const [
           Padding(

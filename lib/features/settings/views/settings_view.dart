@@ -8,6 +8,7 @@ import '../../../core/theme/theme_controller.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../auth/services/auth_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class SettingsView extends StatelessWidget {
   const SettingsView({super.key});
@@ -17,7 +18,7 @@ class SettingsView extends StatelessWidget {
     final theme = Theme.of(context);
     final themeCtrl = context.watch<ThemeController>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Settings')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -265,7 +266,7 @@ class _PrivacySecurityPage extends StatelessWidget {
     final theme = Theme.of(context);
     final email = context.watch<AuthController>().user?.email;
     return Scaffold(
-      appBar: AppBar(title: const Text('Privacy & Security')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Privacy & Security')),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [

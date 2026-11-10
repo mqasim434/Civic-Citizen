@@ -13,6 +13,7 @@ import '../services/contact_request_service.dart';
 import '../services/meetup_suggestion_service.dart';
 import '../widgets/meetup_suggestions_widget.dart';
 import '../widgets/trust_card_widget.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class ContactRequestDetailView extends StatefulWidget {
   const ContactRequestDetailView({super.key, required this.requestId});
@@ -35,7 +36,7 @@ class _ContactRequestDetailViewState extends State<ContactRequestDetailView> {
     final service = context.read<ContactRequestService>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Contact request')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Contact request')),
       body: StreamBuilder<ContactRequest?>(
         stream: service.watchRequest(widget.requestId),
         builder: (context, snap) {

@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../models/contract_status.dart';
 import '../models/lend_borrow_contract.dart';
 import '../services/lend_borrow_contract_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Lender displays QR code for borrower to scan at meetup.
 class ContractQrView extends StatelessWidget {
@@ -18,7 +19,7 @@ class ContractQrView extends StatelessWidget {
     final service = context.read<LendBorrowContractService>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Handoff QR code')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Handoff QR code')),
       body: StreamBuilder<LendBorrowContract?>(
         stream: service.watchContract(contractId),
         builder: (context, snap) {

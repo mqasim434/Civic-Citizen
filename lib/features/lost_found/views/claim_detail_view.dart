@@ -10,6 +10,7 @@ import '../../posts/models/post_model.dart';
 import '../models/claim_status.dart';
 import '../models/lost_found_claim.dart';
 import '../services/lost_found_claim_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class ClaimDetailView extends StatefulWidget {
   const ClaimDetailView({super.key, required this.claimId});
@@ -31,7 +32,7 @@ class _ClaimDetailViewState extends State<ClaimDetailView> {
     final service = context.read<LostFoundClaimService>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Recovery claim')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Recovery claim')),
       body: StreamBuilder<LostFoundClaim?>(
         stream: service.watchClaim(widget.claimId),
         builder: (context, snap) {

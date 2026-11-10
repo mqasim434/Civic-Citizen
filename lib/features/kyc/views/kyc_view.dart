@@ -8,6 +8,7 @@ import '../../../core/theme/app_atmosphere.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/kyc_controller.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class KycView extends StatefulWidget {
   const KycView({
@@ -44,10 +45,12 @@ class _KycViewState extends State<KycView> {
       canPop: false,
       child: Scaffold(
         appBar: AppBar(
+          flexibleSpace: const WaveHeaderBackground(),
           automaticallyImplyLeading: false,
           title: const Text('Verify identity'),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.white),
               onPressed: _signOut,
               child: const Text('Sign out'),
             ),

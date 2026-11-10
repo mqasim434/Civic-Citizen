@@ -9,6 +9,7 @@ import '../../mutual_confidence/widgets/post_meetup_tips_section.dart';
 import '../models/contract_status.dart';
 import '../models/lend_borrow_contract.dart';
 import '../services/lend_borrow_contract_service.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Hub for reviewing terms, signing, and QR handshake steps.
 class ContractDetailView extends StatelessWidget {
@@ -23,7 +24,7 @@ class ContractDetailView extends StatelessWidget {
     final service = context.read<LendBorrowContractService>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lend / borrow agreement')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Lend / borrow agreement')),
       body: StreamBuilder<LendBorrowContract?>(
         stream: service.watchContract(contractId),
         builder: (context, snap) {

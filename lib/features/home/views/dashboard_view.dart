@@ -15,6 +15,7 @@ import '../../posts/utils/post_search_filter.dart';
 import '../../posts/views/post_card.dart';
 import '../../posts/widgets/post_filter_sheet.dart';
 import '../widgets/location_search_sheet.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -182,6 +183,7 @@ class _DashboardViewState extends State<DashboardView>
         controller: _scrollController,
         slivers: [
           SliverAppBar(
+            flexibleSpace: const WaveHeaderBackground(),
             floating: true,
             toolbarHeight: 72,
             title: Row(
@@ -206,7 +208,7 @@ class _DashboardViewState extends State<DashboardView>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.primary,
+                          color: Colors.white,
                           fontWeight: FontWeight.w800,
                           height: 1.1,
                         ),
@@ -218,19 +220,19 @@ class _DashboardViewState extends State<DashboardView>
                           padding: const EdgeInsets.symmetric(vertical: 2),
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.location_on_rounded,
                                 size: 16,
-                                color: theme.colorScheme.secondary,
+                                color: Colors.white70,
                               ),
                               const SizedBox(width: 2),
                               if (_locationLoading)
                                 SizedBox(
                                   width: 12,
                                   height: 12,
-                                  child: CircularProgressIndicator(
+                                  child: const CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: theme.colorScheme.secondary,
+                                    color: Colors.white,
                                   ),
                                 )
                               else
@@ -241,14 +243,14 @@ class _DashboardViewState extends State<DashboardView>
                                     overflow: TextOverflow.ellipsis,
                                     style: theme.textTheme.labelLarge?.copyWith(
                                       fontWeight: FontWeight.w700,
-                                      color: theme.colorScheme.onSurface,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
-                              Icon(
+                              const Icon(
                                 Icons.keyboard_arrow_down_rounded,
                                 size: 18,
-                                color: theme.colorScheme.onSurfaceVariant,
+                                color: Colors.white70,
                               ),
                             ],
                           ),

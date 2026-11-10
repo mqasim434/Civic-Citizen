@@ -5,6 +5,7 @@ import '../../../core/models/app_announcement.dart';
 import '../../../core/services/announcement_service.dart';
 import '../widgets/broadcast_poll_card.dart';
 import '../../auth/controllers/auth_controller.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 class BroadcastDetailView extends StatefulWidget {
   const BroadcastDetailView({super.key, required this.announcement});
@@ -90,7 +91,7 @@ class _BroadcastDetailViewState extends State<BroadcastDetailView> {
     final announcement = widget.announcement;
 
     return Scaffold(
-      appBar: AppBar(title: Text(announcement.title)),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: Text(announcement.title)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(

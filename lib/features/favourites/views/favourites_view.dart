@@ -7,6 +7,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../posts/models/post_model.dart';
 import '../../posts/services/post_service.dart';
 import '../../posts/views/post_card.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Posts the user has liked.
 class FavouritesView extends StatelessWidget {
@@ -18,7 +19,7 @@ class FavouritesView extends StatelessWidget {
     final uid = context.watch<AuthController>().user?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Favourites')),
+      appBar: AppBar(flexibleSpace: const WaveHeaderBackground(), title: const Text('Favourites')),
       body: uid == null
           ? const Center(child: Text('Please sign in'))
           : StreamBuilder<List<PostModel>>(

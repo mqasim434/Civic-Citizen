@@ -13,6 +13,7 @@ import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
 import '../../posts/utils/post_search_filter.dart';
 import '../../posts/views/post_card.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Posts near the user's current location, sorted by distance.
 class NearbyPostsView extends StatefulWidget {
@@ -112,6 +113,7 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverAppBar(
+              flexibleSpace: const WaveHeaderBackground(),
               floating: true,
               title: const Text('Nearby'),
               actions: [

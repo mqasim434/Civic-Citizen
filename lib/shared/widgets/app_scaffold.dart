@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
 /// Base scaffold with consistent safe area and optional scroll.
 class AppScaffold extends StatelessWidget {
@@ -29,6 +30,7 @@ class AppScaffold extends StatelessWidget {
     return Scaffold(
       appBar: title != null
           ? AppBar(
+              flexibleSpace: const WaveHeaderBackground(),
               title: Text(title!),
               actions: actions,
             )
