@@ -389,7 +389,9 @@ class _DashboardViewState extends State<DashboardView>
                           label: 'Borrow',
                         ),
                       ];
-                  final itemWidth = constraints.maxWidth / 5;
+                  // 5.4 per screen: tighter gaps and part of the 6th item
+                  // shows, hinting that the row scrolls.
+                  final itemWidth = constraints.maxWidth / 5.4;
                   return SizedBox(
                     height: 84,
                     child: ListView.builder(
