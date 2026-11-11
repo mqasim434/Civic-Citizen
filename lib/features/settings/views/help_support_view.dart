@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import 'package:civic_citizen/shared/widgets/wave_header.dart';
 
@@ -10,7 +11,7 @@ class HelpSupportView extends StatelessWidget {
   Future<void> _mail(String subject) async {
     final uri = Uri(
       scheme: 'mailto',
-      path: 'support@civiccitizen.app',
+      path: AppConstants.supportEmail,
       queryParameters: {'subject': subject},
     );
     await launchUrl(uri);
@@ -70,6 +71,15 @@ class HelpSupportView extends StatelessWidget {
             onPressed: () => _mail('Civic Citizen support'),
             icon: const Icon(Icons.mail_outline_rounded),
             label: const Text('Contact Support via Email'),
+          ),
+          const SizedBox(height: 10),
+          SelectableText(
+            AppConstants.supportEmail,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppTheme.colors(context).inkMuted,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
