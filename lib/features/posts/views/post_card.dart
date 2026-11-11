@@ -354,13 +354,14 @@ class _TypePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
       decoration: BoxDecoration(
-        color: dark ? const Color(0xE6173B25) : const Color(0xF0E3F1E3),
+        // Swapped: dark green pill with light green text.
+        color: dark ? const Color(0xFF8FE0AE) : const Color(0xFF1E5E33),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: dark ? const Color(0xFF8FE0AE) : const Color(0xFF1E5E33),
+              color: dark ? const Color(0xFF173B25) : const Color(0xFFE3F1E3),
               fontWeight: FontWeight.w800,
             ),
       ),
