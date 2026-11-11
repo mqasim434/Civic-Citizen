@@ -3,6 +3,9 @@ class AppConstants {
   AppConstants._();
 
   static const String appName = 'Civic Citizen';
+
+  /// Support inbox used by Help & Support.
+  static const String supportEmail = 'civiccitizen.support@gmail.com';
   static const String appTagline = 'Connect. Share. Trust.';
 
   // Auth
