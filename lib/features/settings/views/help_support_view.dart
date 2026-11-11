@@ -73,12 +73,12 @@ class HelpSupportView extends StatelessWidget {
             label: const Text('Contact Support via Email'),
           ),
           const SizedBox(height: 10),
-          Center(
-            child: SelectableText(
-              AppConstants.supportEmail,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          SelectableText(
+            AppConstants.supportEmail,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppTheme.colors(context).inkMuted,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
