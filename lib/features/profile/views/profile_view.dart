@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/navigation/shell_tab.dart';
@@ -17,6 +16,8 @@ import '../../points/services/points_service.dart';
 import '../../posts/controllers/post_controller.dart';
 import '../../posts/models/post_model.dart';
 import 'package:civic_citizen/shared/widgets/wave_header.dart';
+import 'package:civic_citizen/shared/widgets/posts_board.dart';
+import 'package:civic_citizen/features/posts/services/post_service.dart';
 
 Future<void> _showDeleteConfirm(BuildContext context, PostModel post) async {
   final confirmed = await showDialog<bool>(
@@ -342,14 +343,13 @@ class _ProfileViewState extends State<ProfileView>
   }
 }
 
-/// The user's own posts (active, then completed exchanges / recoveries).
-/// Opened from Profile → My Posts.
+/// The user's own posts in the shared posts board (Active, Boosted,
+/// Fulfilled), then completed exchanges / recoveries.
 class _MyPostsPage extends StatelessWidget {
   const _MyPostsPage();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final user = context.watch<AuthController>().user;
     return Scaffold(
       appBar: AppBar(
@@ -359,90 +359,75 @@ class _MyPostsPage extends StatelessWidget {
       ),
       body: user == null
           ? const Center(child: Text('Please sign in'))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.only(top: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Active listings only — completed lend/borrow items move to Completed exchanges.',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.55,
+          : StreamBuilder<List<PostModel>>(
+              stream: context.read<PostService>().watchPostsByAuthor(user.uid),
+              builder: (context, snap) {
+                if (!snap.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                return PostsBoard(
+                  posts: snap.data!,
+                  emptyMessage: 'No posts yet',
+                  emptyAction: FilledButton.icon(
+                    onPressed: () => navigatorKey.currentState
+                        ?.pushNamed(AppConstants.routeCreatePost),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Create your first post'),
+                  ),
+                  onView: (p) => navigatorKey.currentState?.pushNamed(
+                    AppConstants.routePostDetail,
+                    arguments: p,
+                  ),
+                  actionsFor: (p) => [
+                    if (!p.isFulfilled)
+                      const PostsBoardAction(
+                        id: 'edit',
+                        icon: Icons.edit_outlined,
+                        label: 'Edit',
                       ),
+                    if (!p.isFulfilled && !p.isSponsored && !p.isSponsorPaused)
+                      const PostsBoardAction(
+                        id: 'boost',
+                        icon: Icons.rocket_launch_outlined,
+                        label: 'Boost',
+                      ),
+                    if (p.hasAdHistory)
+                      const PostsBoardAction(
+                        id: 'insights',
+                        icon: Icons.insights_rounded,
+                        label: 'Ad insights',
+                      ),
+                    const PostsBoardAction(
+                      id: 'delete',
+                      icon: Icons.delete_outline_rounded,
+                      label: 'Delete',
+                      danger: true,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  StreamBuilder<List<PostModel>>(
-                    stream: context.read<PostController>().watchMyPosts(
-                      user.uid,
-                    ),
-                    builder: (context, snap) {
-                      final posts = snap.data ?? [];
-                      if (posts.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
-                          child: Column(
-                            children: [
-                              Text(
-                                'No posts yet',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 12),
-                              FilledButton.icon(
-                                onPressed: () => navigatorKey.currentState
-                                    ?.pushNamed(AppConstants.routeCreatePost),
-                                icon: const Icon(Icons.add_rounded, size: 18),
-                                label: const Text('Create your first post'),
-                              ),
-                            ],
-                          ),
+                  ],
+                  onAction: (p, id) {
+                    switch (id) {
+                      case 'edit':
+                        navigatorKey.currentState?.pushNamed(
+                          AppConstants.routeEditPost,
+                          arguments: p,
                         );
-                      }
-                      return Column(
-                        children: posts
-                            .map(
-                              (p) => Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _MyPostCard(
-                                  post: p,
-                                  onView: () =>
-                                      navigatorKey.currentState?.pushNamed(
-                                        AppConstants.routePostDetail,
-                                        arguments: p,
-                                      ),
-                                  onEdit: () =>
-                                      navigatorKey.currentState?.pushNamed(
-                                        AppConstants.routeEditPost,
-                                        arguments: p,
-                                      ),
-                                  onDelete: () =>
-                                      _showDeleteConfirm(context, p),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      );
-                    },
+                      case 'boost':
+                        showBoostPostDialog(context, p);
+                      case 'insights':
+                        showPostInsights(context, p);
+                      case 'delete':
+                        _showDeleteConfirm(context, p);
+                    }
+                  },
+                  footer: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      CompletedExchangesSection(userId: user.uid),
+                      CompletedRecoveriesSection(userId: user.uid),
+                    ],
                   ),
-                  CompletedExchangesSection(userId: user.uid),
-                  CompletedRecoveriesSection(userId: user.uid),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-                ],
-              ),
+                );
+              },
             ),
     );
   }
@@ -490,196 +475,6 @@ class _MenuTile extends StatelessWidget {
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
       trailing: const Icon(Icons.chevron_right_rounded),
       onTap: onTap,
-    );
-  }
-}
-
-class _MyPostCard extends StatelessWidget {
-  static final _compact = ButtonStyle(
-    padding: const WidgetStatePropertyAll(
-      EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-    ),
-    minimumSize: const WidgetStatePropertyAll(Size(0, 40)),
-    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-    visualDensity: VisualDensity.compact,
-    textStyle: WidgetStatePropertyAll(
-      GoogleFonts.figtree(fontSize: 13, fontWeight: FontWeight.w700),
-    ),
-  );
-
-  const _MyPostCard({
-    required this.post,
-    required this.onView,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final PostModel post;
-  final VoidCallback onView;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: onView,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (post.imageUrls.isNotEmpty)
-                  Image.network(
-                    post.imageUrls.first,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 140,
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        size: 40,
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.4,
-                        ),
-                      ),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withValues(
-                                alpha: 0.15,
-                              ),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              post.isStandaloneAd
-                                  ? 'Sponsored'
-                                  : post.module.label,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          if (post.isSponsorPaused) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              'Ad paused',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ] else if (post.isSponsored &&
-                              !post.isStandaloneAd) ...[
-                            const SizedBox(width: 8),
-                            Text(
-                              'Sponsored',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.tertiary,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        post.title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        post.description,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.8,
-                          ),
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: FilledButton.tonal(
-                    onPressed: onView,
-                    style: _compact,
-                    child: const Text('View'),
-                  ),
-                ),
-                if (!post.isFulfilled &&
-                    !post.isSponsored &&
-                    !post.isSponsorPaused) ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => showBoostPostDialog(context, post),
-                      style: _compact,
-                      icon: const Icon(Icons.campaign_outlined, size: 16),
-                      label: const Text('Boost'),
-                    ),
-                  ),
-                ],
-                if (post.hasAdHistory) ...[
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => showPostInsights(context, post),
-                      style: _compact,
-                      icon: const Icon(Icons.insights_rounded, size: 16),
-                      label: const Text('Insights'),
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 8),
-                IconButton.outlined(
-                  tooltip: 'Edit',
-                  onPressed: post.isFulfilled ? null : onEdit,
-                  icon: const Icon(Icons.edit_outlined, size: 20),
-                ),
-                const SizedBox(width: 4),
-                IconButton.outlined(
-                  tooltip: 'Delete',
-                  onPressed: onDelete,
-                  color: theme.colorScheme.error,
-                  style: IconButton.styleFrom(
-                    side: BorderSide(color: theme.colorScheme.error),
-                  ),
-                  icon: const Icon(Icons.delete_outline_rounded, size: 20),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

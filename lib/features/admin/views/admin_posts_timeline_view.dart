@@ -1,47 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../core/navigation/shell_tab.dart';
 import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/routes/app_router.dart';
+import '../../../shared/widgets/posts_board.dart';
 import '../../posts/models/post_model.dart';
 import '../services/admin_service.dart';
 import '../ui/admin_ui.dart';
 import 'admin_post_detail_view.dart';
 
-enum _StatusFilter { all, active, flagged, fulfilled }
+enum _Sort { newest, oldest, mostLiked }
 
-extension on _StatusFilter {
-  String get label {
-    switch (this) {
-      case _StatusFilter.all:
-        return 'All statuses';
-      case _StatusFilter.active:
-        return 'Active';
-      case _StatusFilter.flagged:
-        return 'Flagged as inappropriate';
-      case _StatusFilter.fulfilled:
-        return 'Fulfilled';
-    }
-  }
-
-  bool matches(PostModel p) {
-    switch (this) {
-      case _StatusFilter.all:
-        return true;
-      case _StatusFilter.active:
-        return !p.isFulfilled && !p.isInappropriate;
-      case _StatusFilter.flagged:
-        return p.isInappropriate;
-      case _StatusFilter.fulfilled:
-        return p.isFulfilled;
-    }
-  }
-}
-
-/// Admin posts timeline with type chips, search and status filter.
+/// Admin posts: shared posts board (status + category chips, Active /
+/// Boosted / Fulfilled sections) with search, sort and moderation actions.
 class AdminPostsTimelineView extends StatefulWidget {
   const AdminPostsTimelineView({super.key, this.onBack});
 
@@ -55,6 +27,9 @@ class AdminPostsTimelineView extends StatefulWidget {
 class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView>
     with TabReselectListener {
   final _scroll = ScrollController();
+  final _search = TextEditingController();
+  bool _searching = false;
+  _Sort _sort = _Sort.newest;
 
   @override
   int get shellTabIndex => AdminShellTab.posts;
@@ -65,23 +40,6 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView>
   @override
   void onTabReselected() => scrollToTop(_scroll);
 
-  PostModule? _module;
-  _StatusFilter _status = _StatusFilter.all;
-  bool _searching = false;
-  final _search = TextEditingController();
-  final Set<String> _busy = <String>{};
-
-  /// Chips shown in the mockup order; Lend/Borrow follow.
-  static const _modules = <PostModule?>[
-    null,
-    PostModule.lost,
-    PostModule.found,
-    PostModule.charity,
-    PostModule.resources,
-    PostModule.lend,
-    PostModule.borrow,
-  ];
-
   @override
   void dispose() {
     _scroll.dispose();
@@ -89,15 +47,39 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView>
     super.dispose();
   }
 
-  Future<void> _pickStatus() async {
-    final picked = await adminPickOption<_StatusFilter>(
+  Future<void> _pickSort() async {
+    final picked = await adminPickOption<_Sort>(
       context,
-      title: 'Filter posts',
-      options: _StatusFilter.values,
-      selected: _status,
-      labelOf: (s) => s.label,
+      title: 'Sort posts',
+      options: _Sort.values,
+      selected: _sort,
+      labelOf: (s) => switch (s) {
+        _Sort.newest => 'Newest first',
+        _Sort.oldest => 'Oldest first',
+        _Sort.mostLiked => 'Most liked',
+      },
     );
-    if (picked != null) setState(() => _status = picked);
+    if (picked != null) setState(() => _sort = picked);
+  }
+
+  List<PostModel> _prepare(List<PostModel> all) {
+    final q = _search.text.trim().toLowerCase();
+    final list = all.where((post) {
+      if (q.isEmpty) return true;
+      return post.title.toLowerCase().contains(q) ||
+          post.description.toLowerCase().contains(q) ||
+          post.authorName.toLowerCase().contains(q);
+    }).toList();
+    switch (_sort) {
+      case _Sort.newest:
+        break; // already newest first from the query
+      case _Sort.oldest:
+        list.sort((a, b) => (a.createdAt ?? DateTime(0))
+            .compareTo(b.createdAt ?? DateTime(0)));
+      case _Sort.mostLiked:
+        list.sort((a, b) => b.likeCount.compareTo(a.likeCount));
+    }
+    return list;
   }
 
   @override
@@ -118,78 +100,69 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView>
           }),
         ),
         Badge(
-          isLabelVisible: _status != _StatusFilter.all,
+          isLabelVisible: _sort != _Sort.newest,
           smallSize: 8,
           backgroundColor: p.amber,
           offset: const Offset(-8, 8),
           child: AdminHeaderIcon(
-            tooltip: 'Filter',
+            tooltip: 'Sort',
             icon: Icons.filter_list_rounded,
-            onPressed: _pickStatus,
+            onPressed: _pickSort,
           ),
         ),
         const SizedBox(width: 4),
       ],
-      body: Column(
-        children: [
-          if (_searching)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: AdminSearchField(
-                controller: _search,
-                hint: 'Search title, description or author...',
-                onChanged: (_) => setState(() {}),
+      body: StreamBuilder<List<PostModel>>(
+        stream: context.read<AdminService>().watchPosts(),
+        builder: (context, snap) {
+          if (snap.hasError) {
+            return AdminEmpty(
+              icon: Icons.error_outline_rounded,
+              message: 'Could not load posts.\n${snap.error}',
+            );
+          }
+          if (!snap.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return PostsBoard(
+            scrollController: _scroll,
+            posts: _prepare(snap.data!),
+            emptyMessage: 'No posts found',
+            header: _searching
+                ? AdminSearchField(
+                    controller: _search,
+                    hint: 'Search title, description or author...',
+                    onChanged: (_) => setState(() {}),
+                  )
+                : null,
+            onView: _view,
+            actionsFor: (post) => [
+              const PostsBoardAction(
+                id: 'view',
+                icon: Icons.info_outline_rounded,
+                label: 'View details',
               ),
-            ),
-          AdminChipBar<PostModule?>(
-            options: _modules,
-            selected: _module,
-            labelOf: (m) => m?.label ?? 'All',
-            onSelected: (m) => setState(() => _module = m),
-          ),
-          Expanded(
-            child: StreamBuilder<List<PostModel>>(
-              stream: context.read<AdminService>().watchPosts(module: _module),
-              builder: (context, snap) {
-                if (snap.hasError) {
-                  return AdminEmpty(
-                    icon: Icons.error_outline_rounded,
-                    message: 'Could not load posts.\n${snap.error}',
-                  );
-                }
-                if (!snap.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final q = _search.text.trim().toLowerCase();
-                final posts = snap.data!.where((post) {
-                  if (!_status.matches(post)) return false;
-                  if (q.isEmpty) return true;
-                  return post.title.toLowerCase().contains(q) ||
-                      post.description.toLowerCase().contains(q) ||
-                      post.authorName.toLowerCase().contains(q);
-                }).toList();
-                if (posts.isEmpty) {
-                  return const AdminEmpty(
-                    icon: Icons.feed_outlined,
-                    message: 'No posts found',
-                  );
-                }
-                return ListView.separated(
-                  controller: _scroll,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  itemCount: posts.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 14),
-                  itemBuilder: (context, i) => _AdminPostCard(
-                    key: ValueKey(posts[i].id),
-                    post: posts[i],
-                    busy: _busy.contains(posts[i].id),
-                    onMenu: (action) => _onMenu(posts[i], action),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+              post.isInappropriate
+                  ? const PostsBoardAction(
+                      id: 'unflag',
+                      icon: Icons.check_circle_outline_rounded,
+                      label: 'Mark appropriate',
+                    )
+                  : const PostsBoardAction(
+                      id: 'flag',
+                      icon: Icons.report_gmailerrorred_rounded,
+                      label: 'Mark inappropriate',
+                    ),
+              const PostsBoardAction(
+                id: 'delete',
+                icon: Icons.delete_outline_rounded,
+                label: 'Delete',
+                danger: true,
+              ),
+            ],
+            onAction: _onMenu,
+          );
+        },
       ),
     );
   }
@@ -216,14 +189,11 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView>
       danger: true,
     );
     if (!ok || !mounted) return;
-    setState(() => _busy.add(post.id));
     try {
       await context.read<AdminService>().deletePost(post.id);
       if (mounted) adminSnack(context, 'Post deleted.');
     } catch (e) {
       if (mounted) adminSnack(context, 'Failed to delete post: $e', error: true);
-    } finally {
-      if (mounted) setState(() => _busy.remove(post.id));
     }
   }
 
@@ -237,7 +207,6 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView>
       );
       if (reason == null || !mounted) return;
     }
-    setState(() => _busy.add(post.id));
     try {
       await context.read<AdminService>().markPostInappropriate(
             post.id,
@@ -252,8 +221,6 @@ class _AdminPostsTimelineViewState extends State<AdminPostsTimelineView>
       }
     } catch (e) {
       if (mounted) adminSnack(context, 'Failed to update post: $e', error: true);
-    } finally {
-      if (mounted) setState(() => _busy.remove(post.id));
     }
   }
 }
@@ -263,267 +230,4 @@ void _view(PostModel post) {
   navigatorKey.currentState?.push(
     MaterialPageRoute<void>(builder: (_) => AdminPostDetailView(post: post)),
   );
-}
-
-/// Module badge colours from the mockup (Found green, Lost red...).
-AdminPill _modulePill(BuildContext context, PostModule m) {
-  switch (m) {
-    case PostModule.lost:
-      return AdminPill.red(context, m.label);
-    case PostModule.found:
-      return AdminPill.green(context, m.label);
-    case PostModule.charity:
-      return AdminPill.blue(context, m.label);
-    case PostModule.resources:
-      return AdminPill.amber(context, m.label);
-    case PostModule.lend:
-    case PostModule.borrow:
-      return AdminPill.green(context, m.label);
-  }
-}
-
-IconData _moduleIcon(PostModule m) {
-  switch (m) {
-    case PostModule.lost:
-      return Icons.search_off_rounded;
-    case PostModule.found:
-      return Icons.travel_explore_rounded;
-    case PostModule.charity:
-      return Icons.volunteer_activism_rounded;
-    case PostModule.resources:
-      return Icons.inventory_2_rounded;
-    case PostModule.lend:
-    case PostModule.borrow:
-      return Icons.handshake_rounded;
-  }
-}
-
-class _AdminPostCard extends StatelessWidget {
-  const _AdminPostCard({
-    super.key,
-    required this.post,
-    required this.busy,
-    required this.onMenu,
-  });
-
-  final PostModel post;
-  final bool busy;
-  final ValueChanged<String> onMenu;
-
-  Future<void> _share() async {
-    await SharePlus.instance.share(
-      ShareParams(
-        text: '${post.title}\n\n${post.description}\n\n'
-            '${AppConstants.sharePostUrl(post.id)}',
-        subject: post.title,
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AdminPalette.of(context);
-    final image = post.imageUrls.isNotEmpty ? post.imageUrls.first : null;
-    final by = [
-      'By ${post.authorName.isEmpty ? 'Unknown' : post.authorName}',
-      if (post.createdAt != null) adminTimeAgo(post.createdAt),
-    ].join(' • ');
-
-    return Stack(
-      children: [
-        Material(
-          color: Colors.transparent,
-          child: Ink(
-            decoration: p.cardDecoration(),
-            child: InkWell(
-              onTap: () => _view(post),
-              borderRadius: BorderRadius.circular(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(18),
-                    ),
-                    child: SizedBox(
-                      height: 150,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          if (image != null)
-                            Image.network(
-                              image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _ImagePlaceholder(module: post.module),
-                            )
-                          else
-                            _ImagePlaceholder(module: post.module),
-                          Positioned(
-                            left: 12,
-                            top: 12,
-                            child: Wrap(
-                              spacing: 6,
-                              children: [
-                                _modulePill(context, post.module),
-                                if (post.isInappropriate)
-                                  AdminPill.red(context, 'Inappropriate'),
-                                if (post.isFulfilled)
-                                  AdminPill.blue(context, 'Fulfilled'),
-                                if (post.isSponsored)
-                                  AdminPill.amber(context, 'Sponsored'),
-                              ],
-                            ),
-                          ),
-                          Positioned(
-                            right: 10,
-                            top: 10,
-                            child: AdminMoreButton<String>(
-                              onImage: true,
-                              tooltip: 'Manage post',
-                              onSelected: onMenu,
-                              itemBuilder: (_) => [
-                                adminMenuItem(
-                                  'view',
-                                  Icons.info_outline_rounded,
-                                  'View details',
-                                ),
-                                post.isInappropriate
-                                    ? adminMenuItem(
-                                        'unflag',
-                                        Icons.check_circle_outline_rounded,
-                                        'Mark appropriate',
-                                      )
-                                    : adminMenuItem(
-                                        'flag',
-                                        Icons.report_gmailerrorred_rounded,
-                                        'Mark inappropriate',
-                                      ),
-                                const PopupMenuDivider(),
-                                adminMenuItem(
-                                  'delete',
-                                  Icons.delete_outline_rounded,
-                                  'Delete',
-                                  danger: true,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          post.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AdminText.title(p, size: 16),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          post.description,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AdminText.body(p, size: 13),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          by,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AdminText.body(p, size: 12),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            _Count(
-                              icon: Icons.favorite_border_rounded,
-                              value: post.likeCount,
-                            ),
-                            const SizedBox(width: 18),
-                            _Count(
-                              icon: Icons.chat_bubble_outline_rounded,
-                              value: post.commentCount,
-                            ),
-                            const SizedBox(width: 14),
-                            InkResponse(
-                              onTap: _share,
-                              radius: 20,
-                              child: Icon(
-                                Icons.share_outlined,
-                                size: 20,
-                                color: p.text,
-                              ),
-                            ),
-                            const Spacer(),
-                            AdminButton(
-                              label: 'View',
-                              compact: true,
-                              onPressed: () => _view(post),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        if (busy)
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: p.page.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder({required this.module});
-
-  final PostModule module;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AdminPalette.of(context);
-    return ColoredBox(
-      color: p.softGreen,
-      child: Center(
-        child: Icon(_moduleIcon(module), size: 48, color: p.softGreenText),
-      ),
-    );
-  }
-}
-
-class _Count extends StatelessWidget {
-  const _Count({required this.icon, required this.value});
-
-  final IconData icon;
-  final int value;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = AdminPalette.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 20, color: p.text),
-        const SizedBox(width: 5),
-        Text('$value', style: AdminText.title(p, size: 13)),
-      ],
-    );
-  }
 }
