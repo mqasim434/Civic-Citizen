@@ -520,6 +520,13 @@ class _DashboardViewState extends State<DashboardView>
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
+                // "My area" waits for the location; otherwise the unfiltered
+                // posts flash on screen before the area filter applies.
+                if (!_allLocations && _locationLoading) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
                 // Users don't see their own posts in the feed (they are in
                 // Profile → My posts).
                 final uid = context.read<AuthController>().user?.uid;
