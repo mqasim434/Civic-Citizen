@@ -65,6 +65,7 @@ class _AnnouncementListenerState extends State<AnnouncementListener> {
         routeName == AppConstants.routeSplash ||
         routeName == AppConstants.routeLogin ||
         routeName == AppConstants.routeSignup ||
+        routeName == AppConstants.routeVerifyEmail ||
         routeName == AppConstants.routeKyc ||
         routeName == AppConstants.routeVerificationPending ||
         routeName == AppConstants.routeVerificationRejected ||

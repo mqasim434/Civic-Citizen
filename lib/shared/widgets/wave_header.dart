@@ -1,28 +1,50 @@
 import 'package:flutter/material.dart';
 
-/// Green gradient header with soft waves and a curved bottom edge.
-/// Same look as the admin panel header, sized for a normal app bar.
+/// Gradient header with soft waves and a curved bottom edge.
+/// Green by default. Daily Rewards passes [maroon] so its header matches
+/// the burgundy cards on that page.
 ///
 /// Use as
 /// `AppBar(flexibleSpace: const WaveHeaderBackground(), bottom: const WaveHeaderSpacer())`.
 /// The spacer adds room under the title for the curve (like the admin
 /// header); the app bar theme is transparent so the curve shows the page.
 class WaveHeaderBackground extends StatelessWidget {
-  const WaveHeaderBackground({super.key});
+  const WaveHeaderBackground({super.key, this.maroon = false});
 
-  // Light: same greens as the admin header.
+  /// Daily Rewards only. Every other screen stays on the original green.
+  final bool maroon;
+
+  // Light green, same as before.
   static const _lightTop = Color(0xFF14522F);
   static const _lightBottom = Color(0xFF2D8A52);
   static const _lightWave = Color(0x26FFFFFF);
 
-  // Dark: deep green into the app's dark navy.
+  // Dark green into the app's dark navy.
   static const _darkTop = Color(0xFF0F3A22);
   static const _darkBottom = Color(0xFF13202A);
   static const _darkWave = Color(0x1F2CCB68);
 
+  // Rewards card burgundy, deeper at the top.
+  static const _maroonLightTop = Color(0xFF542E32);
+  static const _maroonLightBottom = Color(0xFF713F43);
+  static const _maroonDarkTop = Color(0xFF3A2224);
+  static const _maroonDarkBottom = Color(0xFF7A454A);
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final Color top;
+    final Color bottom;
+    final Color wave;
+    if (maroon) {
+      top = dark ? _maroonDarkTop : _maroonLightTop;
+      bottom = dark ? _maroonDarkBottom : _maroonLightBottom;
+      wave = const Color(0x26FFFFFF);
+    } else {
+      top = dark ? _darkTop : _lightTop;
+      bottom = dark ? _darkBottom : _lightBottom;
+      wave = dark ? _darkWave : _lightWave;
+    }
     // SizedBox.expand: a CustomPaint without a child takes the smallest size
     // it is allowed, which is 0 high inside an app bar's flexibleSpace, so
     // nothing showed. Fill the whole app bar instead (as the admin header
@@ -30,9 +52,9 @@ class WaveHeaderBackground extends StatelessWidget {
     return SizedBox.expand(
       child: CustomPaint(
         painter: WaveHeaderPainter(
-          top: dark ? _darkTop : _lightTop,
-          bottom: dark ? _darkBottom : _lightBottom,
-          wave: dark ? _darkWave : _lightWave,
+          top: top,
+          bottom: bottom,
+          wave: wave,
         ),
       ),
     );

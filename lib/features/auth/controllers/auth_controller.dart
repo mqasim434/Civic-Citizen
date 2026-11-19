@@ -91,6 +91,19 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  Future<void> sendEmailVerification() async {
+    _error = null;
+    try {
+      await _authService.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      _error = _messageFromCode(e.code);
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+    }
+  }
+
   Future<void> refreshUser() async {
     final refreshed = await _authService.reloadCurrentUser();
     if (refreshed != null) {

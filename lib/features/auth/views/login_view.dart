@@ -43,6 +43,14 @@ class _LoginViewState extends State<LoginView> {
     if (success) {
       final auth = context.read<AuthController>();
       final user = auth.user!;
+      if (user.needsEmailVerification &&
+          !await context.read<AdminService>().isAdmin(user.uid)) {
+        if (!mounted) return;
+        navigatorKey.currentState?.pushReplacementNamed(
+          AppConstants.routeVerifyEmail,
+        );
+        return;
+      }
       try {
         final dest = await resolvePostAuthDestination(
           uid: user.uid,

@@ -7,8 +7,6 @@ import '../../../core/navigation/tab_reselect.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/routes/app_router.dart';
 import '../../auth/controllers/auth_controller.dart';
-import '../../lend_borrow/widgets/completed_exchanges_section.dart';
-import '../../lost_found/widgets/completed_recoveries_section.dart';
 import '../../ads/widgets/boost_post_sheet.dart';
 import '../../mutual_confidence/models/public_trust_profile.dart';
 import '../../mutual_confidence/services/trust_profile_service.dart';
@@ -206,9 +204,7 @@ class _ProfileViewState extends State<ProfileView>
                         const SizedBox(height: 12),
                         Text(
                           user.displayName ?? 'User',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
+                          style: theme.appBarTheme.titleTextStyle?.copyWith(
                             shadows: _headerTextShadow,
                           ),
                         ),
@@ -344,7 +340,7 @@ class _ProfileViewState extends State<ProfileView>
 }
 
 /// The user's own posts in the shared posts board (Active, Boosted,
-/// Fulfilled), then completed exchanges / recoveries.
+/// Fulfilled). Agreement and recovery records open from the post details.
 class _MyPostsPage extends StatelessWidget {
   const _MyPostsPage();
 
@@ -419,13 +415,6 @@ class _MyPostsPage extends StatelessWidget {
                         _showDeleteConfirm(context, p);
                     }
                   },
-                  footer: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      CompletedExchangesSection(userId: user.uid),
-                      CompletedRecoveriesSection(userId: user.uid),
-                    ],
-                  ),
                 );
               },
             ),

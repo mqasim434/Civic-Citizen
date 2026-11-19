@@ -33,8 +33,10 @@ class ProfileService {
     String? photoUrl,
   }) async {
     if (uid.isEmpty) return;
-    // Keeps the public photo in sync for users who set it before this existed.
-    await _syncPublicPhoto(uid, photoUrl);
+    final trimmedPhoto = photoUrl?.trim();
+    if (trimmedPhoto != null && trimmedPhoto.isNotEmpty) {
+      await _syncPublicPhoto(uid, trimmedPhoto);
+    }
     try {
       await _firestore.collection(AppConstants.userIndexCollection).doc(uid).set({
         'displayName': (displayName ?? '').trim(),
@@ -87,21 +89,19 @@ class ProfileService {
   }
 
   /// Copies the profile photo to the user's public trust profile so other
-  /// members can see it (users/{uid} is private). Best-effort: skipped if
-  /// the user has no public profile yet.
+  /// members can see it (users/{uid} is private).
   Future<void> _syncPublicPhoto(String uid, String? photoUrl) async {
     final trimmed = photoUrl?.trim();
+    final ref =
+        _firestore.collection(AppConstants.publicTrustCollection).doc(uid);
     try {
-      await _firestore
-          .collection(AppConstants.publicTrustCollection)
-          .doc(uid)
-          .update({
-        'photoUrl': trimmed == null || trimmed.isEmpty
-            ? FieldValue.delete()
-            : trimmed,
-      });
+      if (trimmed == null || trimmed.isEmpty) {
+        await ref.update({'photoUrl': FieldValue.delete()});
+        return;
+      }
+      await ref.set({'photoUrl': trimmed}, SetOptions(merge: true));
     } catch (_) {
-      // No public profile yet, or offline.
+      // Offline, or the public profile cannot be updated yet.
     }
   }
 }

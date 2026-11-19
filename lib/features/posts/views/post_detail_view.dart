@@ -203,6 +203,8 @@ class _PostDetailBody extends StatelessWidget {
                 _NextStepCard(post: post, deal: deal, mine: mine),
                 const SizedBox(height: AppTheme.cardGap),
               ],
+              _ListingTypeCard(post: post),
+              const SizedBox(height: AppTheme.cardGap),
               _AboutCard(post: post, mine: mine),
               const SizedBox(height: AppTheme.cardGap),
               _CommentsCard(postId: post.id),
@@ -980,27 +982,28 @@ class _NextStepCardState extends State<_NextStepCard> {
     final contract = deal.contract;
     final claim = deal.claim;
 
-    // Completed: link to the record.
+    // Completed: agreement or recovery record lives on this post.
     if (post.isFulfilled) {
       final recordId = post.completedContractId;
+      final hasRecord = recordId != null && recordId.isNotEmpty;
       return _StepBox(
         icon: Icons.task_alt_rounded,
         title: _isExchange ? 'Exchange completed' : 'Recovery confirmed',
-        message: 'This listing is no longer on the public feed or map. '
-            'Find it under Profile → '
-            '${_isExchange ? 'Completed exchanges' : 'Completed recoveries'}.',
-        action: recordId == null || recordId.isEmpty
-            ? null
-            : _StepButton(
+        message: _isExchange
+            ? 'This listing is complete. Open the agreement for the lend or borrow record.'
+            : 'This listing is complete. Open the ${post.module.label.toLowerCase()} record for the handover details.',
+        action: hasRecord
+            ? _StepButton(
                 icon: Icons.description_outlined,
-                label: _isExchange ? 'View Agreement' : 'View Record',
+                label: _isExchange ? 'View agreement' : 'View record',
                 onTap: () => _open(
                   _isExchange
                       ? AppConstants.routeLendBorrowContract
                       : AppConstants.routeLostFoundClaim,
                   recordId,
                 ),
-              ),
+              )
+            : null,
       );
     }
 
@@ -1315,6 +1318,149 @@ class _StepButton extends StatelessWidget {
               )
             : Icon(icon, size: 24),
         label: Text(label),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Listing type (Charity, Rescue, custom "Other", and every other category)
+// ---------------------------------------------------------------------------
+
+String _listingTypeLabel(PostModule module) =>
+    module == PostModule.resources ? 'Rescue' : module.label;
+
+class _ListingTypeCard extends StatelessWidget {
+  const _ListingTypeCard({required this.post});
+
+  final PostModel post;
+
+  void _open(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (ctx) => _ListingDetailsSheet(post: post),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final custom = post.categoryCustom?.trim();
+    final isCustom = post.category == 'Other' &&
+        custom != null &&
+        custom.isNotEmpty;
+    final category = isCustom
+        ? custom
+        : (post.category?.trim().isNotEmpty == true ? post.category!.trim() : null);
+    final type = _listingTypeLabel(post.module);
+
+    return _CardBox(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _IconBubble(
+                icon: isCustom
+                    ? Icons.edit_note_rounded
+                    : Icons.category_outlined,
+                bg: AppTheme.colors(context).sage,
+                fg: AppTheme.colors(context).olive,
+                size: 48,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isCustom ? 'Custom category' : type,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      category == null
+                          ? 'This $type listing has no extra category.'
+                          : '$type · $category',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _StepButton(
+            icon: Icons.list_alt_rounded,
+            label: 'View listing details',
+            onTap: () => _open(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ListingDetailsSheet extends StatelessWidget {
+  const _ListingDetailsSheet({required this.post});
+
+  final PostModel post;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final custom = post.categoryCustom?.trim();
+    final rows = <(String, String)>[
+      ('Listing type', _listingTypeLabel(post.module)),
+      if (post.category?.trim().isNotEmpty == true)
+        ('Category', post.category!.trim()),
+      if (custom != null && custom.isNotEmpty) ('Custom category', custom),
+      if (post.itemCondition?.trim().isNotEmpty == true)
+        ('Condition', post.itemCondition!.trim()),
+      if (post.location?.trim().isNotEmpty == true)
+        ('Location', post.location!.trim()),
+      ('Status', post.isFulfilled ? 'Completed' : 'Active'),
+    ];
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Listing details',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(post.title, style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 16),
+            for (final row in rows) ...[
+              Text(
+                row.$1,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                row.$2,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ],
+        ),
       ),
     );
   }

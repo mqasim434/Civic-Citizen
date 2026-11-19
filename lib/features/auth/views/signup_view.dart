@@ -41,12 +41,7 @@ class _SignupViewState extends State<SignupView> {
     if (!mounted) return;
     if (user != null) {
       navigatorKey.currentState?.pushReplacementNamed(
-        AppConstants.routeKyc,
-        arguments: {
-          'uid': user.uid,
-          'displayName': user.displayName ?? _nameController.text.trim(),
-          'email': user.email ?? _emailController.text.trim(),
-        },
+        AppConstants.routeVerifyEmail,
       );
     }
   }

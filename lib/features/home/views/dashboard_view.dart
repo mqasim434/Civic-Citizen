@@ -209,11 +209,7 @@ class _DashboardViewState extends State<DashboardView>
                         AppConstants.appName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          height: 1.1,
-                        ),
+                        style: theme.appBarTheme.titleTextStyle,
                       ),
                       InkWell(
                         onTap: _locationLoading ? null : _openLocationSheet,
@@ -490,6 +486,19 @@ class _DashboardViewState extends State<DashboardView>
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
               child: SegmentedButton<bool>(
                 showSelectedIcon: false,
+                style: SegmentedButton.styleFrom(
+                  backgroundColor: theme.brightness == Brightness.dark
+                      ? const Color(0xFF244536)
+                      : AppTheme.sage,
+                  foregroundColor: theme.brightness == Brightness.dark
+                      ? AppTheme.leafDark
+                      : AppTheme.olive,
+                  selectedBackgroundColor: AppTheme.olive,
+                  selectedForegroundColor: Colors.white,
+                  side: BorderSide(
+                    color: AppTheme.olive.withValues(alpha: 0.45),
+                  ),
+                ),
                 segments: const [
                   ButtonSegment(
                     value: false,
@@ -665,15 +674,19 @@ class _HomeCat extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               color: selected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.primaryContainer,
+                  ? AppTheme.olive
+                  : (theme.brightness == Brightness.dark
+                      ? const Color(0xFF244536)
+                      : AppTheme.sage),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               icon,
               color: selected
-                  ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.primary,
+                  ? Colors.white
+                  : (theme.brightness == Brightness.dark
+                      ? AppTheme.leafDark
+                      : AppTheme.olive),
             ),
           ),
           const SizedBox(height: 6),

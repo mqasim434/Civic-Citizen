@@ -7,6 +7,7 @@ import '../../features/admin/views/admin_dashboard_view.dart';
 import '../../features/admin/views/admin_user_verification_view.dart';
 import '../../features/auth/views/login_view.dart';
 import '../../features/auth/views/signup_view.dart';
+import '../../features/auth/views/verify_email_view.dart';
 import '../../features/events/models/civic_event.dart';
 import '../../features/events/views/events_view.dart';
 import '../../features/fun_activity/views/rewards_view.dart';
@@ -49,6 +50,8 @@ class AppRouter {
         return _buildRoute(const LoginView(), settings);
       case AppConstants.routeSignup:
         return _buildRoute(const SignupView(), settings);
+      case AppConstants.routeVerifyEmail:
+        return _buildRoute(const VerifyEmailView(), settings);
       case AppConstants.routeKyc: {
         final args = settings.arguments as Map<String, dynamic>?;
         if (args == null || args['uid'] == null) {

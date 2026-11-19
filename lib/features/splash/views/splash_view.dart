@@ -36,7 +36,21 @@ class _SplashViewState extends State<SplashView> {
       navigatorKey.currentState?.pushReplacementNamed(AppConstants.routeLogin);
       return;
     }
-    final user = auth.user!;
+    await auth.refreshUser();
+    if (!mounted) return;
+    final user = auth.user;
+    if (user == null) {
+      navigatorKey.currentState?.pushReplacementNamed(AppConstants.routeLogin);
+      return;
+    }
+    if (user.needsEmailVerification &&
+        !await context.read<AdminService>().isAdmin(user.uid)) {
+      if (!mounted) return;
+      navigatorKey.currentState?.pushReplacementNamed(
+        AppConstants.routeVerifyEmail,
+      );
+      return;
+    }
     try {
       final dest = await resolvePostAuthDestination(
         uid: user.uid,
