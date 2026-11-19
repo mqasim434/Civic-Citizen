@@ -8,6 +8,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/navigation/shell_tab.dart';
 import '../../../core/theme/map_styles.dart';
 import '../../../core/navigation/tab_reselect.dart';
@@ -712,15 +713,21 @@ class _MapChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final fg = selected ? scheme.onPrimary : scheme.onSurface;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fg = selected
+        ? Colors.white
+        : (dark ? AppTheme.leafDark : AppTheme.olive);
     final chip = Material(
-      color: selected ? scheme.primary : scheme.surface,
+      color: selected
+          ? AppTheme.olive
+          : (dark ? const Color(0xFF244536) : AppTheme.sage),
       elevation: 2,
       shadowColor: Colors.black26,
       shape: StadiumBorder(
         side: BorderSide(
-          color: selected ? scheme.primary : scheme.outlineVariant,
+          color: selected
+              ? AppTheme.olive
+              : AppTheme.olive.withValues(alpha: 0.35),
         ),
       ),
       child: Padding(

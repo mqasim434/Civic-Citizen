@@ -148,7 +148,9 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
                       .where((km) => km <= 10)
                       .map(
                         (km) => ChoiceChip(
-                          label: Text('${km.toStringAsFixed(km == km.roundToDouble() ? 0 : 1)} km'),
+                          label: Text(
+                            '${km.toStringAsFixed(km == km.roundToDouble() ? 0 : 1)} km',
+                          ),
                           selected: _radiusKm == km,
                           onSelected: (_) => setState(() => _radiusKm = km),
                         ),
@@ -222,7 +224,9 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
               )
             else
               StreamBuilder<List<PostModel>>(
-                stream: context.read<PostController>().watchPosts(module: _module),
+                stream: context.read<PostController>().watchPosts(
+                  module: _module,
+                ),
                 builder: (context, snap) {
                   if (snap.connectionState == ConnectionState.waiting) {
                     return const SliverFillRemaining(
@@ -267,8 +271,9 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
                                 'Only posts with map coordinates appear here.',
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.6),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                               ),
                             ],
@@ -286,28 +291,25 @@ class _NearbyPostsViewState extends State<NearbyPostsView>
                       24,
                     ),
                     sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) {
-                          final item = nearby[i];
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: AppTheme.cardGap,
+                      delegate: SliverChildBuilderDelegate((_, i) {
+                        final item = nearby[i];
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                            bottom: AppTheme.cardGap,
+                          ),
+                          child: PostCard(
+                            key: ValueKey(item.post.id),
+                            post: item.post,
+                            distanceLabel: PostSearchFilter.formatDistanceKm(
+                              item.distanceKm,
                             ),
-                            child: PostCard(
-                              key: ValueKey(item.post.id),
-                              post: item.post,
-                              distanceLabel: PostSearchFilter.formatDistanceKm(
-                                item.distanceKm,
-                              ),
-                              onTap: () => navigatorKey.currentState?.pushNamed(
-                                AppConstants.routePostDetail,
-                                arguments: item.post,
-                              ),
+                            onTap: () => navigatorKey.currentState?.pushNamed(
+                              AppConstants.routePostDetail,
+                              arguments: item.post,
                             ),
-                          );
-                        },
-                        childCount: nearby.length,
-                      ),
+                          ),
+                        );
+                      }, childCount: nearby.length),
                     ),
                   );
                 },

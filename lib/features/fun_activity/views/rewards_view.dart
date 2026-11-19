@@ -84,7 +84,7 @@ class _RewardsViewState extends State<RewardsView>
     return Scaffold(
       backgroundColor: AppTheme.colors(context).page,
       appBar: AppBar(
-        flexibleSpace: const WaveHeaderBackground(),
+        flexibleSpace: const WaveHeaderBackground(maroon: true),
         bottom: const WaveHeaderSpacer(),
         title: const Text('Daily Rewards'),
       ),

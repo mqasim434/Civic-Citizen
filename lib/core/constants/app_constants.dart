@@ -16,6 +16,7 @@ class AppConstants {
   static const String routeSplash = '/';
   static const String routeLogin = '/login';
   static const String routeSignup = '/signup';
+  static const String routeVerifyEmail = '/verify-email';
   static const String routeKyc = '/kyc';
   static const String routeVerificationPending = '/verification-pending';
   static const String routeVerificationRejected = '/verification-rejected';

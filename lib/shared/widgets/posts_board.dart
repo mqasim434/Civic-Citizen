@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/theme/app_theme.dart';
 import '../../features/posts/models/post_model.dart';
 
 /// Status filter chips at the top of the board.
@@ -123,7 +124,6 @@ class _PostsBoardState extends State<PostsBoard> {
                   icon: s == PostsBoardStatus.boosted
                       ? Icons.rocket_launch_rounded
                       : null,
-                  iconColor: b.rocket,
                   selected: _status == s,
                   height: 48,
                   dense: true,
@@ -142,22 +142,25 @@ class _PostsBoardState extends State<PostsBoard> {
               ),
         ),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            _Chip(
-              label: 'All',
-              selected: _module == null,
-              onTap: () => setState(() => _module = null),
-            ),
-            for (final m in _modules)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
               _Chip(
-                label: m.label,
-                selected: _module == m,
-                onTap: () => setState(() => _module = m),
+                label: 'All',
+                selected: _module == null,
+                onTap: () => setState(() => _module = null),
               ),
-          ],
+              for (final m in _modules) ...[
+                const SizedBox(width: 10),
+                _Chip(
+                  label: m.label,
+                  selected: _module == m,
+                  onTap: () => setState(() => _module = m),
+                ),
+              ],
+            ],
+          ),
         ),
         const SizedBox(height: 18),
         if (shownCount == 0)
@@ -301,7 +304,6 @@ class _Chip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.icon,
-    this.iconColor,
     this.height = 44,
     this.dense = false,
   });
@@ -313,16 +315,41 @@ class _Chip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final IconData? icon;
-  final Color? iconColor;
   final double height;
 
   @override
   Widget build(BuildContext context) {
-    final b = _BoardColors.of(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fg = selected
+        ? Colors.white
+        : (dark ? AppTheme.leafDark : AppTheme.olive);
+    final labelRow = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: 20, color: fg),
+          const SizedBox(width: 6),
+        ],
+        Text(
+          label,
+          maxLines: 1,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ],
+    );
     return Material(
-      color: selected ? b.green : b.chipBg,
+      color: selected
+          ? AppTheme.olive
+          : (dark ? const Color(0xFF244536) : AppTheme.sage),
       shape: StadiumBorder(
-        side: BorderSide(color: selected ? b.green : b.chipBorder),
+        side: BorderSide(
+          color: selected
+              ? AppTheme.olive
+              : AppTheme.olive.withValues(alpha: 0.35),
+        ),
       ),
       child: InkWell(
         customBorder: const StadiumBorder(),
@@ -330,27 +357,10 @@ class _Chip extends StatelessWidget {
         child: Container(
           height: height,
           padding: EdgeInsets.symmetric(horizontal: dense ? 6 : 18),
-          alignment: Alignment.center,
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 20, color: selected ? Colors.white : iconColor),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                label,
-                maxLines: 1,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: selected ? Colors.white : b.chipText,
-                      fontWeight: FontWeight.w600,
-                    ),
-              ),
-            ],
-          ),
-          ),
+          alignment: dense ? Alignment.center : null,
+          child: dense
+              ? FittedBox(fit: BoxFit.scaleDown, child: labelRow)
+              : labelRow,
         ),
       ),
     );

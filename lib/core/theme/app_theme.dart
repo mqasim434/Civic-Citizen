@@ -158,7 +158,7 @@ class AppTheme {
         iconTheme: const IconThemeData(color: Colors.white),
         actionsIconTheme: const IconThemeData(color: Colors.white),
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: GoogleFonts.nunito(
+        titleTextStyle: GoogleFonts.fraunces(
           fontSize: 22,
           fontWeight: FontWeight.w600,
           color: Colors.white,
@@ -177,26 +177,24 @@ class AppTheme {
         clipBehavior: Clip.antiAlias,
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: scheme.surfaceContainerLow,
-        selectedColor: scheme.secondaryContainer,
+        backgroundColor: isDark ? const Color(0xFF244536) : sage,
+        selectedColor: olive,
         disabledColor: scheme.surfaceContainer,
         labelStyle: GoogleFonts.figtree(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: scheme.onSurface,
+          color: isDark ? leafDark : olive,
         ),
         secondaryLabelStyle: GoogleFonts.figtree(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: scheme.onSecondaryContainer,
+          color: Colors.white,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: scheme.outlineVariant),
-        ),
-        side: BorderSide(color: scheme.outlineVariant),
+        shape: const StadiumBorder(),
+        side: BorderSide(color: olive.withValues(alpha: isDark ? 0.55 : 0.35)),
         showCheckmark: false,
+        checkmarkColor: Colors.white,
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 8,

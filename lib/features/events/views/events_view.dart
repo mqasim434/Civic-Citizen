@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_constants.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/routes/app_router.dart';
 import '../models/civic_event.dart';
 import '../services/event_service.dart';
@@ -88,15 +89,30 @@ class EventsView extends StatelessWidget {
                           spacing: 8,
                           children: [
                             Chip(
-                              label: Text(e.eventType.label),
+                              label: Text(
+                                e.eventType.label,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              backgroundColor: AppTheme.olive,
+                              side: BorderSide.none,
                               visualDensity: VisualDensity.compact,
                             ),
                             Chip(
-                              label: Text(e.isOpen ? 'Open' : 'Closed'),
+                              label: Text(
+                                e.isOpen ? 'Open' : 'Closed',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                               visualDensity: VisualDensity.compact,
                               backgroundColor: e.isOpen
-                                  ? theme.colorScheme.secondaryContainer
-                                  : theme.colorScheme.errorContainer,
+                                  ? AppTheme.olive
+                                  : theme.colorScheme.error,
+                              side: BorderSide.none,
                             ),
                           ],
                         ),
@@ -212,10 +228,15 @@ class EventDetailView extends StatelessWidget {
             child: Chip(
               label: Text(
                 event.isOpen ? 'Event is open' : 'Event is closed',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               backgroundColor: event.isOpen
-                  ? theme.colorScheme.secondaryContainer
-                  : theme.colorScheme.errorContainer,
+                  ? AppTheme.olive
+                  : theme.colorScheme.error,
+              side: BorderSide.none,
             ),
           ),
           const SizedBox(height: 20),

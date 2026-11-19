@@ -25,4 +25,8 @@ class UserModel {
   final String? displayName;
   final String? photoUrl;
   final bool emailVerified;
+
+  /// Email/password accounts must open the Firebase verification link.
+  bool get needsEmailVerification =>
+      email != null && email!.trim().isNotEmpty && !emailVerified;
 }

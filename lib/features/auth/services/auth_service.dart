@@ -53,7 +53,21 @@ class AuthService {
     if (displayName != null && displayName.trim().isNotEmpty) {
       await user.updateDisplayName(displayName.trim());
     }
-    return UserModel.fromFirebase(user);
+    try {
+      await user.sendEmailVerification();
+    } on FirebaseAuthException {
+      // Account exists. The verify screen can send the link again.
+    }
+    return UserModel.fromFirebase(_auth!.currentUser ?? user);
+  }
+
+  Future<void> sendEmailVerification() async {
+    if (!_isFirebaseReady) {
+      throw Exception('Firebase is not configured.');
+    }
+    final user = _auth!.currentUser;
+    if (user == null) throw Exception('Not signed in.');
+    await user.sendEmailVerification();
   }
 
   Future<UserModel> signInWithEmail({

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../features/auth/controllers/auth_controller.dart';
 import '../../features/mutual_confidence/models/public_trust_profile.dart';
 import '../../features/mutual_confidence/services/trust_profile_service.dart';
 
@@ -27,14 +28,26 @@ class UserAvatar extends StatelessWidget {
   final Color? backgroundColor;
   final Color? foregroundColor;
 
+  String? _nonEmpty(String? url) {
+    final trimmed = url?.trim();
+    if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (photoUrl != null || userId.isEmpty) {
-      return _avatar(context, photoUrl);
-    }
+    final direct = _nonEmpty(photoUrl);
+    if (direct != null) return _avatar(context, direct);
+
+    final signedIn = context.watch<AuthController>().user;
+    final ownPhoto =
+        signedIn != null && signedIn.uid == userId ? _nonEmpty(signedIn.photoUrl) : null;
+    if (userId.isEmpty) return _avatar(context, ownPhoto);
+
     return StreamBuilder<PublicTrustProfile?>(
       stream: context.read<TrustProfileService>().watchProfile(userId),
-      builder: (context, snap) => _avatar(context, snap.data?.photoUrl),
+      builder: (context, snap) =>
+          _avatar(context, _nonEmpty(snap.data?.photoUrl) ?? ownPhoto),
     );
   }
 
